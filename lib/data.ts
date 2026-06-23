@@ -88,6 +88,7 @@ export const journals: Journal[] = [
     slug: "migration-matters",
     title: "Migration Matters",
     desc: "Journal of International Labour and Human Trafficking",
+    issn: "3050-4597",
     fullDescription: "Migration Matters is a leading scholarly journal dedicated to the comprehensive analysis of international migration, labour mobility, and human trafficking. As migration continues to reshape the global landscape, this journal provides critical insights into the complex interplay between migration patterns, policy responses, and human rights. Through rigorous research and interdisciplinary perspectives, Migration Matters advances understanding of one of the most pressing humanitarian and policy challenges of our time.",
     focusAreas: [
       "International Labour Migration",
