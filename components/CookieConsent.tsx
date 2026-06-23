@@ -8,7 +8,12 @@ import Link from 'next/link';
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
-  const [preferences, setPreferences] = useState(() => {
+  const [preferences, setPreferences] = useState<{
+    essential: boolean;
+    analytics: boolean;
+    marketing: boolean;
+    preferences: boolean;
+  }>(() => {
     if (typeof window !== 'undefined') {
       const consent = localStorage.getItem('cookieConsent');
       if (consent) {
