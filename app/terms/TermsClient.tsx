@@ -10,7 +10,6 @@ import {
   Scale, 
   Gavel, 
   Mail, 
-  Globe,
   Lock,
   AlertCircle
 } from 'lucide-react';

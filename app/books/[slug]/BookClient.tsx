@@ -3,7 +3,7 @@
 import { Book } from '@/lib/data';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, BookOpen, Download, HelpCircle, Calendar, FileText, Globe, Tag, DollarSign } from 'lucide-react';
+import { ArrowLeft, BookOpen, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -163,7 +163,7 @@ export default function BookClient({ book }: Props) {
                       {book.testimonials.map((testimonial, index) => (
                         <div key={index} className="bg-white rounded-lg p-6 shadow-sm border-t-4 border-[#8B1A1A]">
                           <p className="italic text-[#1A1A2E]/70 mb-4 text-sm sm:text-base leading-relaxed">
-                            "{testimonial.quote}"
+                            &ldquo;{testimonial.quote}&rdquo;
                           </p>
                           <div>
                             <h4 className="font-serif text-[#8B1A1A] font-bold text-sm">

@@ -8,26 +8,32 @@ import Link from 'next/link';
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
-  const [preferences, setPreferences] = useState({
-    essential: true, // Always true - cannot be disabled
-    analytics: false,
-    marketing: false,
-    preferences: false,
+  const [preferences, setPreferences] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const consent = localStorage.getItem('cookieConsent');
+      if (consent) {
+        try {
+          const parsed = JSON.parse(consent);
+          if (parsed.preferences) {
+            return parsed.preferences;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return {
+      essential: true,
+      analytics: false,
+      marketing: false,
+      preferences: false,
+    };
   });
 
   useEffect(() => {
     // Check if user has already made a choice
     const consent = localStorage.getItem('cookieConsent');
-    if (consent) {
-      try {
-        const parsed = JSON.parse(consent);
-        if (parsed.preferences) {
-          setPreferences(parsed.preferences);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    } else {
+    if (!consent) {
       // Show banner after a short delay for better UX
       const timer = setTimeout(() => setIsVisible(true), 1000);
       return () => clearTimeout(timer);
