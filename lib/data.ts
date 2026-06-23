@@ -158,9 +158,10 @@ export const journals: Journal[] = [
   {
     id: 6,
     slug: "voice-rights",
-    title: "Voice & Rights",
+    title: "Voice & Rights: A Journal on Democracy and Civil Liberties",
     desc: "A Journal on Democracy and Civil Liberties",
-    fullDescription: "Voice & Rights is a distinguished journal dedicated to the study and advancement of democracy, civil liberties, and human rights. In an era of democratic backsliding, rising authoritarianism, and growing threats to fundamental freedoms, this journal provides critical analysis and advocacy for the principles that underpin open, just, and equitable societies. Through rigorous research and diverse perspectives, Voice & Rights advances understanding of the challenges and opportunities facing democratic governance and civil liberties around the world.",
+    issn: "3050-4503",
+    fullDescription: "Rights: A Journal on Democracy and Civil Liberties is a distinguished journal dedicated to the study and advancement of democracy, civil liberties, and human rights. In an era of democratic backsliding, rising authoritarianism, and growing threats to fundamental freedoms, this journal provides critical analysis and advocacy for the principles that underpin open, just, and equitable societies.",
     focusAreas: [
       "Democratic Theory and Practice",
       "Civil Liberties and Human Rights",
