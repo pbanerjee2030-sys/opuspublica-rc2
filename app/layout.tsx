@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { Playfair_Display, Inter } from 'next/font/google';
 import './globals.css';
-import CookieConsent from '@/components/CookieConsent'; // ✅ Import
+import CookieConsent from '@/components/CookieConsent';
+import Navbar from '@/components/Navbar';
+import { getServerUserAndProfile } from '@/lib/supabaseServer';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -18,16 +20,19 @@ export const metadata: Metadata = {
   description: 'Leading global platform for public policy research, academic journals, and book publishing.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { user, profile } = await getServerUserAndProfile();
+
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">
+        <Navbar initialUser={user} initialProfile={profile} />
         {children}
-        <CookieConsent /> {/* ✅ Add the cookie consent banner */}
+        <CookieConsent />
       </body>
     </html>
   );

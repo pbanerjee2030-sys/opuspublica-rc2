@@ -5,7 +5,18 @@ import { useInView } from 'react-intersection-observer';
 import { BookOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { journals } from '@/lib/data';
+
+interface JournalItem {
+  id: number;
+  slug: string;
+  title: string;
+  desc: string;
+  issn?: string;
+}
+
+interface Props {
+  journals?: JournalItem[];
+}
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -20,7 +31,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-export default function Journals() {
+export default function Journals({ journals = [] }: Props) {
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1

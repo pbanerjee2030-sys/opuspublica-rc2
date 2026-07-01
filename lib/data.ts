@@ -1,17 +1,3 @@
-export interface Journal {
-  id: number;
-  slug: string;
-  title: string;
-  desc: string;
-  fullDescription: string;
-  focusAreas: string[];
-  issn?: string;
-  callToAction?: string;
-  hasPDF?: boolean;
-  pdfPath?: string;
-  featuredContent?: string;
-}
-
 export interface BookAuthor {
   name: string;
   role: string;
@@ -21,12 +7,6 @@ export interface BookTestimonial {
   quote: string;
   author: string;
   title: string;
-}
-
-export interface BookFormatDetail {
-  name: string;
-  price: string;
-  isbn: string;
 }
 
 export interface Book {
@@ -54,8 +34,8 @@ export interface Book {
   downloadPath?: string;
   externalUrl?: string;
   isAvailable?: boolean;
-  author?: string; // fallback
-  formats?: BookFormatDetail[];
+  author?: string;
+  formats?: { name: string; price: string; isbn: string }[];
 }
 
 export interface Address {
@@ -65,152 +45,22 @@ export interface Address {
   note?: string;
 }
 
-export const journals: Journal[] = [
+export const addresses: Address[] = [
   {
-    id: 1,
-    slug: "cybersec-journal",
-    title: "CyberSec Journal",
-    desc: "Exploring cybersecurity challenges, policies, and emerging threats in the digital age.",
-    fullDescription: "CyberSec Journal is a premier academic publication dedicated to the critical examination of cybersecurity challenges, policies, and emerging threats in our increasingly digital world. As technology continues to evolve at an unprecedented pace, the need for rigorous research and analysis in cybersecurity has never been more urgent. This journal serves as a vital platform for scholars, policymakers, practitioners, and industry leaders to share cutting-edge research, innovative solutions, and thought-provoking perspectives on the most pressing cybersecurity issues of our time.",
-    focusAreas: [
-      "Cybersecurity Policy and Governance",
-      "Critical Infrastructure Protection",
-      "Data Privacy and Protection",
-      "Artificial Intelligence and Cybersecurity",
-      "Cyber Warfare and International Security",
-      "Digital Forensics and Incident Response",
-      "Cybersecurity Education and Workforce Development"
-    ],
-    callToAction: "Read the Latest Issue"
+    label: "Headquarters",
+    icon: "Building2",
+    address: "Fluwelen Burgwal 58, 2511 CJ Den Haag, Netherlands",
+    note: "Advocacy Unified Network"
   },
   {
-    id: 2,
-    slug: "migration-matters",
-    title: "Migration Matters",
-    desc: "Journal of International Labour and Human Trafficking",
-    issn: "3050-4597",
-    fullDescription: "Migration Matters is a leading scholarly journal dedicated to the comprehensive analysis of international migration, labour mobility, and human trafficking. As migration continues to reshape the global landscape, this journal provides critical insights into the complex interplay between migration patterns, policy responses, and human rights. Through rigorous research and interdisciplinary perspectives, Migration Matters advances understanding of one of the most pressing humanitarian and policy challenges of our time.",
-    focusAreas: [
-      "International Labour Migration",
-      "Human Trafficking and Modern Slavery",
-      "Refugee and Asylum Policy",
-      "Migration Governance",
-      "Migrant Rights and Protection",
-      "Integration and Social Cohesion",
-      "Climate-Induced Migration"
-    ],
-    hasPDF: true,
-    pdfPath: "/pdfs/migration-matters.pdf",
-    featuredContent: "This issue features the comprehensive research paper 'Migration Matters: A Multi-Dimensional Analysis of Policy Responses and Implications' by Arindam Bhattacharya, examining the complex relationship between migration, security threats, and human rights through a multi-dimensional analysis of policy responses and implications."
+    label: "Registered Office",
+    icon: "MapPin",
+    address: "85 MOUNT HOPE RD, MAHOPAC NY 10541-0000, USA"
   },
   {
-    id: 3,
-    slug: "world-trade-finance-journal",
-    title: "The World Trade and Finance Journal",
-    desc: "Analysis of global trade dynamics, financial systems, and economic policy.",
-    fullDescription: "The World Trade and Finance Journal is the definitive publication for scholars, policymakers, and financial professionals seeking to understand and navigate the complexities of the global economy. As international trade and financial systems undergo rapid transformation, this journal provides authoritative analysis and rigorous research on the most critical issues shaping global commerce and economic policy. Through a commitment to academic excellence and practical relevance, the journal advances understanding of the interconnected forces driving economic globalization.",
-    focusAreas: [
-      "International Trade Policy",
-      "Global Financial Systems",
-      "Economic Development",
-      "Monetary Policy and Central Banking",
-      "Foreign Direct Investment",
-      "Trade Agreements and Disputes",
-      "Sustainable Finance"
-    ],
-    callToAction: "Read the Latest Issue"
-  },
-  {
-    id: 4,
-    slug: "ecolaw-journal",
-    title: "EcoLaw Journal",
-    desc: "Environmental Law and Global Concerns",
-    fullDescription: "EcoLaw Journal is a leading publication at the intersection of environmental law, policy, and global sustainability. As the world confronts unprecedented environmental challenges, this journal provides critical analysis and innovative solutions to the most pressing ecological issues of our time. Through rigorous legal scholarship, interdisciplinary research, and policy-focused analysis, EcoLaw Journal advances the understanding and implementation of environmental law and governance.",
-    focusAreas: [
-      "Climate Change Law and Policy",
-      "Biodiversity and Conservation Law",
-      "Environmental Justice",
-      "International Environmental Agreements",
-      "Sustainable Development Law",
-      "Pollution Control and Regulation",
-      "Indigenous Rights and Environmental Protection"
-    ],
-    callToAction: "Read the Latest Issue"
-  },
-  {
-    id: 5,
-    slug: "global-perspectives",
-    title: "Global Perspectives on Politics and Diplomacy",
-    desc: "International relations, diplomatic strategies, and political theory.",
-    issn: "3050-4589",
-    fullDescription: "Global Perspectives on Politics and Diplomacy is a premier academic journal that examines the complex dynamics of international relations, diplomatic strategies, and political theory. As the global order evolves and new challenges emerge, this journal provides a forum for scholars, diplomats, and policy analysts to explore the shifting landscapes of power, governance, and international cooperation. Through rigorous scholarship and diverse perspectives, the journal advances understanding of the forces shaping our interconnected world.",
-    focusAreas: [
-      "International Relations Theory",
-      "Diplomatic Studies",
-      "Global Governance",
-      "Conflict Resolution and Peacebuilding",
-      "Geopolitics and Strategic Studies",
-      "Human Rights and International Law",
-      "Regional Studies and Comparative Politics"
-    ],
-    callToAction: "Read the Latest Issue"
-  },
-  {
-    id: 6,
-    slug: "voice-rights",
-    title: "Voice & Rights: A Journal on Democracy and Civil Liberties",
-    desc: "A Journal on Democracy and Civil Liberties",
-    issn: "3050-4503",
-    fullDescription: "Rights: A Journal on Democracy and Civil Liberties is a distinguished journal dedicated to the study and advancement of democracy, civil liberties, and human rights. In an era of democratic backsliding, rising authoritarianism, and growing threats to fundamental freedoms, this journal provides critical analysis and advocacy for the principles that underpin open, just, and equitable societies.",
-    focusAreas: [
-      "Democratic Theory and Practice",
-      "Civil Liberties and Human Rights",
-      "Constitutional Law",
-      "Freedom of Expression and Press Freedom",
-      "Civil Society and Social Movements",
-      "Electoral Systems and Political Participation",
-      "Human Rights Advocacy"
-    ],
-    callToAction: "Read the Latest Issue"
-  },
-  {
-    id: 7,
-    slug: "expressions",
-    title: "Expressions",
-    desc: "A Journal of Art and Culture",
-    issn: "3050-4538",
-    fullDescription: "Expressions is a scholarly journal dedicated to the exploration and celebration of art, culture, and creative expression. As the cultural landscape evolves and new forms of artistic expression emerge, this journal provides a forum for scholars, artists, and cultural practitioners to examine the role of creativity in society and the preservation of cultural heritage. Through interdisciplinary perspectives and rigorous scholarship, Expressions advances understanding of the arts and their transformative power.",
-    focusAreas: [
-      "Contemporary Art and Criticism",
-      "Cultural Heritage Preservation",
-      "Visual Culture and Media Studies",
-      "Performing Arts and Cultural Expression",
-      "Indigenous Art and Culture",
-      "Museum and Curatorial Studies",
-      "Arts Policy and Practice"
-    ],
-    hasPDF: true,
-    pdfPath: "/pdfs/expressions-sustainable-art.pdf",
-    featuredContent: "This issue features the research paper 'Sustainable Art and Cultural Heritage: Balancing Conservation and Innovation' by Priyasa Banerjee, examining the delicate balance between conservation and innovation in preserving sustainable art and cultural heritage through a mixed-methods approach including literature review, case studies, interviews, and surveys."
-  },
-  {
-    id: 8,
-    slug: "conflict-peace-studies",
-    title: "The Journal of Conflict and Peace Studies",
-    desc: "Conflict resolution, peacebuilding, and international security.",
-    fullDescription: "The Journal of Conflict and Peace Studies is a leading publication dedicated to the scholarly examination of conflict, peacebuilding, and international security. As violent conflict continues to devastate communities and threaten global stability, this journal provides critical analysis and innovative solutions for preventing, managing, and resolving conflict. Through rigorous research and diverse perspectives, the journal advances understanding of the root causes of conflict and the pathways to sustainable peace.",
-    focusAreas: [
-      "Conflict Resolution and Mediation",
-      "Peacebuilding and Post-Conflict Reconstruction",
-      "International Security and Peacekeeping",
-      "Conflict Analysis and Early Warning",
-      "Nonviolent Resistance and Civil Resistance",
-      "Reconciliation and Transitional Justice",
-      "Security Sector Reform"
-    ],
-    hasPDF: true,
-    pdfPath: "/pdfs/conflict-peace-studies.pdf",
-    featuredContent: "This issue features the research paper 'Examining the Jurisdictional Challenges Faced by the International Criminal Court Under the Rome Statute' by Arindam Bhattacharya, offering a comprehensive comparative analysis of the ICC's jurisdictional challenges across case studies including Darfur, Uganda, the Democratic Republic of the Congo, and Libya."
+    label: "SAARC Office",
+    icon: "Globe",
+    address: "Anamnagar, Kathmandu, Nepal"
   }
 ];
 
@@ -234,8 +84,8 @@ export const books: Book[] = [
     language: "English",
     format: "Paperback, E-book",
     price: "$25.99",
-    description: "GRACE: Timekeepers of Ancient Cultural Legacy offers a profound exploration of the urgent need to preserve ancient cultures and traditions in the face of mounting global challenges. From the collapse of historical sites due to urban sprawl to the loss of traditional knowledge systems, the book paints a vivid picture of the critical threats facing cultural heritage today. But more than that, it presents innovative solutions that utilize the latest technological advancements such as AI-driven tools, 3D scanning, and virtual reality to preserve the legacies of the past for future generations.",
-    longDescription: "Through a richly detailed narrative, this book introduces GRACE's founding mission and its growing influence on the global stage. Readers will embark on a journey through GRACE's partnerships with governments, cultural institutions, NGOs, and local communities across continents, discovering inspiring case studies of how heritage is being preserved in both digital and physical forms. Whether it's the successful restoration of cultural artifacts or community-led initiatives that breathe life into endangered traditions, GRACE: Timekeepers of Ancient Cultural Legacy offers a glimpse into the diverse ways ancient legacies are being safeguarded.",
+    description: "GRACE: Timekeepers of Ancient Cultural Legacy offers a profound exploration of the urgent need to preserve ancient cultures and traditions in the face of mounting global challenges.",
+    longDescription: "Through a richly detailed narrative, this book introduces GRACE's founding mission and its growing influence on the global stage.",
     tableOfContents: [
       "The Genesis of GRACE",
       "The Global Threat to Ancient Cultures",
@@ -263,15 +113,7 @@ export const books: Book[] = [
     categories: ["Cultural Heritage", "Preservation", "Technology", "Global Affairs"],
     tags: ["cultural preservation", "ancient heritage", "digital archiving", "global heritage"],
     status: "Available Now",
-    hasSample: true,
-    samplePath: "/samples/grace-sample.pdf",
-    downloadPath: "/downloads/grace-full.pdf",
-    externalUrl: "#",
-    isAvailable: true,
-    formats: [
-      { name: "Paperback", price: "$25.99", isbn: "9798227366276" },
-      { name: "Ebook", price: "$12.99", isbn: "9798227567499" }
-    ]
+    isAvailable: true
   },
   {
     id: 2,
@@ -288,8 +130,8 @@ export const books: Book[] = [
     language: "English",
     format: "Paperback, E-book",
     price: "$21.99",
-    description: "A remarkable fusion of cultural immersion, encounters, and recollections conveyed with lyrical gentleness, this collection of poems focuses on the nature and culture of the Himalayan region. These poems capture the special relationship between the nature and the communities that live in these magnificent mountains, steeped in centuries-old customs, and go beyond simply describing the Himalayas' natural grandeur.",
-    longDescription: "The poems offer readers a broad range of themes, from the resiliency of indigenous peoples to the holiness of the mountains, capturing the rich diversity of the Himalayan region. Every poetry attests to the mutually beneficial relationship that exists in this area between people, gods, and nature. The diversity of languages, cultures, and traditions that coexist here is reflected in the collection's voices.",
+    description: "A remarkable fusion of cultural immersion, encounters, and recollections conveyed with lyrical gentleness.",
+    longDescription: "The poems offer readers a broad range of themes, from the resiliency of indigenous peoples to the holiness of the mountains.",
     tableOfContents: [
       "Exalted Aspects - Himalayan Eco-Culture",
       "Family, Friends, and Kinship Values",
@@ -314,15 +156,7 @@ export const books: Book[] = [
     categories: ["Poetry", "Himalayas", "Spiritual", "Cultural Heritage"],
     tags: ["himalayas", "poetry", "spiritual discovery", "cultural heritage"],
     status: "Available Now",
-    hasSample: true,
-    samplePath: "/samples/echoes-sample.pdf",
-    downloadPath: "/downloads/echoes-full.pdf",
-    externalUrl: "#",
-    isAvailable: true,
-    formats: [
-      { name: "Paperback", price: "$21.99", isbn: "9798232056490" },
-      { name: "Ebook", price: "$9.99", isbn: "9798230002963" }
-    ]
+    isAvailable: true
   },
   {
     id: 3,
@@ -339,8 +173,8 @@ export const books: Book[] = [
     language: "English",
     format: "Paperback, E-book",
     price: "$65.99",
-    description: "A timeless scripture meets modern governance in this thought-provoking book that reimagines the Bhagavad Gita's wisdom in the realm of contemporary politics. From the Bhagavad Gita to the Ballot Box explores how Krishna's teachings on duty, ethics, and leadership offer profound insights for today's policymakers, diplomats, and leaders navigating an increasingly complex world.",
-    longDescription: "Through a compelling narrative, this book delves into the intersections of spirituality and statecraft, demonstrating how principles like dharma (righteous action), strategic decision-making, and moral responsibility can shape just and effective governance. Drawing from historical examples and modern political landscapes, it presents a visionary perspective on leadership that is both ethical and pragmatic. With global relevance and a fresh interpretation of an ancient philosophy, this book is an essential read for political thinkers, policymakers, and anyone interested in the fusion of wisdom and governance.",
+    description: "A timeless scripture meets modern governance in this thought-provoking book that reimagines the Bhagavad Gita's wisdom.",
+    longDescription: "Through a compelling narrative, this book delves into the intersections of spirituality and statecraft.",
     tableOfContents: [
       "From the Bhagavad Gita to the Ballot Box: An Introduction",
       "The Relevance of Ancient Wisdom in Modern Politics",
@@ -351,17 +185,7 @@ export const books: Book[] = [
       "The Quest for Wisdom: Applying Krishna's Teachings to Decision-Making",
       "Governance for the Greater Good",
       "Pursuit of Justice and Equality in Politics",
-      "Sustainable Policies and Environmental Stewardship",
-      "Compassion and Social Welfare in Governance",
-      "Conflict Resolution: Krishna's Approach to Peaceful Diplomacy",
-      "Non-violence and Ethics in Political Engagement",
-      "Balancing Personal Convictions and Political Pragmatism",
-      "Spirituality, Religion, and Civic Engagement",
-      "Faith-based Organizations: Agents of Positive Change",
-      "Values-based Activism and Grassroots Movements",
-      "Empowering Individuals: The Impact of Krishna's Teachings",
-      "Politics in the Modern Era: Challenges and Evolving Paradigms",
-      "Embracing Krishna's Wisdom for a Better Political Future"
+      "Sustainable Policies and Environmental Stewardship"
     ],
     testimonials: [
       {
@@ -378,33 +202,6 @@ export const books: Book[] = [
     categories: ["Politics", "Philosophy", "Leadership", "Spirituality"],
     tags: ["bhagavad gita", "political leadership", "ethical governance", "karma"],
     status: "Available Now",
-    hasSample: true,
-    samplePath: "/samples/bhagavad-sample.pdf",
-    downloadPath: "/downloads/bhagavad-full.pdf",
-    externalUrl: "#",
-    isAvailable: true,
-    formats: [
-      { name: "Paperback", price: "$65.99", isbn: "9798230447689" },
-      { name: "Ebook", price: "$25.99", isbn: "9798230724995" }
-    ]
+    isAvailable: true
   }
-];
-
-export const addresses: Address[] = [
-  { 
-    label: "Headquarters", 
-    icon: "Building2",
-    address: "Fluwelen Burgwal 58, 2511 CJ Den Haag, Netherlands",
-    note: "Advocacy Unified Network"
-  },
-  { 
-    label: "Registered Office", 
-    icon: "MapPin",
-    address: "85 MOUNT HOPE RD, MAHOPAC NY 10541-0000, USA"
-  },
-  { 
-    label: "SAARC Office", 
-    icon: "Globe",
-    address: "Anamnagar, Kathmandu, Nepal"
-  },
 ];

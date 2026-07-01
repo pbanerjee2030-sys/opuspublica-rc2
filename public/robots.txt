@@ -1,0 +1,9 @@
+# https://opuspublica.com/robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://opuspublica.com/sitemap.xml
+
+# Disallow admin or private paths (if any)
+Disallow: /api/

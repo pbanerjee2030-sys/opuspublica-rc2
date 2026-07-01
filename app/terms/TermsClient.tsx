@@ -13,7 +13,6 @@ import {
   Lock,
   AlertCircle
 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 
@@ -479,8 +478,7 @@ const termSections = [
 export default function TermsClient() {
   return (
     <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col font-sans">
-      <Navbar />
-      
+            
       {/* Spacer for Fixed Navbar */}
       <div className="h-16"></div>
 

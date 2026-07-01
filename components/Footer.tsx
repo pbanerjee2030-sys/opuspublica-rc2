@@ -5,11 +5,11 @@ import { Mail } from 'lucide-react';
 import CookieSettingsButton from './CookieSettingsButton';
 
 const quickLinks = [
-  { href: '#home', label: 'Home' },
-  { href: '#journals', label: 'Journals' },
-  { href: '#books', label: 'Books' },
-  { href: '#about', label: 'About' },
-  { href: '#contact', label: 'Contact' },
+  { href: '/#home', label: 'Home' },
+  { href: '/#journals', label: 'Journals' },
+  { href: '/#books', label: 'Books' },
+  { href: '/#about', label: 'About' },
+  { href: '/#contact', label: 'Contact' },
 ];
 
 const legalLinks = [

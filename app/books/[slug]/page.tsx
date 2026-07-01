@@ -15,9 +15,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const book = books.find((b) => b.slug === slug);
+  if (!book) return { title: 'Book Not Found | Opus Publica' };
   return {
-    title: `${book?.title} | Opus Publica`,
-    description: book?.description,
+    title: `${book.title} | Opus Publica`,
+    description: book.description,
   };
 }
 

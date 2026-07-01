@@ -3,7 +3,6 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { Shield, Mail, Globe, Lock, FileText } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 
@@ -328,8 +327,7 @@ const policySections = [
 export default function PrivacyClient() {
   return (
     <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col font-sans">
-      <Navbar />
-      
+            
       {/* Spacer for Fixed Navbar */}
       <div className="h-16"></div>
 

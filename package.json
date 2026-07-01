@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@next/font": "^14.2.15",
+    "@supabase/supabase-js": "^2.108.2",
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.4.11",
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.21.0",
     "next": "16.2.9",
