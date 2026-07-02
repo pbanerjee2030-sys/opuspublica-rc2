@@ -58,8 +58,11 @@ export async function POST(request: Request) {
           slug
         ),
         article_authors (
+          co_author_name,
+          co_author_orcid,
           profiles (
-            full_name
+            full_name,
+            orcid
           )
         )
       `)
@@ -74,7 +77,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Article does not have a pre-assigned DOI in the database.' }, { status: 400 });
     }
 
-    const authors = article.article_authors?.map((aa: any) => aa.profiles).filter(Boolean) || [];
+    const authors = article.article_authors?.map((aa: any) => {
+      if (aa.profiles) {
+        return {
+          full_name: aa.profiles.full_name,
+          orcid: aa.profiles.orcid,
+        };
+      }
+      if (aa.co_author_name) {
+        return {
+          full_name: aa.co_author_name,
+          orcid: aa.co_author_orcid,
+        };
+      }
+      return null;
+    }).filter(Boolean) || [];
 
     const host = request.headers.get('host') || 'opuspublica.org';
     const proto = request.headers.get('x-forwarded-proto') || 'https';

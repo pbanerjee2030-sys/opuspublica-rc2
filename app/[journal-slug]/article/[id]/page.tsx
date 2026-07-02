@@ -270,6 +270,29 @@ export default async function ArticleDetailPage({ params }: Props) {
                     abstract={article.abstract}
                   />
 
+                  {article.doi && (
+                    <div className="bg-white rounded-lg p-5 shadow-sm border border-black/5 flex flex-col items-start gap-3">
+                      <h4 className="text-[#1A1A2E] font-serif text-sm font-semibold uppercase tracking-wider">
+                        Document Verification
+                      </h4>
+                      <p className="text-xs text-[#1A1A2E]/70 leading-normal mb-1">
+                        Click the badge below to verify the authenticity, current publication status, and any corrections or updates for this article via Crossmark.
+                      </p>
+                      <a
+                        href={`https://crossmark.crossref.org/dialog?doi=${encodeURIComponent(article.doi)}&domain=opuspublica.com&date_stamp=${new Date(article.publishedAt).toISOString().split('T')[0]}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block hover:opacity-85 transition-opacity duration-150"
+                      >
+                        <img
+                          src="https://crossmark.crossref.org/button.svg"
+                          alt="Crossmark Status"
+                          className="h-7"
+                        />
+                      </a>
+                    </div>
+                  )}
+
                   <div className="bg-[#1A1A2E] text-white p-5 rounded-lg border border-[#C9A84C]/10 shadow-md">
                     <h4 className="text-[#C9A84C] font-serif font-bold text-sm uppercase tracking-wider mb-3">
                       Publication Context
