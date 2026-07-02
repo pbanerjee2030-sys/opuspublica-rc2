@@ -1,14 +1,17 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, User, BookOpen, Calendar, MapPin, Mail, GraduationCap, Fingerprint } from 'lucide-react';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
+import { getServerUserAndProfile } from '@/lib/supabaseServer';
+import { revalidatePath } from 'next/cache';
 
 interface Props {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -29,8 +32,37 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
-export default async function ProfilePage({ params }: Props) {
+export default async function ProfilePage({ params, searchParams }: Props) {
   const { id } = await params;
+  const sParams = (await searchParams) || {};
+  const orcidConnected = sParams.orcid_connected === 'true';
+  const orcidDisconnected = sParams.orcid_disconnected === 'true';
+  const orcidError = sParams.orcid_error as string | undefined;
+
+  const { user: currentUser } = await getServerUserAndProfile();
+  const isOwner = currentUser?.id === id;
+
+  async function disconnectOrcid() {
+    'use server';
+    const { user } = await getServerUserAndProfile();
+    if (!user || user.id !== id) {
+      throw new Error("Unauthorized");
+    }
+    const adminSupabase = getSupabaseAdmin();
+    const { error } = await (adminSupabase
+      .from('profiles') as any)
+      .update({ orcid: null })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to disconnect ORCID:', error);
+      redirect(`/profile/${id}?orcid_error=${encodeURIComponent(error.message)}`);
+    }
+
+    revalidatePath(`/profile/${id}`);
+    redirect(`/profile/${id}?orcid_disconnected=true`);
+  }
+
   const supabase = getSupabaseAdmin();
 
   const { data: dbProfile } = await supabase
@@ -115,6 +147,28 @@ export default async function ProfilePage({ params }: Props) {
           </Link>
         </div>
 
+        {/* ORCID Notification Banners */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-4 space-y-3">
+          {orcidConnected && (
+            <div className="p-4 bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
+              <strong>Success:</strong> Your ORCID iD has been successfully connected!
+            </div>
+          )}
+          {orcidError && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-lg text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500" />
+              <strong>Error:</strong> {decodeURIComponent(orcidError)}
+            </div>
+          )}
+          {orcidDisconnected && (
+            <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 rounded-lg text-sm flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-yellow-500" />
+              <strong>Status:</strong> Your ORCID iD has been disconnected.
+            </div>
+          )}
+        </div>
+
         <section className="py-12 bg-gradient-to-br from-[#1A1A2E] via-[#8B1A1A]/10 to-[#1A1A2E] border-b border-[#C9A84C]/10 text-center sm:text-left">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8">
@@ -137,17 +191,55 @@ export default async function ProfilePage({ params }: Props) {
                 <h1 className="text-3xl sm:text-4xl font-serif text-white font-bold">
                   {profile.full_name}
                 </h1>
-                {profile.orcid && (
-                  <a
-                    href={`https://orcid.org/${profile.orcid}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[#C9A84C] hover:text-[#D4AF37] text-sm font-mono transition-colors"
-                  >
-                    <Fingerprint className="w-4 h-4" />
-                    {profile.orcid}
-                  </a>
-                )}
+                {/* ORCID iD Display & Interaction */}
+                <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start pt-1">
+                  {profile.orcid ? (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <a
+                        href={`https://orcid.org/${profile.orcid}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 hover:text-green-300 hover:bg-green-500/20 text-sm font-mono transition-all shadow-sm"
+                        title="Verified ORCID iD"
+                      >
+                        <Fingerprint className="w-4 h-4 animate-pulse" />
+                        <span>ID: {profile.orcid}</span>
+                      </a>
+                      
+                      {isOwner && (
+                        <details className="group relative">
+                          <summary className="cursor-pointer text-xs text-red-400 hover:text-red-300 list-none flex items-center gap-1 select-none font-medium">
+                            <span>Disconnect</span>
+                            <span className="text-[10px] group-open:rotate-180 transition-transform">&#9662;</span>
+                          </summary>
+                          <div className="absolute left-0 mt-2 p-3 bg-[#1A1A2E] border border-red-500/30 rounded-lg text-xs space-y-2 w-64 shadow-2xl z-50 text-left">
+                            <p className="text-white/80 leading-relaxed font-sans">
+                              Disconnecting will affect Crossref metadata for your published articles. Are you sure?
+                            </p>
+                            <form action={disconnectOrcid}>
+                              <button
+                                type="submit"
+                                className="w-full py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-semibold transition-colors font-sans cursor-pointer"
+                              >
+                                Yes, Disconnect
+                              </button>
+                            </form>
+                          </div>
+                        </details>
+                      )}
+                    </div>
+                  ) : (
+                    isOwner && (
+                      <a
+                        href="/api/auth/orcid/connect"
+                        className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#C9A84C]/25 hover:bg-[#C9A84C]/45 border border-[#C9A84C] text-[#C9A84C] hover:text-white rounded-full text-xs font-bold transition-all shadow-md"
+                      >
+                        <Fingerprint className="w-3.5 h-3.5" />
+                        Connect your ORCID iD
+                      </a>
+                    )
+                  )}
+                </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm text-white/80 items-center justify-center sm:justify-start">
                   <div className="flex items-center gap-1.5">
                     <GraduationCap className="w-4 h-4 text-[#C9A84C]" />
