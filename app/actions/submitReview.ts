@@ -42,14 +42,14 @@ export async function submitReview(payload: SubmitReviewPayload, accessToken: st
       return { success: false, error: 'Access Denied: This assignment is not yours.' };
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from('reviewer_assignments')
       .update({
         recommendation: payload.recommendation,
         comments: payload.comments,
         scores: payload.scores,
         status: 'completed',
-      } as any)
+      })
       .eq('id', payload.assignmentId);
 
     if (error) throw error;
@@ -100,9 +100,9 @@ export async function declineReview(payload: DeclineReviewPayload, accessToken: 
       return { success: false, error: 'Access Denied: This assignment is not yours.' };
     }
 
-    const { error } = await supabaseAdmin
+    const { error } = await (supabaseAdmin as any)
       .from('reviewer_assignments')
-      .update({ status: 'declined' } as any)
+      .update({ status: 'declined' })
       .eq('id', payload.assignmentId);
 
     if (error) throw error;

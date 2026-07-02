@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
-    const articleId = identifier.split(':').pop();
+    const articleId = identifier.split(':').pop() || '';
 
     const { data: article } = await supabaseAdmin
       .from('articles')

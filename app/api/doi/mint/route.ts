@@ -118,13 +118,13 @@ export async function POST(request: Request) {
     const responseText = await response.text();
 
     if (response.ok) {
-      await supabaseAdmin
+      await (supabaseAdmin as any)
         .from('articles')
         .update({
           doi_deposit_status: 'submitted',
           doi_deposited_at: new Date().toISOString(),
           doi_deposit_error: null,
-        } as any)
+        })
         .eq('id', articleId);
 
       return NextResponse.json({
@@ -136,12 +136,12 @@ export async function POST(request: Request) {
         crossrefResponse: responseText,
       });
     } else {
-      await supabaseAdmin
+      await (supabaseAdmin as any)
         .from('articles')
         .update({
           doi_deposit_status: 'failed',
           doi_deposit_error: responseText || `HTTP ${response.status}`,
-        } as any)
+        })
         .eq('id', articleId);
 
       return NextResponse.json({
