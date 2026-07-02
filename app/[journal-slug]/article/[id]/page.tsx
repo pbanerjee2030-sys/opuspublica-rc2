@@ -72,6 +72,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       pdf_url,
       doi,
       published_at,
+      status,
       journals (
         id,
         name,
@@ -92,6 +93,10 @@ export default async function ArticleDetailPage({ params }: Props) {
     .single() as { data: any };
 
   if (!dbArticle) {
+    notFound();
+  }
+
+  if (dbArticle.status !== 'published') {
     notFound();
   }
 
