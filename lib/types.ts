@@ -77,6 +77,19 @@ export interface DatabaseReviewerAssignment {
   updated_at: string;
 }
 
+export interface DatabaseEditorialBoardMember {
+  id: string;
+  journal_id: string;
+  full_name: string;
+  affiliation: string | null;
+  role: string | null;
+  photo_url: string | null;
+  orcid: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -109,6 +122,11 @@ export interface Database {
         Row: DatabaseReviewerAssignment;
         Insert: Omit<DatabaseReviewerAssignment, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<DatabaseReviewerAssignment, 'id'>>;
+      };
+      editorial_board_members: {
+        Row: DatabaseEditorialBoardMember;
+        Insert: Omit<DatabaseEditorialBoardMember, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<DatabaseEditorialBoardMember, 'id'>>;
       };
     };
   };

@@ -73,7 +73,16 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (!isAuthor) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        const { data: isReviewer } = await supabaseAdmin
+          .from('reviewer_assignments')
+          .select('id')
+          .eq('reviewer_id', user.id)
+          .eq('article_id', articleId)
+          .maybeSingle();
+
+        if (!isReviewer) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
       }
     }
 

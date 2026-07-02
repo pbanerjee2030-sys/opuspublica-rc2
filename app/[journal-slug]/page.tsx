@@ -2,7 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, BookOpen, Calendar, CheckCircle } from 'lucide-react';
+import { ArrowLeft, BookOpen, Calendar, CheckCircle, Users, Fingerprint } from 'lucide-react';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 
@@ -96,6 +96,18 @@ export default async function JournalLandingPage({ params }: Props) {
     'Policy Analysis',
     'Interdisciplinary Scholarship'
   ];
+
+  // Fetch editorial board members
+  let boardMembers: any[] = [];
+  const { data: dbBoardMembers } = await supabase
+    .from('editorial_board_members')
+    .select('*')
+    .eq('journal_id', dbJournal.id)
+    .order('sort_order', { ascending: true });
+
+  if (dbBoardMembers) {
+    boardMembers = dbBoardMembers;
+  }
 
   return (
     <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
@@ -282,6 +294,58 @@ export default async function JournalLandingPage({ params }: Props) {
                     ))}
                   </ul>
                 </div>
+
+                {boardMembers.length > 0 && (
+                  <div className="bg-white rounded-lg p-6 shadow-sm border border-black/5">
+                    <h3 className="text-[#8B1A1A] font-serif text-xl font-semibold mb-4 border-b border-[#8B1A1A]/10 pb-2 flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Editorial Board
+                    </h3>
+                    <div className="space-y-4">
+                      {boardMembers.map((member) => (
+                        <div key={member.id} className="flex items-start gap-3">
+                          {member.photo_url ? (
+                            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-zinc-200">
+                              <Image
+                                src={member.photo_url}
+                                alt={member.full_name}
+                                fill
+                                sizes="48px"
+                                className="object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-[#8B1A1A]/10 flex items-center justify-center flex-shrink-0">
+                              <span className="text-[#8B1A1A] font-serif font-bold text-sm">
+                                {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                              </span>
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-[#1A1A2E] leading-tight">{member.full_name}</p>
+                            {member.role && (
+                              <p className="text-xs text-[#8B1A1A] font-medium">{member.role}</p>
+                            )}
+                            {member.affiliation && (
+                              <p className="text-xs text-[#1A1A2E]/60 mt-0.5">{member.affiliation}</p>
+                            )}
+                            {member.orcid && (
+                              <a
+                                href={`https://orcid.org/${member.orcid}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-xs text-[#C9A84C] hover:text-[#D4AF37] mt-1"
+                              >
+                                <Fingerprint className="w-3 h-3" />
+                                {member.orcid}
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
             </div>

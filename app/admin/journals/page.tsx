@@ -14,6 +14,8 @@ import {
   Loader2,
   ExternalLink,
   Image as ImageIcon,
+  Users,
+  GripVertical,
 } from 'lucide-react';
 
 interface Journal {
@@ -48,6 +50,18 @@ export default function JournalsPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [userRole, setUserRole] = useState<string>('author');
+  const [boardMembers, setBoardMembers] = useState<any[]>([]);
+  const [selectedJournalForBoard, setSelectedJournalForBoard] = useState<string | null>(null);
+  const [showBoardModal, setShowBoardModal] = useState(false);
+  const [editingMember, setEditingMember] = useState<any>(null);
+  const [boardForm, setBoardForm] = useState({
+    full_name: '',
+    affiliation: '',
+    role: 'Member',
+    photo_url: '',
+    orcid: '',
+    sort_order: 0,
+  });
 
   useEffect(() => {
     fetchJournals();
@@ -68,6 +82,45 @@ export default function JournalsPage() {
       console.error('Error fetching journals:', e);
     }
     setLoading(false);
+  };
+
+  const fetchBoardMembers = async (journalId: string) => {
+    try {
+      const { data } = await adminFetch(`editorial_board_members&journal_id=${journalId}`);
+      setBoardMembers((data || []) as any);
+      setSelectedJournalForBoard(journalId);
+    } catch (e) {
+      console.error('Error fetching board members:', e);
+    }
+  };
+
+  const handleSaveMember = async () => {
+    try {
+      if (editingMember) {
+        await adminUpdate('editorial_board_members', editingMember.id, boardForm);
+        showToast('success', 'Board member updated');
+      } else {
+        await adminCreate('editorial_board_members', { ...boardForm, journal_id: selectedJournalForBoard });
+        showToast('success', 'Board member added');
+      }
+      setShowBoardModal(false);
+      setEditingMember(null);
+      setBoardForm({ full_name: '', affiliation: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 });
+      if (selectedJournalForBoard) fetchBoardMembers(selectedJournalForBoard);
+    } catch (e: any) {
+      showToast('error', e.message || 'Failed to save board member');
+    }
+  };
+
+  const handleDeleteMember = async (member: any) => {
+    if (!confirm(`Remove ${member.full_name} from the editorial board?`)) return;
+    try {
+      await adminDelete('editorial_board_members', member.id);
+      showToast('success', 'Board member removed');
+      if (selectedJournalForBoard) fetchBoardMembers(selectedJournalForBoard);
+    } catch (e: any) {
+      showToast('error', e.message || 'Failed to remove board member');
+    }
   };
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -227,6 +280,12 @@ export default function JournalsPage() {
                   <a href={`/${journal.slug}`} target="_blank" className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] hover:text-white flex items-center gap-1 transition-colors">
                     View <ExternalLink className="w-3 h-3" />
                   </a>
+                  <button
+                    onClick={() => fetchBoardMembers(journal.id)}
+                    className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-[#C9A84C] flex items-center gap-1 transition-colors"
+                  >
+                    <Users className="w-3 h-3" /> Board
+                  </button>
                 </div>
               </div>
             </div>
@@ -234,7 +293,64 @@ export default function JournalsPage() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Editorial Board Members Section */}
+      {selectedJournalForBoard && (
+        <div className="mt-8 bg-[#111118] border border-zinc-800 rounded-2xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#C9A84C]" />
+              <h3 className="text-lg font-serif font-bold text-white">
+                Editorial Board — {journals.find(j => j.id === selectedJournalForBoard)?.name}
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setSelectedJournalForBoard(null); setBoardMembers([]); }}
+                className="px-3 py-1.5 text-xs font-bold text-zinc-400 hover:text-white transition-colors"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { setEditingMember(null); setBoardForm({ full_name: '', affiliation: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 }); setShowBoardModal(true); }}
+                className="px-3 py-1.5 bg-[#C9A84C] text-[#111118] text-xs font-bold rounded-lg hover:bg-[#D4AF37] transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Member
+              </button>
+            </div>
+          </div>
+
+          {boardMembers.length > 0 ? (
+            <div className="space-y-2">
+              {boardMembers.map((member) => (
+                <div key={member.id} className="flex items-center gap-3 p-3 bg-zinc-900 rounded-lg border border-zinc-800/60">
+                  <GripVertical className="w-4 h-4 text-zinc-600" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white">{member.full_name}</p>
+                    <p className="text-xs text-zinc-500">{member.role} {member.affiliation ? `• ${member.affiliation}` : ''}</p>
+                    {member.orcid && <p className="text-xs text-[#C9A84C] font-mono">ORCID: {member.orcid}</p>}
+                  </div>
+                  <button
+                    onClick={() => { setEditingMember(member); setBoardForm({ full_name: member.full_name, affiliation: member.affiliation || '', role: member.role || 'Member', photo_url: member.photo_url || '', orcid: member.orcid || '', sort_order: member.sort_order || 0 }); setShowBoardModal(true); }}
+                    className="p-1.5 text-zinc-500 hover:text-[#C9A84C] transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteMember(member)}
+                    className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 text-center py-6">No board members yet. Click "Add Member" to begin.</p>
+          )}
+        </div>
+      )}
+
+      {/* Board Member Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/70" onClick={() => setShowModal(false)} />
@@ -393,6 +509,93 @@ export default function JournalsPage() {
               >
                 {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                 {editingJournal ? 'Save Changes' : 'Create Journal'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Board Member Modal */}
+      {showBoardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowBoardModal(false)} />
+          <div className="relative bg-[#111118] border border-zinc-800 rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+              <h3 className="text-lg font-serif font-bold text-white">{editingMember ? 'Edit Board Member' : 'Add Board Member'}</h3>
+              <button onClick={() => setShowBoardModal(false)} className="text-zinc-400 hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Full Name *</label>
+                <input
+                  type="text"
+                  value={boardForm.full_name}
+                  onChange={(e) => setBoardForm({ ...boardForm, full_name: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                  placeholder="e.g. Dr. Jane Smith"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Role</label>
+                <select
+                  value={boardForm.role}
+                  onChange={(e) => setBoardForm({ ...boardForm, role: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-[#C9A84C]"
+                >
+                  <option value="Editor-in-Chief">Editor-in-Chief</option>
+                  <option value="Associate Editor">Associate Editor</option>
+                  <option value="Editorial Board Member">Editorial Board Member</option>
+                  <option value="Member">Member</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Affiliation</label>
+                <input
+                  type="text"
+                  value={boardForm.affiliation}
+                  onChange={(e) => setBoardForm({ ...boardForm, affiliation: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                  placeholder="e.g. University of Oxford"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Photo URL</label>
+                <input
+                  type="text"
+                  value={boardForm.photo_url}
+                  onChange={(e) => setBoardForm({ ...boardForm, photo_url: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] font-mono"
+                  placeholder="/photos/jane-smith.jpg"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">ORCID iD</label>
+                <input
+                  type="text"
+                  value={boardForm.orcid}
+                  onChange={(e) => setBoardForm({ ...boardForm, orcid: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] font-mono"
+                  placeholder="0000-0002-1234-5678"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Sort Order</label>
+                <input
+                  type="number"
+                  value={boardForm.sort_order}
+                  onChange={(e) => setBoardForm({ ...boardForm, sort_order: parseInt(e.target.value) || 0 })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                />
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-zinc-800 flex justify-end gap-3">
+              <button onClick={() => setShowBoardModal(false)} className="px-4 py-2 text-xs font-bold text-zinc-400 hover:text-white transition-colors">Cancel</button>
+              <button
+                onClick={handleSaveMember}
+                disabled={!boardForm.full_name}
+                className="px-4 py-2 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-xs font-bold rounded-lg transition-colors disabled:opacity-50"
+              >
+                {editingMember ? 'Save Changes' : 'Add Member'}
               </button>
             </div>
           </div>

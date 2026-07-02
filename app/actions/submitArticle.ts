@@ -14,6 +14,75 @@ export interface SubmitArticlePayload {
   } | null;
 }
 
+async function sendSubmissionConfirmation(
+  recipientEmail: string,
+  recipientName: string,
+  articleTitle: string,
+  journalName: string
+) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (!resendApiKey) {
+    console.log(`[Email] submission_received: To=${recipientEmail}, Article=${articleTitle} (no API key, logged only)`);
+    return;
+  }
+
+  const baseStyles = `
+    <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+      <div style="background: #1A1A2E; padding: 30px; text-align: center;">
+        <h1 style="color: #C9A84C; margin: 0; font-size: 24px; font-family: Georgia, serif;">Opus Publica</h1>
+        <p style="color: #ffffff80; margin: 5px 0 0; font-size: 12px;">Global Public Policy Research & Publishing</p>
+      </div>
+      <div style="padding: 30px; color: #333;">
+  `;
+  const footerStyles = `
+      </div>
+      <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 11px; color: #666;">
+        <p>Advocacy Unified Network | Fluwelen Burgwal 58, 2511 CJ Den Haag, Netherlands</p>
+        <p>This is an automated notification from Opus Publica.</p>
+      </div>
+    </div>
+  `;
+
+  const subject = `Manuscript Submission Received - ${articleTitle}`;
+  const html = `${baseStyles}
+    <h2 style="color: #1A1A2E; font-size: 18px;">Submission Received</h2>
+    <p>Dear ${recipientName || 'Author'},</p>
+    <p>Thank you for submitting your manuscript to Opus Publica. We have received your submission and it is now under review.</p>
+    <div style="background: #f9f9f9; padding: 15px; border-left: 4px solid #C9A84C; margin: 20px 0;">
+      <p style="margin: 0;"><strong>Article Title:</strong> ${articleTitle}</p>
+      <p style="margin: 5px 0 0;"><strong>Journal:</strong> ${journalName}</p>
+      <p style="margin: 5px 0 0;"><strong>Status:</strong> Pending Review</p>
+    </div>
+    <p>Our editorial team will review your submission and get back to you within 2-4 weeks.</p>
+    <p>Best regards,<br/>The Opus Publica Editorial Team</p>
+  ${footerStyles}`;
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Opus Publica <notifications@opuspublica.com>',
+        to: [recipientEmail],
+        subject,
+        html,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('[Email] Resend error:', err);
+    } else {
+      console.log(`[Email] submission_received sent to ${recipientEmail}`);
+    }
+  } catch (err) {
+    console.error('[Email] Failed to send submission confirmation:', err);
+  }
+}
+
 export async function submitArticle(payload: SubmitArticlePayload, accessToken: string) {
   try {
     if (!accessToken) {
@@ -108,6 +177,28 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
           co_author_name: co.name,
           co_author_orcid: co.orcid || null
         } as any);
+    }
+
+    // Send submission confirmation email to the author
+    const { data: authorProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', userId)
+      .single() as { data: any };
+
+    const { data: journal } = await supabaseAdmin
+      .from('journals')
+      .select('name')
+      .eq('id', payload.journalId)
+      .single() as { data: any };
+
+    if (authorProfile?.email) {
+      await sendSubmissionConfirmation(
+        authorProfile.email,
+        authorProfile.full_name || 'Author',
+        payload.title,
+        journal?.name || 'Unknown Journal'
+      );
     }
 
     return { success: true, articleId: (newArticle as any).id };

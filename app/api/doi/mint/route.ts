@@ -118,6 +118,15 @@ export async function POST(request: Request) {
     const responseText = await response.text();
 
     if (response.ok) {
+      await supabaseAdmin
+        .from('articles')
+        .update({
+          doi_deposit_status: 'submitted',
+          doi_deposited_at: new Date().toISOString(),
+          doi_deposit_error: null,
+        } as any)
+        .eq('id', articleId);
+
       return NextResponse.json({
         status: 'submitted',
         statusCode: response.status,
@@ -127,6 +136,14 @@ export async function POST(request: Request) {
         crossrefResponse: responseText,
       });
     } else {
+      await supabaseAdmin
+        .from('articles')
+        .update({
+          doi_deposit_status: 'failed',
+          doi_deposit_error: responseText || `HTTP ${response.status}`,
+        } as any)
+        .eq('id', articleId);
+
       return NextResponse.json({
         status: 'failed',
         statusCode: response.status,

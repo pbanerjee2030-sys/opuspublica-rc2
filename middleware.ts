@@ -6,11 +6,21 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 const adminRoutes = ['/admin', '/api/admin'];
 const protectedApiRoutes = ['/api/notifications', '/api/doi/mint'];
+const reviewerRoutes = ['/reviewer'];
 
 function isProtectedPath(pathname: string): boolean {
   if (adminRoutes.some(r => pathname === r || pathname.startsWith(r + '/'))) return true;
   if (protectedApiRoutes.some(r => pathname.startsWith(r))) return true;
+  if (reviewerRoutes.some(r => pathname === r || pathname.startsWith(r + '/'))) return true;
   return false;
+}
+
+function isAdminRoute(pathname: string): boolean {
+  return adminRoutes.some(r => pathname === r || pathname.startsWith(r + '/'));
+}
+
+function isReviewerRoute(pathname: string): boolean {
+  return reviewerRoutes.some(r => pathname === r || pathname.startsWith(r + '/'));
 }
 
 export async function middleware(request: NextRequest) {
@@ -62,11 +72,25 @@ export async function middleware(request: NextRequest) {
 
   const role = (profile as any)?.role;
 
-  if (!role || (role !== 'admin' && role !== 'editor')) {
-    if (pathname.startsWith('/api/')) {
+  if (isAdminRoute(pathname)) {
+    if (!role || (role !== 'admin' && role !== 'editor')) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  if (isReviewerRoute(pathname)) {
+    if (!role || !['admin', 'editor', 'reviewer'].includes(role)) {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
+
+  if (protectedApiRoutes.some(r => pathname.startsWith(r))) {
+    if (!role || (role !== 'admin' && role !== 'editor')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
@@ -78,5 +102,6 @@ export const config = {
     '/api/admin/:path*',
     '/api/notifications/:path*',
     '/api/doi/mint/:path*',
+    '/reviewer/:path*',
   ],
 };

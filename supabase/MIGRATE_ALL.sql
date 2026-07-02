@@ -77,6 +77,41 @@ CREATE POLICY "Allow editors and admins ALL on article_versions" ON public.artic
         )
     );
 
+-- 6c. Create editorial_board_members table
+CREATE TABLE IF NOT EXISTS public.editorial_board_members (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    journal_id uuid REFERENCES public.journals(id) ON DELETE CASCADE NOT NULL,
+    full_name text NOT NULL,
+    affiliation text,
+    role text DEFAULT 'Member',
+    photo_url text,
+    orcid text,
+    sort_order integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6d. Enable RLS on editorial_board_members
+ALTER TABLE public.editorial_board_members ENABLE ROW LEVEL SECURITY;
+
+-- 6e. Drop existing policies before recreating
+DROP POLICY IF EXISTS "Allow public SELECT on editorial_board_members" ON public.editorial_board_members;
+DROP POLICY IF EXISTS "Allow editors and admins ALL on editorial_board_members" ON public.editorial_board_members;
+
+-- 6f. RLS policies for editorial_board_members
+CREATE POLICY "Allow public SELECT on editorial_board_members" ON public.editorial_board_members
+    FOR SELECT USING (true);
+
+CREATE POLICY "Allow editors and admins ALL on editorial_board_members" ON public.editorial_board_members
+    FOR ALL TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role IN ('admin', 'editor')
+        )
+    );
+
 -- 7. Fix article_authors for co-author names and ORCID
 ALTER TABLE public.article_authors DROP CONSTRAINT IF EXISTS article_authors_pkey;
 ALTER TABLE public.article_authors ALTER COLUMN profile_id DROP NOT NULL;
@@ -137,3 +172,37 @@ ALTER TABLE public.journals ADD COLUMN IF NOT EXISTS license_type text DEFAULT '
 ALTER TABLE public.journals ADD COLUMN IF NOT EXISTS license_url text;
 ALTER TABLE public.journals ADD COLUMN IF NOT EXISTS frequency text;
 ALTER TABLE public.journals ADD COLUMN IF NOT EXISTS subject_areas text[];
+
+-- 11. Create audit_log table
+CREATE TABLE IF NOT EXISTS public.audit_log (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    actor_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    action text NOT NULL,
+    target_type text NOT NULL,
+    target_id uuid,
+    metadata jsonb,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 11b. Enable RLS on audit_log
+ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
+
+-- 11c. Drop existing policies before recreating
+DROP POLICY IF EXISTS "Allow admin/editor SELECT on audit_log" ON public.audit_log;
+
+-- 11d. RLS policies: admin/editor can SELECT, service role only for INSERT (no client insert policy)
+CREATE POLICY "Allow admin/editor SELECT on audit_log" ON public.audit_log
+    FOR SELECT TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role IN ('admin', 'editor')
+        )
+    );
+
+-- 11e. Index for efficient querying
+CREATE INDEX IF NOT EXISTS idx_audit_log_actor ON public.audit_log (actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON public.audit_log (action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_target ON public.audit_log (target_type, target_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created ON public.audit_log (created_at DESC);

@@ -341,3 +341,50 @@ CROSSREF_PASSWORD=AUN4...2030
 - [ ] article_versions table needs SQL migration
 - [ ] No rate limiting on public API routes
 - [ ] No CSRF protection beyond Bearer tokens
+
+---
+
+## 8. First Admin Bootstrap — Critical Deploy Step
+
+### The Problem
+
+Since `/api/admin/setup` requires an existing admin to call it, and there is no `/setup` page in the UI, **no one can become the first admin through the application alone**. This creates a chicken-and-egg problem:
+
+- Admin dashboard requires admin role
+- Admin API requires admin role
+- No path exists to promote the first user to admin
+
+### The Solution (One-Time Manual Step)
+
+After deploying and registering the first user, run this SQL in Supabase SQL Editor:
+
+```sql
+-- File: supabase/FIX_first_admin.sql
+-- Replace 'your-email@institution.edu' with the actual email
+
+UPDATE public.profiles 
+SET role = 'admin' 
+WHERE id = (
+  SELECT id FROM auth.users 
+  WHERE email = 'your-email@institution.edu'
+);
+```
+
+### Deploy Checklist
+
+1. ✅ Register first user at `/register`
+2. ✅ Run `supabase/MIGRATE_ALL.sql` in Supabase SQL Editor
+3. ✅ Run `supabase/FIX_first_admin.sql` with the user's email
+4. ✅ Add `RESEND_API_KEY` to `.env.local`
+5. ✅ Set Supabase storage bucket to private
+6. ✅ Deploy to Vercel
+
+### Future Improvement
+
+Consider adding a secure bootstrap mechanism:
+- Environment variable `FIRST_ADMIN_EMAIL` that auto-promotes on first login
+- Or a time-limited bootstrap token during initial deploy
+
+---
+
+*Last updated: July 2, 2026*
