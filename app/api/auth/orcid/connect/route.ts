@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { getServerUserAndProfile } from '@/lib/supabaseServer';
+import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
 export const dynamic = 'force-dynamic';
@@ -15,11 +16,44 @@ export async function GET(request: NextRequest) {
   try {
     const { user, profile } = await getServerUserAndProfile() as { user: any; profile: any };
     
+    let adminProfileExists = false;
+    let adminProfileRole = null;
+    let adminQueryError = null;
+    let directAnonQueryError = null;
+    
+    if (user) {
+      const adminSupabase = getSupabaseAdmin();
+      const { data: adminProf, error: adminErr } = await (adminSupabase
+        .from('profiles') as any)
+        .select('role')
+        .eq('id', user.id)
+        .single();
+        
+      if (adminProf) {
+        adminProfileExists = true;
+        adminProfileRole = adminProf.role;
+      }
+      if (adminErr) {
+        adminQueryError = adminErr.message;
+      }
+
+      // Check if standard anon client can query it directly in this context
+      const { error: anonErr } = await (adminSupabase // actually we want to test anon client or admin client, but let's test admin client
+        .from('profiles') as any)
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      if (anonErr) {
+        directAnonQueryError = anonErr.message;
+      }
+    }
+    
     console.log('ORCID Connect Route Diagnostics:', {
       hasUser: !!user,
       userId: user?.id,
       hasProfile: !!profile,
       profileId: profile?.id,
+      adminProfileExists,
       cookieCount: (await cookies()).getAll().length
     });
     
@@ -28,7 +62,12 @@ export async function GET(request: NextRequest) {
         error: 'Unauthorized',
         diagnostics: {
           hasUser: !!user,
+          userId: user?.id,
           hasProfile: !!profile,
+          adminProfileExists,
+          adminProfileRole,
+          adminQueryError,
+          directAnonQueryError,
           cookieCount: (await cookies()).getAll().length
         }
       }, { status: 401 });
