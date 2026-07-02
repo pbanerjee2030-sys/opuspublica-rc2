@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
-import { getServerUserAndProfile } from '@/lib/supabaseServer';
+import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
@@ -13,92 +12,41 @@ function signState(state: string, secret: string): string {
   return `${state}.${hmac.digest('hex')}`;
 }
 
+async function getServerUserAndProfileAdminBypass() {
+  try {
+    const supabaseServer = await getSupabaseServerClient();
+    const { data: { user }, error: userError } = await supabaseServer.auth.getUser();
+
+    if (userError || !user) {
+      return { user: null, profile: null };
+    }
+
+    // Bypass the RLS infinite recursion issue in database policies for the profiles table
+    // by using the admin client which bypasses RLS checks on the server-side.
+    const adminSupabase = getSupabaseAdmin();
+    const { data: profile, error: profError } = await (adminSupabase
+      .from('profiles') as any)
+      .select('*, journals(*)')
+      .eq('id', user.id)
+      .single();
+
+    if (profError || !profile) {
+      return { user, profile: null };
+    }
+
+    return { user, profile };
+  } catch (err) {
+    console.error('Server user lookup admin bypass failed:', err);
+    return { user: null, profile: null };
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
-    const { user, profile } = await getServerUserAndProfile() as { user: any; profile: any };
-    
-    let adminProfileExists = false;
-    let adminProfileRole = null;
-    let adminQueryError = null;
-    let directAnonQueryError = null;
-    
-    if (user) {
-      const adminSupabase = getSupabaseAdmin();
-      const { data: adminProf, error: adminErr } = await (adminSupabase
-        .from('profiles') as any)
-        .select('role')
-        .eq('id', user.id)
-        .single();
-        
-      if (adminProf) {
-        adminProfileExists = true;
-        adminProfileRole = adminProf.role;
-      }
-      if (adminErr) {
-        adminQueryError = adminErr.message;
-      }
-
-      // Check if standard anon client can query it directly in this context
-      try {
-        const cookieStore = await cookies();
-        const allCookies = cookieStore.getAll();
-        const authCookie = allCookies.find(c => c.name.includes('-auth-token'));
-        if (authCookie?.value) {
-          const decodedVal = decodeURIComponent(authCookie.value);
-          const tokenData = JSON.parse(decodedVal);
-          const accessToken = tokenData.access_token;
-          if (accessToken) {
-            const client = createClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-            );
-            await client.auth.setSession({
-              access_token: accessToken,
-              refresh_token: tokenData.refresh_token || ''
-            });
-            const { error: anonQueryErr } = await (client.from('profiles') as any)
-              .select('*, journals(*)')
-              .eq('id', user.id)
-              .single();
-            if (anonQueryErr) {
-              directAnonQueryError = `${anonQueryErr.message} (Code: ${anonQueryErr.code})`;
-            } else {
-              directAnonQueryError = 'Succeeded manually';
-            }
-          } else {
-            directAnonQueryError = 'No access token in cookie';
-          }
-        } else {
-          directAnonQueryError = 'No auth cookie found';
-        }
-      } catch (e: any) {
-        directAnonQueryError = `Manual check exception: ${e.message}`;
-      }
-    }
-    
-    console.log('ORCID Connect Route Diagnostics:', {
-      hasUser: !!user,
-      userId: user?.id,
-      hasProfile: !!profile,
-      profileId: profile?.id,
-      adminProfileExists,
-      cookieCount: (await cookies()).getAll().length
-    });
+    const { user, profile } = await getServerUserAndProfileAdminBypass() as { user: any; profile: any };
     
     if (!user || !profile) {
-      return NextResponse.json({ 
-        error: 'Unauthorized',
-        diagnostics: {
-          hasUser: !!user,
-          userId: user?.id,
-          hasProfile: !!profile,
-          adminProfileExists,
-          adminProfileRole,
-          adminQueryError,
-          directAnonQueryError,
-          cookieCount: (await cookies()).getAll().length
-        }
-      }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const clientId = process.env.ORCID_CLIENT_ID;
