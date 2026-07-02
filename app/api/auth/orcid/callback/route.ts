@@ -4,6 +4,8 @@ import { getServerUserAndProfile } from '@/lib/supabaseServer';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
 function verifyState(signedState: string, secret: string): boolean {
   const parts = signedState.split('.');
   if (parts.length !== 2) return false;
@@ -144,6 +146,21 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id);
 
     if (updateError) {
+      // 23505 = unique_violation. This is the DB-level backstop for the
+      // uniqueness check above (see migration
+      // 20260702000002_add_orcid_unique_constraint.sql) — it only fires
+      // if two callbacks raced past the application-level check together,
+      // so it's expected to be rare, not a bug if it happens.
+      if ((updateError as any).code === '23505') {
+        console.warn('ORCID uniqueness race caught at DB level for', orcidId);
+        const profileUrl = new URL(`/profile/${user.id}`, request.url);
+        profileUrl.searchParams.set(
+          'orcid_error',
+          'This ORCID iD was just linked to another profile. Please try again.'
+        );
+        return cleanResponse(profileUrl);
+      }
+
       console.error('Failed to update profile ORCID iD:', updateError);
       const profileUrl = new URL(`/profile/${user.id}`, request.url);
       profileUrl.searchParams.set('orcid_error', 'Failed to save ORCID iD to your profile.');

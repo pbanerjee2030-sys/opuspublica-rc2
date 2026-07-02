@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { getServerUserAndProfile } from '@/lib/supabaseServer';
 import crypto from 'crypto';
+
+export const dynamic = 'force-dynamic';
 
 function signState(state: string, secret: string): string {
   const hmac = crypto.createHmac('sha256', secret);
@@ -10,10 +13,25 @@ function signState(state: string, secret: string): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, profile } = await getServerUserAndProfile();
+    const { user, profile } = await getServerUserAndProfile() as { user: any; profile: any };
+    
+    console.log('ORCID Connect Route Diagnostics:', {
+      hasUser: !!user,
+      userId: user?.id,
+      hasProfile: !!profile,
+      profileId: profile?.id,
+      cookieCount: (await cookies()).getAll().length
+    });
     
     if (!user || !profile) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ 
+        error: 'Unauthorized',
+        diagnostics: {
+          hasUser: !!user,
+          hasProfile: !!profile,
+          cookieCount: (await cookies()).getAll().length
+        }
+      }, { status: 401 });
     }
 
     const clientId = process.env.ORCID_CLIENT_ID;
