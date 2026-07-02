@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import { getServerUserAndProfile } from '@/lib/supabaseServer';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import crypto from 'crypto';
@@ -38,13 +39,40 @@ export async function GET(request: NextRequest) {
       }
 
       // Check if standard anon client can query it directly in this context
-      const { error: anonErr } = await (adminSupabase // actually we want to test anon client or admin client, but let's test admin client
-        .from('profiles') as any)
-        .select('id')
-        .eq('id', user.id)
-        .single();
-      if (anonErr) {
-        directAnonQueryError = anonErr.message;
+      try {
+        const cookieStore = await cookies();
+        const allCookies = cookieStore.getAll();
+        const authCookie = allCookies.find(c => c.name.includes('-auth-token'));
+        if (authCookie?.value) {
+          const decodedVal = decodeURIComponent(authCookie.value);
+          const tokenData = JSON.parse(decodedVal);
+          const accessToken = tokenData.access_token;
+          if (accessToken) {
+            const client = createClient(
+              process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+              process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+            );
+            await client.auth.setSession({
+              access_token: accessToken,
+              refresh_token: tokenData.refresh_token || ''
+            });
+            const { error: anonQueryErr } = await (client.from('profiles') as any)
+              .select('*, journals(*)')
+              .eq('id', user.id)
+              .single();
+            if (anonQueryErr) {
+              directAnonQueryError = `${anonQueryErr.message} (Code: ${anonQueryErr.code})`;
+            } else {
+              directAnonQueryError = 'Succeeded manually';
+            }
+          } else {
+            directAnonQueryError = 'No access token in cookie';
+          }
+        } else {
+          directAnonQueryError = 'No auth cookie found';
+        }
+      } catch (e: any) {
+        directAnonQueryError = `Manual check exception: ${e.message}`;
       }
     }
     
