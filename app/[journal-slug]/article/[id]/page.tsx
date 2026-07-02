@@ -262,6 +262,7 @@ export default async function ArticleDetailPage({ params }: Props) {
                     journalTitle={article.journalName}
                     publishDate={article.publishedAt}
                     doi={article.doi}
+                    abstract={article.abstract}
                   />
 
                   <div className="bg-[#1A1A2E] text-white p-5 rounded-lg border border-[#C9A84C]/10 shadow-md">

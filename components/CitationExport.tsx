@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Download, Copy, Check } from 'lucide-react';
+import { toBibTeX, toRIS, toEndNote, type CitationData } from '@/lib/citation-export';
 
 interface CitationExportProps {
   title: string;
@@ -9,15 +10,23 @@ interface CitationExportProps {
   journalTitle: string;
   publishDate: string;
   doi?: string | null;
+  abstract?: string | null;
 }
 
-export default function CitationExport({ title, authors, journalTitle, publishDate, doi }: CitationExportProps) {
+export default function CitationExport({ title, authors, journalTitle, publishDate, doi, abstract }: CitationExportProps) {
   const [copiedFormat, setCopiedFormat] = useState<string | null>(null);
 
-  const year = new Date(publishDate).getFullYear();
-  const month = new Date(publishDate).toLocaleDateString('en-US', { month: 'long' });
+  const citationData: CitationData = {
+    title,
+    authors,
+    journalName: journalTitle,
+    publishDate,
+    doi,
+    abstract,
+  };
 
   const formatAPA = () => {
+    const year = new Date(publishDate).getFullYear();
     const authorStr = authors.map(a => {
       const parts = a.split(' ');
       const last = parts.pop() || '';
@@ -25,30 +34,6 @@ export default function CitationExport({ title, authors, journalTitle, publishDa
       return `${last}, ${initials}`;
     }).join(', ');
     return `${authorStr} (${year}). ${title}. *${journalTitle}*. ${doi ? `https://doi.org/${doi}` : ''}`.trim();
-  };
-
-  const formatBibTeX = () => {
-    const key = authors[0]?.split(' ').pop()?.toLowerCase() || 'unknown';
-    const authorStr = authors.join(' and ');
-    return `@article{${key}${year},
-  title = {${title}},
-  author = {${authorStr}},
-  journal = {${journalTitle}},
-  year = {${year}},
-  month = {${month}}${doi ? `,\n  doi = {${doi}}` : ''}
-}`;
-  };
-
-  const formatRIS = () => {
-    let ris = `TY  - JOUR\n`;
-    ris += `TI  - ${title}\n`;
-    authors.forEach(a => ris += `AU  - ${a}\n`);
-    ris += `JO  - ${journalTitle}\n`;
-    ris += `PY  - ${year}\n`;
-    ris += `DA  - ${publishDate}\n`;
-    if (doi) ris += `DO  - ${doi}\n`;
-    ris += `ER  - \n`;
-    return ris;
   };
 
   const handleCopy = async (format: string, content: string) => {
@@ -63,14 +48,15 @@ export default function CitationExport({ title, authors, journalTitle, publishDa
 
   const formats = [
     { name: 'APA', content: formatAPA() },
-    { name: 'BibTeX', content: formatBibTeX() },
-    { name: 'RIS', content: formatRIS() },
+    { name: 'BibTeX', content: toBibTeX(citationData) },
+    { name: 'RIS', content: toRIS(citationData) },
+    { name: 'EndNote', content: toEndNote(citationData) },
   ];
 
   return (
     <div className="bg-white rounded-lg p-5 shadow-sm border border-black/5">
       <h3 className="text-[#1A1A2E] font-serif text-lg font-semibold mb-3">
-        Export Citation
+        Cite this article
       </h3>
       <div className="space-y-2">
         {formats.map((fmt) => (
