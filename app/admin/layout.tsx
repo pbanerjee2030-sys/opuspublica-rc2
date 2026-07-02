@@ -22,6 +22,8 @@ import {
   Lock,
   History,
   ExternalLink,
+  ClipboardCheck,
+  BarChart3,
 } from 'lucide-react';
 
 const navItems = [
@@ -30,6 +32,8 @@ const navItems = [
   { href: '/admin/journals', label: 'Journals', icon: BookOpen },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/reviewers', label: 'Reviews', icon: Shield },
+  { href: '/admin/reviewer-workload', label: 'Reviewer Workload', icon: BarChart3 },
+  { href: '/admin/compliance', label: 'Compliance', icon: ClipboardCheck },
   { href: '/admin/doi-monitor', label: 'DOI Monitor', icon: ExternalLink },
   { href: '/admin/audit-log', label: 'Audit Log', icon: History },
   { href: '/admin/settings', label: 'Settings', icon: Settings },

@@ -45,3 +45,6 @@ next-env.d.ts
 
 # zip exports
 *.zip
+
+# zip build temp
+opus-publica-audit-temp/

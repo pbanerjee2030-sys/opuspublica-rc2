@@ -128,6 +128,119 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data });
     }
 
+    // compliance: admin/editor — DOAJ readiness per journal
+    if (entity === 'compliance') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      const { data: journals, error: jErr } = await supabaseAdmin
+        .from('journals')
+        .select('id, name, slug, issn, aims_and_scope, peer_review_policy, license_type')
+        .order('name');
+      if (jErr) throw jErr;
+
+      const { data: boardCounts, error: bErr } = await supabaseAdmin
+        .from('editorial_board_members')
+        .select('journal_id')
+        .then(async (res) => {
+          if (res.error) return { data: [], error: res.error };
+          const counts: Record<string, number> = {};
+          (res.data || []).forEach((m: any) => {
+            counts[m.journal_id] = (counts[m.journal_id] || 0) + 1;
+          });
+          return { data: counts, error: null };
+        });
+
+      const { data: pubCounts } = await supabaseAdmin
+        .from('articles')
+        .select('journal_id')
+        .eq('status', 'published')
+        .then(async (res) => {
+          if (res.error) return { data: {} as Record<string, number> };
+          const counts: Record<string, number> = {};
+          (res.data || []).forEach((a: any) => {
+            counts[a.journal_id] = (counts[a.journal_id] || 0) + 1;
+          });
+          return { data: counts };
+        });
+
+      const data = (journals || []).map((j: any) => {
+        const hasIssn = !!(j.issn && j.issn.trim());
+        const hasBoard = ((boardCounts as any) || {})[j.id] > 0;
+        const hasAimsScope = !!(j.aims_and_scope && j.aims_and_scope.trim());
+        const hasPeerReview = !!(j.peer_review_policy && j.peer_review_policy.trim());
+        const hasLicense = !!(j.license_type && j.license_type.trim());
+        const publishedCount = ((pubCounts as any) || {})[j.id] || 0;
+        const doajReady = hasIssn && hasBoard && hasAimsScope && hasPeerReview && hasLicense && publishedCount >= 10;
+
+        return {
+          journal_id: j.id,
+          name: j.name,
+          slug: j.slug,
+          has_issn: hasIssn,
+          has_editorial_board: hasBoard,
+          has_aims_scope: hasAimsScope,
+          has_peer_review_policy: hasPeerReview,
+          has_license: hasLicense,
+          published_article_count: publishedCount,
+          doaj_ready: doajReady,
+        };
+      });
+
+      return NextResponse.json({ data });
+    }
+
+    // reviewer_workload: admin/editor — assignment stats per reviewer
+    if (entity === 'reviewer_workload') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      const { data: assignments, error: aErr } = await supabaseAdmin
+        .from('reviewer_assignments')
+        .select('reviewer_id, status, created_at, updated_at');
+      if (aErr) throw aErr;
+
+      const { data: profiles } = await supabaseAdmin
+        .from('profiles')
+        .select('id, full_name')
+        .in('role', ['editor', 'reviewer']);
+
+      const profileMap: Record<string, string> = {};
+      (profiles || []).forEach((p: any) => { profileMap[p.id] = p.full_name; });
+
+      const grouped: Record<string, { total: number; pending: number; completed: number; declined: number; turnaroundDays: number[] }> = {};
+
+      (assignments || []).forEach((a: any) => {
+        if (!grouped[a.reviewer_id]) {
+          grouped[a.reviewer_id] = { total: 0, pending: 0, completed: 0, declined: 0, turnaroundDays: [] };
+        }
+        const g = grouped[a.reviewer_id];
+        g.total++;
+        if (a.status === 'pending') g.pending++;
+        else if (a.status === 'completed') {
+          g.completed++;
+          if (a.created_at && a.updated_at) {
+            const days = (new Date(a.updated_at).getTime() - new Date(a.created_at).getTime()) / (1000 * 60 * 60 * 24);
+            g.turnaroundDays.push(days);
+          }
+        } else if (a.status === 'declined') g.declined++;
+      });
+
+      const data = Object.entries(grouped).map(([reviewerId, stats]) => ({
+        reviewer_id: reviewerId,
+        reviewer_name: profileMap[reviewerId] || 'Unknown',
+        total: stats.total,
+        pending: stats.pending,
+        completed: stats.completed,
+        declined: stats.declined,
+        avg_turnaround_days: stats.turnaroundDays.length > 0
+          ? Math.round((stats.turnaroundDays.reduce((a, b) => a + b, 0) / stats.turnaroundDays.length) * 10) / 10
+          : null,
+      })).sort((a, b) => b.pending - a.pending);
+
+      return NextResponse.json({ data });
+    }
+
     // audit_log: admin only (includes role-change history)
     if (entity === 'audit_log') {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin']);
