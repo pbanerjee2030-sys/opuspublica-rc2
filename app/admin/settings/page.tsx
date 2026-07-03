@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { adminFetch } from '@/lib/admin-api';
 import {
   Settings,
   Mail,
@@ -31,6 +32,26 @@ const sections: SettingSection[] = [
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('general');
+  const [doiPrefix, setDoiPrefix] = useState('10.57939');
+
+  useEffect(() => {
+    fetchDoiPrefix();
+  }, []);
+
+  const fetchDoiPrefix = async () => {
+    try {
+      const { data } = await adminFetch('articles');
+      if (data && Array.isArray(data)) {
+        const articleWithDoi = data.find((a: any) => a.doi && a.doi.includes('/'));
+        if (articleWithDoi) {
+          const prefix = articleWithDoi.doi.split('/')[0];
+          setDoiPrefix(prefix);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching DOI prefix:', e);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -133,7 +154,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">DOI Prefix</label>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400 font-mono">10.57939</div>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400 font-mono">{doiPrefix}</div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Username</label>

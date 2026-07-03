@@ -68,6 +68,7 @@ export default async function JournalLandingPage({ params }: Props) {
       pdf_url,
       published_at,
       article_authors (
+        co_author_name,
         profiles (
           id,
           full_name,
@@ -86,7 +87,7 @@ export default async function JournalLandingPage({ params }: Props) {
       abstract: art.abstract || 'No abstract available.',
       pdfUrl: art.pdf_url,
       publishedAt: art.published_at,
-      authors: art.article_authors?.map((aa: any) => aa.profiles).filter(Boolean) || [],
+      authors: art.article_authors?.map((aa: any) => aa.profiles ? aa.profiles : (aa.co_author_name ? { id: null, full_name: aa.co_author_name } : null)).filter(Boolean) || [],
     }));
   }
 
@@ -208,12 +209,16 @@ export default async function JournalLandingPage({ params }: Props) {
                               <span className="font-medium text-[#1A1A2E]/80">Authors:</span>
                               {article.authors.map((author: any, idx: number) => (
                                 <span key={author.id || idx}>
-                                  <Link 
-                                    href={`/profile/${author.id}`}
-                                    className="underline hover:text-[#8B1A1A] transition-colors"
-                                  >
-                                    {author.full_name}
-                                  </Link>
+                                  {author.id ? (
+                                    <Link 
+                                      href={`/profile/${author.id}`}
+                                      className="underline hover:text-[#8B1A1A] transition-colors"
+                                    >
+                                      {author.full_name}
+                                    </Link>
+                                  ) : (
+                                    <span>{author.full_name}</span>
+                                  )}
                                   {idx < article.authors.length - 1 && ', '}
                                 </span>
                               ))}

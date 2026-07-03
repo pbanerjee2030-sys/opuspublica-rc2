@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
       const [articlesRes, journalsRes, usersRes] = await Promise.all([
-        supabaseAdmin.from('articles').select('id, title, status, doi, published_at, created_at, journals(name, slug), article_authors(profiles(full_name))'),
+        supabaseAdmin.from('articles').select('id, title, status, doi, published_at, created_at, journals(name, slug), article_authors(co_author_name, profiles(full_name))'),
         supabaseAdmin.from('journals').select('id, name'),
         supabaseAdmin.from('profiles').select('id, role'),
       ]);
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
           id, title, abstract, status, doi, pdf_url, published_at, created_at, rejection_reason,
           doi_deposit_status, doi_deposited_at, doi_deposit_error,
           journals ( name, slug ),
-          article_authors ( profiles ( id, full_name, email ) )
+          article_authors ( co_author_name, profiles ( id, full_name, email ) )
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;

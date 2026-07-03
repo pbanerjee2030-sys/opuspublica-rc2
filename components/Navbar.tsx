@@ -117,6 +117,11 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
             <Link href="/#contact" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Contact
             </Link>
+            {isEditorOrAdmin && (
+              <Link href="/admin/dashboard" className="text-[#C9A84C] hover:text-[#D4AF37] transition-colors text-xs font-bold uppercase tracking-wider">
+                Dashboard
+              </Link>
+            )}
 
             {user ? (
               <div className="relative" ref={dropdownRef}>
@@ -261,6 +266,15 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
             >
               Contact
             </Link>
+            {isEditorOrAdmin && (
+              <Link
+                href="/admin/dashboard"
+                className="block text-[#C9A84C] hover:text-[#D4AF37] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
+                onClick={() => setIsOpen(false)}
+              >
+                Dashboard
+              </Link>
+            )}
 
             {user ? (
               <div className="pt-2 space-y-2">

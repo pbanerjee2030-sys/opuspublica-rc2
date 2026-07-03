@@ -29,7 +29,7 @@ interface Article {
   created_at: string;
   rejection_reason: string | null;
   journals: { name: string; slug: string } | null;
-  article_authors: { profiles: { id: string; full_name: string; email?: string } | null }[] | null;
+  article_authors: { co_author_name: string | null; profiles: { id: string; full_name: string; email?: string } | null }[] | null;
 }
 
 type Tab = 'pending' | 'published' | 'rejected';
@@ -195,7 +195,7 @@ export default function ArticlesPage() {
       return (
         a.title.toLowerCase().includes(q) ||
         a.journals?.name?.toLowerCase().includes(q) ||
-        a.article_authors?.some(aa => aa.profiles?.full_name?.toLowerCase().includes(q))
+        a.article_authors?.some(aa => (aa.profiles?.full_name || aa.co_author_name || '').toLowerCase().includes(q))
       );
     }
     return true;
@@ -301,7 +301,7 @@ export default function ArticlesPage() {
                       <span className="text-xs text-zinc-400">{article.journals?.name}</span>
                     </td>
                     <td className="px-5 py-4 hidden lg:table-cell">
-                      <span className="text-xs text-zinc-400">{article.article_authors?.[0]?.profiles?.full_name || 'Unknown'}</span>
+                      <span className="text-xs text-zinc-400">{article.article_authors?.[0]?.profiles?.full_name || article.article_authors?.[0]?.co_author_name || 'Unknown'}</span>
                     </td>
                     <td className="px-5 py-4 hidden lg:table-cell">
                       <span className="text-xs text-zinc-500">
@@ -405,7 +405,7 @@ export default function ArticlesPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Author</label>
-                  <p className="text-sm text-zinc-300 mt-1">{selectedArticle.article_authors?.[0]?.profiles?.full_name || 'Unknown'}</p>
+                  <p className="text-sm text-zinc-300 mt-1">{selectedArticle.article_authors?.[0]?.profiles?.full_name || selectedArticle.article_authors?.[0]?.co_author_name || 'Unknown'}</p>
                 </div>
               </div>
               <div>

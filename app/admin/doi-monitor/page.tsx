@@ -23,7 +23,7 @@ interface Article {
   doi_deposited_at: string | null;
   doi_deposit_error: string | null;
   journals: { name: string; slug: string } | null;
-  article_authors: { profiles: { full_name: string } | null }[] | null;
+  article_authors: { co_author_name: string | null; profiles: { full_name: string } | null }[] | null;
 }
 
 type Filter = 'all' | 'not_submitted' | 'submitted' | 'failed';
@@ -109,7 +109,7 @@ export default function DoiMonitorPage() {
         a.title.toLowerCase().includes(q) ||
         a.doi?.toLowerCase().includes(q) ||
         a.journals?.name?.toLowerCase().includes(q) ||
-        a.article_authors?.some(aa => aa.profiles?.full_name?.toLowerCase().includes(q))
+        a.article_authors?.some(aa => (aa.profiles?.full_name || aa.co_author_name || '').toLowerCase().includes(q))
       );
     }
     return true;
