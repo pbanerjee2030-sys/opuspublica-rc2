@@ -63,7 +63,9 @@ export async function GET(request: NextRequest) {
     const dataToSign = `${user.id}:${randomVal}`;
     const signedState = signState(dataToSign, clientSecret);
 
-    const origin = request.nextUrl.origin;
+    const host = request.headers.get('host') || 'opuspublica.org';
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const origin = `${proto}://${host}`;
     const callbackUri = `${origin}/api/auth/orcid/callback`;
 
     // Construct the ORCID Authorize URL

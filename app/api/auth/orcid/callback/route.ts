@@ -106,7 +106,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const origin = request.nextUrl.origin;
+    const host = request.headers.get('host') || 'opuspublica.org';
+    const proto = request.headers.get('x-forwarded-proto') || 'https';
+    const origin = `${proto}://${host}`;
     const callbackUri = `${origin}/api/auth/orcid/callback`;
 
     // 5. Exchange code for token
