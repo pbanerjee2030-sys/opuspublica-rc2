@@ -89,6 +89,32 @@ export function generateCrossrefXml(articleData: {
     ? `        <issn media_type="electronic">${escapedJournalIssn}</issn>\n`
     : '';
 
+  // Form Crossmark XML
+  let crossmarkXml = '';
+  try {
+    const articleUrlObj = new URL(articleData.url);
+    const domainHost = articleUrlObj.hostname;
+    
+    let policyDoi = '10.5555/opuspublica_crossmark_policy';
+    if (articleData.doi.includes('/')) {
+      const doiPrefix = articleData.doi.split('/')[0];
+      policyDoi = `${doiPrefix}/opuspublica_crossmark_policy`;
+    }
+
+    crossmarkXml = `        <crossmark>
+          <crossmark_version>1</crossmark_version>
+          <crossmark_policy>${escapeXml(policyDoi)}</crossmark_policy>
+          <crossmark_domains>
+            <crossmark_domain>
+              <domain>${escapeXml(domainHost)}</domain>
+            </crossmark_domain>
+          </crossmark_domains>
+          <crossmark_domain_exclusive>false</crossmark_domain_exclusive>
+        </crossmark>\n`;
+  } catch (err) {
+    console.error('Failed to generate Crossmark XML segment:', err);
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
 <doi_batch version="4.4.2" xmlns="http://www.crossref.org/schema/4.4.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/4.4.2 http://www.crossref.org/schema/deposit/crossref4.4.2.xsd">
   <head>
@@ -120,7 +146,7 @@ ${abstractXml}        <publication_date media_type="online">
           <month>${month}</month>
           <day>${day}</day>
         </publication_date>
-        <doi_data>
+${crossmarkXml}        <doi_data>
           <doi>${escapedDoi}</doi>
           <resource>${escapedUrl}</resource>
         </doi_data>
