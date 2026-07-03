@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props) {
   const { 'journal-slug': journalSlug, id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data: dbArticle } = await supabase
+  const { data: dbArticle, error: metadataError } = await supabase
     .from('articles')
     .select(`
       title,
@@ -30,9 +30,14 @@ export async function generateMetadata({ params }: Props) {
       article_authors ( profiles ( full_name ) )
     `)
     .eq('id', id)
-    .single() as { data: any };
+    .single() as { data: any; error: any };
+
+  if (metadataError) {
+    console.error('DATABASE ERROR IN ARTICLE METADATA QUERY:', metadataError);
+  }
 
   if (!dbArticle) {
+    console.warn('ARTICLE METADATA: dbArticle is null or undefined for ID:', id);
     return { title: 'Article Not Found | Opus Publica' };
   }
 
@@ -62,7 +67,7 @@ export default async function ArticleDetailPage({ params }: Props) {
   const { 'journal-slug': journalSlug, id } = await params;
   const supabase = getSupabaseAdmin();
 
-  const { data: dbArticle } = await supabase
+  const { data: dbArticle, error: queryError } = await supabase
     .from('articles')
     .select(`
       id,
@@ -90,13 +95,19 @@ export default async function ArticleDetailPage({ params }: Props) {
       )
     `)
     .eq('id', id)
-    .single() as { data: any };
+    .single() as { data: any; error: any };
+
+  if (queryError) {
+    console.error('DATABASE ERROR IN ARTICLE DETAIL QUERY:', queryError);
+  }
 
   if (!dbArticle) {
+    console.warn('ARTICLE DETAIL: dbArticle is null or undefined for ID:', id);
     notFound();
   }
 
   if (dbArticle.status !== 'published') {
+    console.warn('ARTICLE DETAIL: Article status is not published:', dbArticle.status);
     notFound();
   }
 
