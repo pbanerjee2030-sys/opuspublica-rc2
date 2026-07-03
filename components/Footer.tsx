@@ -16,6 +16,8 @@ const legalLinks = [
   { href: '/privacy', label: 'Privacy Policy' },
   { href: '/terms', label: 'Terms of Service' },
   { href: '/cookies', label: 'Cookie Policy' },
+  { href: '/policies/corrections-and-retractions', label: 'Corrections Policy' },
+  { href: '/policies/research-ethics', label: 'Research Ethics' },
 ];
 
 const TwitterIcon = ({ className }: { className?: string }) => (
