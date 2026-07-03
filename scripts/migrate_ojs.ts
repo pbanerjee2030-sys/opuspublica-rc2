@@ -50,7 +50,7 @@ const filesSqlPath = path.join(parentDir, 'files.sql');
 const journalSlugMap: Record<string, { slug: string; name: string }> = {
   'migration-matters': { slug: 'migration-matters', name: 'Migration Matters' },
   'expressions': { slug: 'expressions', name: 'Expressions' },
-  'gppd': { slug: 'global-perspectives', name: 'Global Perspectives and Policy Development' },
+  'gppd': { slug: 'conflict-peace-studies', name: 'The Journal of Conflict and Peace Studies' },
   'voice-and-rights': { slug: 'voice-rights', name: 'Voice & Rights' }
 };
 
