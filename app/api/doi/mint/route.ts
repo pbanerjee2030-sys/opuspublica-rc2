@@ -53,6 +53,9 @@ export async function POST(request: Request) {
         abstract,
         doi,
         published_at,
+        funder_name,
+        funder_award_number,
+        funder_id,
         journals (
           name,
           slug
@@ -60,9 +63,12 @@ export async function POST(request: Request) {
         article_authors (
           co_author_name,
           co_author_orcid,
+          co_author_ror_id,
           profiles (
             full_name,
-            orcid
+            orcid,
+            affiliation,
+            ror_id
           )
         )
       `)
@@ -82,12 +88,16 @@ export async function POST(request: Request) {
         return {
           full_name: aa.profiles.full_name,
           orcid: aa.profiles.orcid,
+          affiliation: aa.profiles.affiliation,
+          ror_id: aa.profiles.ror_id,
         };
       }
       if (aa.co_author_name) {
         return {
           full_name: aa.co_author_name,
           orcid: aa.co_author_orcid,
+          affiliation: null,
+          ror_id: aa.co_author_ror_id,
         };
       }
       return null;
@@ -108,6 +118,9 @@ export async function POST(request: Request) {
       journalName: article.journals?.name || 'Academic Journal',
       journalIssn: undefined,
       authors: authors,
+      funderName: article.funder_name,
+      funderAwardNumber: article.funder_award_number,
+      funderId: article.funder_id,
     });
 
     const username = process.env.CROSSREF_USERNAME || '';

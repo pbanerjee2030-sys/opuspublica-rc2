@@ -41,7 +41,15 @@ export function generateCrossrefXml(articleData: {
   publishedAt: string;
   journalName: string;
   journalIssn?: string | null;
-  authors: Array<{ full_name: string; orcid?: string | null }>;
+  authors: Array<{
+    full_name: string;
+    orcid?: string | null;
+    affiliation?: string | null;
+    ror_id?: string | null;
+  }>;
+  funderName?: string | null;
+  funderAwardNumber?: string | null;
+  funderId?: string | null;
 }): string {
   const batchId = `deposit_${articleData.doi.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
   const timestamp = Date.now();
@@ -70,6 +78,21 @@ export function generateCrossrefXml(articleData: {
         contributorsXml += `            <given_name>${escapeXml(given)}</given_name>\n`;
       }
       contributorsXml += `            <surname>${escapeXml(surname)}</surname>\n`;
+      
+      // Affiliations with optional ROR ID
+      if (author.affiliation?.trim() || author.ror_id?.trim()) {
+        contributorsXml += `            <affiliations>\n`;
+        contributorsXml += `              <institution>\n`;
+        if (author.affiliation?.trim()) {
+          contributorsXml += `                <institution_name>${escapeXml(author.affiliation.trim())}</institution_name>\n`;
+        }
+        if (author.ror_id?.trim()) {
+          contributorsXml += `                <institution_id type="ror">${escapeXml(author.ror_id.trim())}</institution_id>\n`;
+        }
+        contributorsXml += `              </institution>\n`;
+        contributorsXml += `            </affiliations>\n`;
+      }
+
       if (author.orcid) {
         const cleanOrcid = author.orcid.trim().replace(/^https?:\/\/orcid\.org\//, '');
         contributorsXml += `            <ORCID authenticated="false">https://orcid.org/${escapeXml(cleanOrcid)}</ORCID>\n`;
@@ -115,8 +138,26 @@ export function generateCrossrefXml(articleData: {
     console.error('Failed to generate Crossmark XML segment:', err);
   }
 
+  // Form Funder XML
+  let fundingXml = '';
+  if (articleData.funderName?.trim()) {
+    fundingXml = `        <fr:program name="fundref">\n`;
+    fundingXml += `          <fr:assertion name="fundgroup">\n`;
+    fundingXml += `            <fr:assertion name="funder_name">\n`;
+    fundingXml += `              ${escapeXml(articleData.funderName.trim())}\n`;
+    if (articleData.funderId?.trim()) {
+      fundingXml += `              <fr:assertion name="funder_identifier">${escapeXml(articleData.funderId.trim())}</fr:assertion>\n`;
+    }
+    fundingXml += `            </fr:assertion>\n`;
+    if (articleData.funderAwardNumber?.trim()) {
+      fundingXml += `            <fr:assertion name="award_number">${escapeXml(articleData.funderAwardNumber.trim())}</fr:assertion>\n`;
+    }
+    fundingXml += `          </fr:assertion>\n`;
+    fundingXml += `        </fr:program>\n`;
+  }
+
   return `<?xml version="1.0" encoding="UTF-8"?>
-<doi_batch version="4.4.2" xmlns="http://www.crossref.org/schema/4.4.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/schema/4.4.2 http://www.crossref.org/schema/deposit/crossref4.4.2.xsd">
+<doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://www.crossref.org/schemas/crossref5.3.1.xsd">
   <head>
     <doi_batch_id>${batchId}</doi_batch_id>
     <timestamp>${timestamp}</timestamp>
@@ -146,7 +187,7 @@ ${abstractXml}        <publication_date media_type="online">
           <month>${month}</month>
           <day>${day}</day>
         </publication_date>
-${crossmarkXml}        <doi_data>
+${crossmarkXml}${fundingXml}        <doi_data>
           <doi>${escapedDoi}</doi>
           <resource>${escapedUrl}</resource>
         </doi_data>

@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import { getServerUserAndProfile } from '@/lib/supabaseServer';
 import { revalidatePath } from 'next/cache';
+import ProfileEditModal from './ProfileEditModal';
 
 interface Props {
   params: Promise<{
@@ -63,6 +64,31 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     redirect(`/profile/${id}?orcid_disconnected=true`);
   }
 
+  async function updateProfile(formData: { full_name: string; bio: string; affiliation: string; ror_id: string }) {
+    'use server';
+    const { user } = await getServerUserAndProfile();
+    if (!user || user.id !== id) {
+      throw new Error("Unauthorized");
+    }
+    const adminSupabase = getSupabaseAdmin();
+    const { error } = await (adminSupabase
+      .from('profiles') as any)
+      .update({
+        full_name: formData.full_name,
+        bio: formData.bio,
+        affiliation: formData.affiliation,
+        ror_id: formData.ror_id || null
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Failed to update profile:', error);
+      throw error;
+    }
+
+    revalidatePath(`/profile/${id}`);
+  }
+
   const supabase = getSupabaseAdmin();
 
   const { data: dbProfile } = await supabase
@@ -75,6 +101,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       bio,
       affiliation,
       orcid,
+      ror_id,
       journals (
         id,
         name,
@@ -82,7 +109,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       )
     `)
     .eq('id', id)
-    .single() as { data: any };
+    .single() as { data: any; error: any };
 
   if (!dbProfile) {
     notFound();
@@ -96,6 +123,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     bio: dbProfile.bio || 'Peer-reviewed academic contributor.',
     affiliation: dbProfile.affiliation || (dbProfile.journals ? `Editor, ${dbProfile.journals?.name}` : 'Opus Publica Contributor'),
     orcid: dbProfile.orcid || null,
+    ror_id: dbProfile.ror_id || null,
     journalName: dbProfile.journals?.name || null,
     journalSlug: dbProfile.journals?.slug || null,
   };
@@ -184,10 +212,18 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <span className="px-2.5 py-0.5 bg-[#C9A84C]/20 text-[#C9A84C] font-mono text-xs rounded uppercase tracking-wider">
-                  {profile.role}
-                </span>
+              <div className="space-y-2 flex-grow">
+                <div className="flex items-center justify-center sm:justify-start gap-3 flex-wrap">
+                  <span className="px-2.5 py-0.5 bg-[#C9A84C]/20 text-[#C9A84C] font-mono text-xs rounded uppercase tracking-wider">
+                    {profile.role}
+                  </span>
+                  {isOwner && (
+                    <ProfileEditModal 
+                      profile={profile} 
+                      onSave={updateProfile} 
+                    />
+                  )}
+                </div>
                 <h1 className="text-3xl sm:text-4xl font-serif text-white font-bold">
                   {profile.full_name}
                 </h1>
@@ -245,6 +281,19 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                     <GraduationCap className="w-4 h-4 text-[#C9A84C]" />
                     <span>{profile.affiliation}</span>
                   </div>
+                  {profile.ror_id && (
+                    <div className="flex items-center gap-1.5">
+                      <Fingerprint className="w-4 h-4 text-[#C9A84C]" />
+                      <a 
+                        href={profile.ror_id} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-xs text-zinc-400 hover:underline font-mono"
+                      >
+                        ROR ID: {profile.ror_id.replace(/^https?:\/\/ror\.org\//, '')}
+                      </a>
+                    </div>
+                  )}
                   {profile.journalSlug && (
                     <>
                       <span className="hidden sm:inline">&#8226;</span>
@@ -281,6 +330,19 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-[#8B1A1A]" />
                       <span>{profile.affiliation}</span>
+                    </div>
+                  )}
+                  {profile.ror_id && (
+                    <div className="flex items-center gap-2 text-xs font-mono">
+                      <Fingerprint className="w-4 h-4 text-[#8B1A1A]" />
+                      <a 
+                        href={profile.ror_id} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="hover:underline text-black/60"
+                      >
+                        ROR: {profile.ror_id}
+                      </a>
                     </div>
                   )}
                   <div className="flex items-center gap-2">

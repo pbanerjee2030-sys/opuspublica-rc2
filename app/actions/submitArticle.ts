@@ -6,12 +6,15 @@ export interface SubmitArticlePayload {
   title: string;
   abstract: string;
   journalId: string;
-  coAuthors: { name: string; orcid: string }[];
+  coAuthors: { name: string; orcid: string; rorId?: string }[];
   pdfFile: {
     name: string;
     type: string;
     base64: string;
   } | null;
+  funderName?: string;
+  funderAwardNumber?: string;
+  funderId?: string;
 }
 
 async function sendSubmissionConfirmation(
@@ -122,7 +125,7 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
     }
 
     const authorIds: string[] = [userId];
-    const externalCoAuthors: { name: string; orcid: string }[] = [];
+    const externalCoAuthors: { name: string; orcid: string; rorId?: string }[] = [];
 
     for (const coAuthor of payload.coAuthors) {
       const cleanName = coAuthor.name.trim();
@@ -137,7 +140,11 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
       if (existingProfile) {
         authorIds.push((existingProfile as any).id);
       } else {
-        externalCoAuthors.push({ name: cleanName, orcid: coAuthor.orcid || '' });
+        externalCoAuthors.push({ 
+          name: cleanName, 
+          orcid: coAuthor.orcid || '', 
+          rorId: coAuthor.rorId || '' 
+        });
       }
     }
 
@@ -151,7 +158,10 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
         journal_id: payload.journalId,
         pdf_url: storagePath,
         published_at: null,
-        version: 1
+        version: 1,
+        funder_name: payload.funderName || null,
+        funder_award_number: payload.funderAwardNumber || null,
+        funder_id: payload.funderId || null
       } as any)
       .select()
       .single();
@@ -175,7 +185,8 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
         .insert({
           article_id: (newArticle as any).id,
           co_author_name: co.name,
-          co_author_orcid: co.orcid || null
+          co_author_orcid: co.orcid || null,
+          co_author_ror_id: co.rorId || null
         } as any);
     }
 

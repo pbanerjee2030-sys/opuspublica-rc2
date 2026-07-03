@@ -33,6 +33,10 @@ export default function SubmitArticlePage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [orcid, setOrcid] = useState('');
+  const [affiliation, setAffiliation] = useState('');
+  const [rorId, setRorId] = useState('');
+  const [rorSuggestions, setRorSuggestions] = useState<any[]>([]);
+  const [showRorSuggestions, setShowRorSuggestions] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -41,8 +45,15 @@ export default function SubmitArticlePage() {
   const [selectedJournalId, setSelectedJournalId] = useState('');
   const [title, setTitle] = useState('');
   const [abstract, setAbstract] = useState('');
-  const [coAuthors, setCoAuthors] = useState<{ name: string; orcid: string }[]>([]);
+  const [coAuthors, setCoAuthors] = useState<{ name: string; orcid: string; affiliationName: string; rorId: string; suggestions?: any[]; showSuggestions?: boolean }[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+  // Funding states
+  const [funderName, setFunderName] = useState('');
+  const [funderAwardNumber, setFunderAwardNumber] = useState('');
+  const [funderId, setFunderId] = useState('');
+  const [funderSuggestions, setFunderSuggestions] = useState<any[]>([]);
+  const [showFunderSuggestions, setShowFunderSuggestions] = useState(false);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -93,7 +104,9 @@ export default function SubmitArticlePage() {
             data: { 
               full_name: fullName,
               role: 'author',
-              orcid: orcid || null
+              orcid: orcid || null,
+              affiliation: affiliation || null,
+              ror_id: rorId || null
             }
           }
         });
@@ -116,7 +129,7 @@ export default function SubmitArticlePage() {
   };
 
   const handleAddCoAuthor = () => {
-    setCoAuthors([...coAuthors, { name: '', orcid: '' }]);
+    setCoAuthors([...coAuthors, { name: '', orcid: '', affiliationName: '', rorId: '' }]);
   };
 
   const handleCoAuthorChange = (index: number, value: string) => {
@@ -131,9 +144,66 @@ export default function SubmitArticlePage() {
     setCoAuthors(updated);
   };
 
+  const handleCoAuthorAffiliationChange = async (index: number, val: string) => {
+    const updated = [...coAuthors];
+    updated[index] = { ...updated[index], affiliationName: val };
+    setCoAuthors(updated);
+
+    if (!val.trim()) {
+      const nextUpdated = [...coAuthors];
+      nextUpdated[index] = { ...nextUpdated[index], affiliationName: val, suggestions: [], showSuggestions: false };
+      setCoAuthors(nextUpdated);
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://api.ror.org/organizations?query=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      const nextUpdated = [...coAuthors];
+      nextUpdated[index] = { ...nextUpdated[index], suggestions: data.items || [], showSuggestions: true };
+      setCoAuthors(nextUpdated);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleRemoveCoAuthor = (index: number) => {
     const updated = coAuthors.filter((_, i) => i !== index);
     setCoAuthors(updated);
+  };
+
+  const handleRorSearchChange = async (val: string) => {
+    setAffiliation(val);
+    if (!val.trim()) {
+      setRorSuggestions([]);
+      setShowRorSuggestions(false);
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.ror.org/organizations?query=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      setRorSuggestions(data.items || []);
+      setShowRorSuggestions(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleFunderSearchChange = async (val: string) => {
+    setFunderName(val);
+    if (!val.trim()) {
+      setFunderSuggestions([]);
+      setShowFunderSuggestions(false);
+      return;
+    }
+    try {
+      const res = await fetch(`https://api.crossref.org/funders?query=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      setFunderSuggestions(data.message?.items || []);
+      setShowFunderSuggestions(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -176,12 +246,19 @@ export default function SubmitArticlePage() {
         title,
         abstract,
         journalId: selectedJournalId,
-        coAuthors: coAuthors.filter(a => a.name.trim() !== ''),
+        coAuthors: coAuthors.map(a => ({
+          name: a.name,
+          orcid: a.orcid,
+          rorId: a.rorId
+        })).filter(a => a.name.trim() !== ''),
         pdfFile: {
           name: pdfFile.name,
           type: pdfFile.type,
           base64: base64String
         },
+        funderName: funderName || undefined,
+        funderAwardNumber: funderAwardNumber || undefined,
+        funderId: funderId || undefined
       };
 
       const token = session?.access_token || '';
@@ -326,23 +403,77 @@ export default function SubmitArticlePage() {
                   </div>
 
                   {isRegistering && (
-                    <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
-                        ORCID iD <span className="font-normal normal-case tracking-normal">(Optional)</span>
-                      </label>
-                      <div className="relative">
-                        <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
-                        <input
-                          type="text"
-                          value={orcid}
-                          onChange={(e) => setOrcid(e.target.value)}
-                          pattern="^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
-                          className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
-                          placeholder="0000-0002-1234-5678"
-                        />
+                    <>
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                          ORCID iD <span className="font-normal normal-case tracking-normal">(Optional)</span>
+                        </label>
+                        <div className="relative">
+                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <input
+                            type="text"
+                            value={orcid}
+                            onChange={(e) => setOrcid(e.target.value)}
+                            pattern="^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
+                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                            placeholder="0000-0002-1234-5678"
+                          />
+                        </div>
+                        <p className="text-[10px] text-[#1A1A2E]/40 mt-0.5">16-digit identifier from orcid.org</p>
                       </div>
-                      <p className="text-[10px] text-[#1A1A2E]/40 mt-0.5">16-digit identifier from orcid.org</p>
-                    </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                          Institutional Affiliation <span className="font-normal normal-case tracking-normal">(Optional)</span>
+                        </label>
+                        <div className="relative">
+                          <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <input
+                            type="text"
+                            value={affiliation}
+                            onChange={(e) => handleRorSearchChange(e.target.value)}
+                            onFocus={() => setShowRorSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowRorSuggestions(false), 200)}
+                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                            placeholder="Type to search institution..."
+                          />
+                          {showRorSuggestions && rorSuggestions.length > 0 && (
+                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                              {rorSuggestions.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                                  onMouseDown={() => {
+                                    setAffiliation(item.name);
+                                    setRorId(item.id);
+                                    setShowRorSuggestions(false);
+                                  }}
+                                >
+                                  <strong>{item.name}</strong>
+                                  <span className="block text-[9px] text-zinc-500 font-mono">{item.id}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                          ROR ID
+                        </label>
+                        <div className="relative">
+                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <input
+                            type="text"
+                            readOnly
+                            value={rorId}
+                            className="w-full pl-9 pr-3 py-2 border border-zinc-200 text-zinc-500 rounded text-sm bg-zinc-100 cursor-not-allowed focus:outline-none"
+                            placeholder="Selected institution's ROR ID"
+                          />
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   <button
@@ -503,7 +634,7 @@ export default function SubmitArticlePage() {
 
                 <div className="space-y-2 mt-2">
                   {coAuthors.map((author, index) => (
-                    <div key={index} className="space-y-1">
+                    <div key={index} className="space-y-2 bg-white/30 p-4 rounded-lg border border-black/5">
                       <div className="flex gap-2 items-center">
                         <Users className="w-4 h-4 text-black/40 flex-shrink-0" />
                         <input
@@ -516,13 +647,13 @@ export default function SubmitArticlePage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveCoAuthor(index)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded animate-pulse"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                       <div className="flex gap-2 items-center ml-6">
-                        <Fingerprint className="w-3 h-3 text-black/30 flex-shrink-0" />
+                        <Fingerprint className="w-3.5 h-3.5 text-black/30 flex-shrink-0" />
                         <input
                           type="text"
                           value={author.orcid}
@@ -532,11 +663,122 @@ export default function SubmitArticlePage() {
                           placeholder="ORCID iD (optional)"
                         />
                       </div>
+                      <div className="flex gap-2 items-center ml-6 relative">
+                        <BookOpen className="w-3.5 h-3.5 text-black/30 flex-shrink-0" />
+                        <div className="flex-grow relative">
+                          <input
+                            type="text"
+                            value={author.affiliationName}
+                            onChange={(e) => handleCoAuthorAffiliationChange(index, e.target.value)}
+                            onFocus={() => {
+                              const updated = [...coAuthors];
+                              updated[index].showSuggestions = true;
+                              setCoAuthors(updated);
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                const updated = [...coAuthors];
+                                if (updated[index]) {
+                                  updated[index].showSuggestions = false;
+                                  setCoAuthors(updated);
+                                }
+                              }, 200);
+                            }}
+                            className="w-full px-3 py-1 border border-black/10 rounded text-xs bg-white focus:outline-none focus:border-[#8B1A1A]"
+                            placeholder="Type to search institution (ROR ID)..."
+                          />
+                          {author.showSuggestions && author.suggestions && author.suggestions.length > 0 && (
+                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                              {author.suggestions.map((item: any) => (
+                                <div
+                                  key={item.id}
+                                  className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                                  onMouseDown={() => {
+                                    const updated = [...coAuthors];
+                                    updated[index].affiliationName = item.name;
+                                    updated[index].rorId = item.id;
+                                    updated[index].showSuggestions = false;
+                                    setCoAuthors(updated);
+                                  }}
+                                >
+                                  <strong>{item.name}</strong>
+                                  <span className="block text-[8px] text-zinc-500 font-mono">{item.id}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      {author.rorId && (
+                        <div className="text-[10px] text-green-700 font-mono font-bold ml-12">
+                          ROR ID: {author.rorId}
+                        </div>
+                      )}
                     </div>
                   ))}
                   {coAuthors.length === 0 && (
                     <p className="text-xs text-[#1A1A2E]/40 italic">No co-authors added yet.</p>
                   )}
+                </div>
+              </div>
+
+              {/* Funding Section */}
+              <div className="bg-white/40 border border-black/5 rounded-lg p-5 space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1A1A2E]/70 border-b border-black/5 pb-1">
+                  Funding & Grant Details (Optional)
+                </h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="relative">
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                      Funder Name
+                    </label>
+                    <input
+                      type="text"
+                      value={funderName}
+                      onChange={(e) => handleFunderSearchChange(e.target.value)}
+                      onFocus={() => setShowFunderSuggestions(true)}
+                      onBlur={() => setTimeout(() => setShowFunderSuggestions(false), 200)}
+                      className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                      placeholder="Search Funder Registry (e.g. Wellcome)..."
+                    />
+                    {showFunderSuggestions && funderSuggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                        {funderSuggestions.map((item) => (
+                          <div
+                            key={item.uri}
+                            className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                            onMouseDown={() => {
+                              setFunderName(item.name);
+                              setFunderId(item.uri);
+                              setShowFunderSuggestions(false);
+                            }}
+                          >
+                            <strong>{item.name}</strong>
+                            <span className="block text-[9px] text-zinc-500 font-mono">{item.uri}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {funderId && (
+                      <div className="mt-1 text-[10px] text-green-700 font-mono font-bold">
+                        Funder ID: {funderId}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                      Grant/Award Number
+                    </label>
+                    <input
+                      type="text"
+                      value={funderAwardNumber}
+                      onChange={(e) => setFunderAwardNumber(e.target.value)}
+                      className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                      placeholder="e.g. WT-12345"
+                    />
+                  </div>
                 </div>
               </div>
 
