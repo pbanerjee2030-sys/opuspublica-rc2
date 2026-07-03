@@ -25,6 +25,7 @@ interface FilteredArticle {
   journal_slug: string;
   author_name: string;
   all_authors: string[];
+  doi?: string | null;
 }
 
 export const revalidate = 0;
@@ -48,11 +49,13 @@ export default async function SearchPage({
         abstract,
         published_at,
         status,
+        doi,
         journals (
           name,
           slug
         ),
         article_authors (
+          co_author_name,
           profiles (
             full_name
           )
@@ -70,7 +73,7 @@ export default async function SearchPage({
   }
 
   const sourceArticles: FilteredArticle[] = dbArticles.map((art: any) => {
-    const authors = art.article_authors?.map((aa: any) => aa.profiles?.full_name || '').filter(Boolean) || [];
+    const authors = art.article_authors?.map((aa: any) => aa.profiles?.full_name || aa.co_author_name || '').filter(Boolean) || [];
     return {
       id: art.id,
       title: art.title,
@@ -79,7 +82,8 @@ export default async function SearchPage({
       journal_name: art.journals?.name || 'Academic Journal',
       journal_slug: art.journals?.slug || '',
       author_name: authors[0] || 'Academic Contributor',
-      all_authors: authors
+      all_authors: authors,
+      doi: art.doi
     };
   });
 
@@ -90,7 +94,8 @@ export default async function SearchPage({
         const abstractMatch = art.abstract.toLowerCase().includes(searchQuery);
         const journalMatch = art.journal_name.toLowerCase().includes(searchQuery);
         const authorMatch = art.all_authors.some(name => name.toLowerCase().includes(searchQuery));
-        return titleMatch || abstractMatch || journalMatch || authorMatch;
+        const doiMatch = art.doi?.toLowerCase().includes(searchQuery) || false;
+        return titleMatch || abstractMatch || journalMatch || authorMatch || doiMatch;
       })
     : [];
 
