@@ -197,11 +197,12 @@ export default function OpenAccessClient() {
                         </h2>
                       </div>
                       <p className="text-base sm:text-lg text-[#1A1A2E]/80 leading-relaxed font-serif">
-                        Opus Publica may charge an Article Processing Charge (APC) to cover the costs of publication.
-                        APC rates are published on the website and are subject to change. Waivers and discounts are
-                        available for authors from low-income countries or those without institutional funding.
-                        Please refer to the specific journal's page or contact the editorial office for details on
-                        the current APC rates and waiver policies.
+                        Opus Publica is a Diamond Open Access publisher. We charge no fees to 
+                        authors at any stage of the publication process — no submission fee, no 
+                        article processing charge (APC), and no fee upon acceptance or 
+                        publication. Readers likewise access all published content free of 
+                        charge, with no subscription or paywall. Publication costs are covered 
+                        by Advocacy Unified Network, not by authors or readers.
                       </p>
                     </div>
 
