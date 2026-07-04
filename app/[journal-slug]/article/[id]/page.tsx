@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: Props) {
       abstract,
       pdf_url,
       published_at,
+      keywords,
       journals ( name ),
       article_authors ( profiles ( full_name ) )
     `)
@@ -59,6 +60,7 @@ export async function generateMetadata({ params }: Props) {
       'citation_publication_date': formattedDate,
       'citation_pdf_url': pdfUrl,
       'citation_journal_title': journalTitle,
+      ...(dbArticle.keywords && dbArticle.keywords.length > 0 ? { 'citation_keywords': dbArticle.keywords.join(', ') } : {}),
     },
   };
 }
@@ -78,6 +80,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       doi,
       published_at,
       status,
+      keywords,
       journals (
         id,
         name,
@@ -119,6 +122,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     pdfUrl: dbArticle.pdf_url || '#',
     publishedAt: dbArticle.published_at,
     doi: dbArticle.doi,
+    keywords: dbArticle.keywords || [],
     journalName: dbArticle.journals?.name || 'Academic Journal',
     journalSlug: dbArticle.journals?.slug || journalSlug,
     journalIssn: 'N/A',
@@ -237,6 +241,12 @@ export default async function ArticleDetailPage({ params }: Props) {
                     html={article.abstract}
                     className="text-base sm:text-lg text-[#1A1A2E]/90 italic leading-relaxed"
                   />
+                  {article.keywords && article.keywords.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-[#1A1A2E]/10 text-sm">
+                      <span className="font-bold text-[#1A1A2E]">Keywords:</span>{' '}
+                      <span className="text-[#1A1A2E]/80">{article.keywords.join(', ')}</span>
+                    </div>
+                  )}
                 </section>
 
                 <SafeHtml

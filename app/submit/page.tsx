@@ -48,12 +48,16 @@ export default function SubmitArticlePage() {
   const [coAuthors, setCoAuthors] = useState<{ name: string; orcid: string; affiliationName: string; rorId: string; suggestions?: any[]; showSuggestions?: boolean }[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
 
-  // Funding states
   const [funderName, setFunderName] = useState('');
   const [funderAwardNumber, setFunderAwardNumber] = useState('');
   const [funderId, setFunderId] = useState('');
   const [funderSuggestions, setFunderSuggestions] = useState<any[]>([]);
   const [showFunderSuggestions, setShowFunderSuggestions] = useState(false);
+
+  const [keywords, setKeywords] = useState('');
+  const [conflictOfInterest, setConflictOfInterest] = useState('The author(s) declare no conflicts of interest.');
+  const [dataAvailability, setDataAvailability] = useState('');
+  const [ethicsApproval, setEthicsApproval] = useState('');
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -220,8 +224,8 @@ export default function SubmitArticlePage() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !abstract.trim() || !selectedJournalId || !pdfFile) {
-      setSubmissionError('Validation Error: All form fields are required, including the PDF manuscript.');
+    if (!title.trim() || !abstract.trim() || !selectedJournalId || !pdfFile || !keywords.trim() || !conflictOfInterest.trim()) {
+      setSubmissionError('Validation Error: All required form fields must be filled out, including the PDF manuscript, keywords, and conflict declaration.');
       return;
     }
 
@@ -258,7 +262,11 @@ export default function SubmitArticlePage() {
         },
         funderName: funderName || undefined,
         funderAwardNumber: funderAwardNumber || undefined,
-        funderId: funderId || undefined
+        funderId: funderId || undefined,
+        keywords: keywords.split(',').map(k => k.trim()).filter(Boolean),
+        conflictOfInterestStatement: conflictOfInterest.trim() || undefined,
+        dataAvailabilityStatement: dataAvailability.trim() || undefined,
+        ethicsApprovalStatement: ethicsApproval.trim() || undefined
       };
 
       const token = session?.access_token || '';
@@ -271,6 +279,10 @@ export default function SubmitArticlePage() {
         setAbstract('');
         setCoAuthors([]);
         setPdfFile(null);
+        setKeywords('');
+        setConflictOfInterest('The author(s) declare no conflicts of interest.');
+        setDataAvailability('');
+        setEthicsApproval('');
       } else {
         setSubmissionError(result.error || 'Submission failed.');
       }
@@ -779,6 +791,70 @@ export default function SubmitArticlePage() {
                       placeholder="e.g. WT-12345"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Section: Academic Declarations & Metadata */}
+              <div className="bg-white/40 border border-black/5 rounded-lg p-5 space-y-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1A1A2E]/70 border-b border-black/5 pb-1">
+                  Academic Declarations &amp; Metadata
+                </h3>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    Keywords * (Specify 4-6 keywords)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={keywords}
+                    onChange={(e) => setKeywords(e.target.value)}
+                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                    placeholder="Comma-separated (e.g. public policy, ancient legacy, governance). Minimum 4-6 keywords."
+                  />
+                  <p className="text-[10px] text-zinc-500 mt-1">Specify 4 to 6 keywords separated by commas as requested by the Instructions for Authors.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    Conflict of Interest Declaration *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={conflictOfInterest}
+                    onChange={(e) => setConflictOfInterest(e.target.value)}
+                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    placeholder="Declare any potential conflict of interest."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    Data Availability Statement (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={dataAvailability}
+                    onChange={(e) => setDataAvailability(e.target.value)}
+                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    placeholder="Describe where the data supporting the research can be accessed."
+                  />
+                  <p className="text-[10px] text-zinc-500 mt-1">Provide details on the availability of datasets, code, or other research materials.</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    Ethics Approval Statement (Optional)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={ethicsApproval}
+                    onChange={(e) => setEthicsApproval(e.target.value)}
+                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    placeholder="Required if research involved human subjects, animal testing, surveys, or interviews."
+                  />
+                  <p className="text-[10px] text-zinc-500 mt-1">Provide approval details from your Institutional Review Board (IRB) or Ethics Committee.</p>
                 </div>
               </div>
 

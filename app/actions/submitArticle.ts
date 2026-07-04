@@ -15,6 +15,10 @@ export interface SubmitArticlePayload {
   funderName?: string;
   funderAwardNumber?: string;
   funderId?: string;
+  keywords?: string[];
+  conflictOfInterestStatement?: string;
+  dataAvailabilityStatement?: string;
+  ethicsApprovalStatement?: string;
 }
 
 async function sendSubmissionConfirmation(
@@ -157,11 +161,14 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
         status: 'pending_review',
         journal_id: payload.journalId,
         pdf_url: storagePath,
-        published_at: null,
         version: 1,
         funder_name: payload.funderName || null,
         funder_award_number: payload.funderAwardNumber || null,
-        funder_id: payload.funderId || null
+        funder_id: payload.funderId || null,
+        keywords: payload.keywords || null,
+        conflict_of_interest_statement: payload.conflictOfInterestStatement || null,
+        data_availability_statement: payload.dataAvailabilityStatement || null,
+        ethics_approval_statement: payload.ethicsApprovalStatement || null
       } as any)
       .select()
       .single();

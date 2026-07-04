@@ -83,6 +83,9 @@ function articleToOaiRecord(article: any, journal: any, authors: string[], baseU
   const articleUrl = `${baseUrl}/${journal?.slug || 'journal'}/article/${article.id}`;
 
   const dcCreators = authors.map(a => `      <dc:creator>${xmlEscape(a)}</dc:creator>`).join('\n');
+  const dcSubjects = (article.keywords && Array.isArray(article.keywords))
+    ? article.keywords.map((k: string) => `      <dc:subject>${xmlEscape(k.trim())}</dc:subject>`).join('\n')
+    : '';
   const dcIdentifiers = [
     `      <dc:identifier>${xmlEscape(articleUrl)}</dc:identifier>`,
     ...(doi ? [`      <dc:identifier>https://doi.org/${xmlEscape(doi)}</dc:identifier>`] : []),
@@ -106,7 +109,7 @@ function articleToOaiRecord(article: any, journal: any, authors: string[], baseU
           xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd">
       <dc:title>${xmlEscape(article.title)}</dc:title>
 ${dcCreators}
-      <dc:description>${xmlEscape(article.abstract || '')}</dc:description>
+${dcSubjects ? dcSubjects + '\n' : ''}      <dc:description>${xmlEscape(article.abstract || '')}</dc:description>
       <dc:publisher>${xmlEscape(journalName)}</dc:publisher>
       <dc:date>${publishedDate}</dc:date>
 ${dcIdentifiers}
@@ -168,7 +171,7 @@ export async function GET(request: NextRequest) {
     const { data: article } = await supabaseAdmin
       .from('articles')
       .select(`
-        id, title, abstract, doi, published_at, status,
+        id, title, abstract, doi, published_at, status, keywords,
         journals ( name, slug, license_type, license_url ),
         article_authors (
           profiles ( full_name ),
@@ -222,7 +225,7 @@ ${record}
   const { data: articles } = await supabaseAdmin
     .from('articles')
     .select(`
-      id, title, abstract, doi, published_at,
+      id, title, abstract, doi, published_at, keywords,
       journals ( name, slug, license_type, license_url ),
       article_authors (
         profiles ( full_name ),
