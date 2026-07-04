@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 export interface SubmitArticlePayload {
   title: string;
   abstract: string;
+  content: string;
   journalId: string;
   coAuthors: { name: string; orcid: string; rorId?: string }[];
   pdfFile: {
@@ -157,7 +158,7 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
       .insert({
         title: payload.title,
         abstract: payload.abstract,
-        content: `<p>${payload.abstract}</p>`,
+        content: payload.content,
         status: 'pending_review',
         journal_id: payload.journalId,
         pdf_url: storagePath,

@@ -22,6 +22,9 @@ import {
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import type { DatabaseJournal } from '@/lib/types';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import TiptapLink from '@tiptap/extension-link';
 
 export default function SubmitArticlePage() {
   const [session, setSession] = useState<any>(null);
@@ -58,6 +61,20 @@ export default function SubmitArticlePage() {
   const [conflictOfInterest, setConflictOfInterest] = useState('The author(s) declare no conflicts of interest.');
   const [dataAvailability, setDataAvailability] = useState('');
   const [ethicsApproval, setEthicsApproval] = useState('');
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      TiptapLink.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-[#8B1A1A] underline hover:text-[#C9A84C]',
+        },
+      }),
+    ],
+    content: '<p>Write your manuscript body here...</p>',
+    immediatelyRender: false,
+  });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -224,8 +241,12 @@ export default function SubmitArticlePage() {
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !abstract.trim() || !selectedJournalId || !pdfFile || !keywords.trim() || !conflictOfInterest.trim()) {
-      setSubmissionError('Validation Error: All required form fields must be filled out, including the PDF manuscript, keywords, and conflict declaration.');
+    
+    const contentHtml = editor ? editor.getHTML() : '';
+    const isEditorEmpty = !contentHtml || contentHtml === '<p></p>' || contentHtml === '<p>Write your manuscript body here...</p>';
+
+    if (!title.trim() || !abstract.trim() || isEditorEmpty || !selectedJournalId || !pdfFile || !keywords.trim() || !conflictOfInterest.trim()) {
+      setSubmissionError('Validation Error: All required form fields must be filled out, including the PDF manuscript, keywords, conflict declaration, and manuscript body content.');
       return;
     }
 
@@ -249,6 +270,7 @@ export default function SubmitArticlePage() {
       const payload = {
         title,
         abstract,
+        content: contentHtml,
         journalId: selectedJournalId,
         coAuthors: coAuthors.map(a => ({
           name: a.name,
@@ -277,6 +299,7 @@ export default function SubmitArticlePage() {
         setSubmittedId(result.articleId || '');
         setTitle('');
         setAbstract('');
+        editor?.commands.setContent('<p>Write your manuscript body here...</p>');
         setCoAuthors([]);
         setPdfFile(null);
         setKeywords('');
@@ -297,6 +320,52 @@ export default function SubmitArticlePage() {
 
   return (
     <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
+      <style>{`
+        .ProseMirror {
+          min-height: 300px;
+          outline: none;
+          padding: 12px;
+        }
+        .ProseMirror p {
+          margin-bottom: 1em;
+        }
+        .ProseMirror h2 {
+          font-size: 1.5em;
+          font-weight: bold;
+          margin-top: 1.2em;
+          margin-bottom: 0.6em;
+        }
+        .ProseMirror h3 {
+          font-size: 1.25em;
+          font-weight: bold;
+          margin-top: 1.2em;
+          margin-bottom: 0.6em;
+        }
+        .ProseMirror ul {
+          list-style-type: disc;
+          padding-left: 1.5em;
+          margin-bottom: 1em;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+          padding-left: 1.5em;
+          margin-bottom: 1em;
+        }
+        .ProseMirror blockquote {
+          border-left: 4px solid #8B1A1A;
+          padding-left: 1em;
+          font-style: italic;
+          color: rgba(26, 26, 46, 0.8);
+          margin: 1em 0;
+        }
+        .ProseMirror a {
+          color: #8B1A1A;
+          text-decoration: underline;
+        }
+        .ProseMirror a:hover {
+          color: #C9A84C;
+        }
+      `}</style>
       <div className="h-16"></div>
 
       <main className="flex-grow bg-[#1A1A2E] py-12 px-4 sm:px-6">
@@ -627,6 +696,93 @@ export default function SubmitArticlePage() {
                   className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
                   placeholder="Provide a comprehensive academic summary of the research study, findings, and methodologies."
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                  Manuscript Body *
+                </label>
+                <div className="border border-black/10 rounded overflow-hidden bg-white focus-within:border-[#8B1A1A]">
+                  {/* Toolbar */}
+                  {editor && (
+                    <div className="flex flex-wrap items-center gap-1 bg-[#1A1A2E]/5 border-b border-black/10 p-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                        className={`px-2.5 py-1.5 rounded font-bold hover:bg-black/5 ${editor.isActive('bold') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        B
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                        className={`px-2.5 py-1.5 rounded italic hover:bg-black/5 ${editor.isActive('italic') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        I
+                      </button>
+                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 2 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        H2
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        H3
+                      </button>
+                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleBulletList().run()}
+                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('bulletList') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        Bullet List
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('orderedList') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        Numbered List
+                      </button>
+                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('blockquote') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        Quote
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const previousUrl = editor.getAttributes('link').href;
+                          const url = window.prompt('Enter URL:', previousUrl);
+                          if (url === null) return;
+                          if (url === '') {
+                            editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                            return;
+                          }
+                          editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                        }}
+                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('link') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        Link
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Editor Content Area */}
+                  <div className="prose prose-sm max-w-none text-[#1A1A2E] leading-relaxed">
+                    <EditorContent editor={editor} />
+                  </div>
+                </div>
+                <p className="text-[10px] text-zinc-500 mt-1">Provide the full text body of the manuscript. Format with headings, lists, quotes, and links using the toolbar above.</p>
               </div>
 
               <div>
