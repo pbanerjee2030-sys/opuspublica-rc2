@@ -11,9 +11,12 @@ export type AuditAction =
   | 'article_updated'
   | 'reviewer_assigned'
   | 'review_submitted'
-  | 'review_declined';
+  | 'review_declined'
+  | 'book_created'
+  | 'book_updated'
+  | 'book_deleted';
 
-export type AuditTargetType = 'article' | 'user' | 'journal' | 'reviewer_assignment';
+export type AuditTargetType = 'article' | 'user' | 'journal' | 'reviewer_assignment' | 'book';
 
 export async function logAuditEvent(params: {
   actorId: string;

@@ -308,8 +308,8 @@ export async function POST(request: NextRequest) {
 
       await logAuditEvent({
         actorId: user.id,
-        action: 'book_created' as any,
-        targetType: 'journal' as any,
+        action: 'book_created',
+        targetType: 'book',
         targetId: (data as any)?.id,
         metadata: { title: body.title, slug: body.slug },
       });
@@ -403,8 +403,8 @@ export async function PATCH(request: NextRequest) {
 
       await logAuditEvent({
         actorId: user.id,
-        action: 'book_updated' as any,
-        targetType: 'journal' as any,
+        action: 'book_updated',
+        targetType: 'book',
         targetId: id,
         metadata: { ...updates },
       });
@@ -527,8 +527,8 @@ export async function DELETE(request: NextRequest) {
 
       await logAuditEvent({
         actorId: user.id,
-        action: 'book_deleted' as any,
-        targetType: 'journal' as any,
+        action: 'book_deleted',
+        targetType: 'book',
         targetId: id,
         metadata: { title: book?.title },
       });
