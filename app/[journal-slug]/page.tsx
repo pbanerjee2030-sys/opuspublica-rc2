@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { ArrowLeft, BookOpen, Calendar, CheckCircle, Users, Fingerprint } from 'lucide-react';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
+import SafeHtml from '@/components/SafeHtml';
 
 const JOURNAL_COVER_MAP: Record<string, string> = {
   'cybersec-journal': '/CyberSec Journal.jpg',
@@ -260,6 +261,62 @@ export default async function JournalLandingPage({ params }: Props) {
                     </div>
                   )}
                 </div>
+
+                {(dbJournal.aims_and_scope || dbJournal.peer_review_policy || dbJournal.license_type) && (
+                  <div className="bg-white rounded-lg p-8 shadow-sm border border-black/5 mt-8 space-y-6">
+                    <h2 className="text-2xl sm:text-3xl font-serif text-[#8B1A1A] font-semibold border-b border-[#8B1A1A]/10 pb-3 mb-6">
+                      Editorial Policies
+                    </h2>
+
+                    {dbJournal.aims_and_scope && (
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                          Aims & Scope
+                        </h3>
+                        <SafeHtml
+                          html={dbJournal.aims_and_scope}
+                          className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed font-serif"
+                        />
+                      </div>
+                    )}
+
+                    {dbJournal.peer_review_policy && (
+                      <div className="space-y-2 pt-4 border-t border-[#1A1A2E]/5">
+                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                          Peer Review Policy
+                        </h3>
+                        <SafeHtml
+                          html={dbJournal.peer_review_policy}
+                          className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed font-serif"
+                        />
+                      </div>
+                    )}
+
+                    {dbJournal.license_type && (
+                      <div className="space-y-2 pt-4 border-t border-[#1A1A2E]/5">
+                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                          Licensing
+                        </h3>
+                        <p className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed">
+                          Articles in this journal are published under the{' '}
+                          {dbJournal.license_url ? (
+                            <a
+                              href={dbJournal.license_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[#C9A84C] hover:underline font-semibold"
+                            >
+                              {dbJournal.license_type}
+                            </a>
+                          ) : (
+                            <span className="font-semibold">{dbJournal.license_type}</span>
+                          )}
+                          .
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="lg:col-span-1 space-y-8">
