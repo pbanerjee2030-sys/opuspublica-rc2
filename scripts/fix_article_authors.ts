@@ -32,10 +32,12 @@ try {
   console.error('Failed to load .env.local manually:', err);
 }
 
+const AUTHOR_PROFILE_ID = 'aff40ff8-9ff5-47ae-a79c-936a374def00'; // Arindam Bhattacharya's author profile
+
 const mappings = [
   {
     article_id: 'e863739b-4042-4be7-8c34-d1d3d78379ce', // Migration, Security Threats...
-    profile_id: 'aff40ff8-9ff5-47ae-a79c-936a374def00', // Arindam Bhattacharya
+    profile_id: AUTHOR_PROFILE_ID,
     co_author_name: null
   },
   {
@@ -45,12 +47,12 @@ const mappings = [
   },
   {
     article_id: 'd62511c5-be8d-45cb-b6f6-8237d229bfc0', // Examining the Jurisdictional Challenges...
-    profile_id: 'aff40ff8-9ff5-47ae-a79c-936a374def00', // Arindam Bhattacharya
+    profile_id: AUTHOR_PROFILE_ID,
     co_author_name: null
   },
   {
     article_id: '12cc3ce1-6fa8-4f2f-85c4-d40c957c6198', // The Socio-Economic Impact of Judicial Verdicts
-    profile_id: 'ae7c2502-e4fd-49b7-98b7-3fe5c4358d3a', // Arindam Bhattacharya (admin)
+    profile_id: AUTHOR_PROFILE_ID, // Map to same active author profile so it shows on his profile page
     co_author_name: null
   }
 ];
