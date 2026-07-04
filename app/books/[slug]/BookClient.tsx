@@ -45,6 +45,9 @@ export interface Book {
   sample_path?: string;
   download_path?: string;
   external_url?: string;
+  doi_deposit_status?: string | null;
+  doi_deposited_at?: string | null;
+  doi_deposit_error?: string | null;
 }
 
 interface Props {

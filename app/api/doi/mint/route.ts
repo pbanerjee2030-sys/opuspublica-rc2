@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // BOOK DEPOSIT BRANCH
     // ----------------------------------------------------
     if (type === 'book') {
-      const { data: book, error: bookError } = await supabaseAdmin
+      const { data: book, error: bookError } = await (supabaseAdmin as any)
         .from('books')
         .select('*')
         .eq('id', id)

@@ -49,6 +49,9 @@ interface Book {
   status: string;
   is_available: boolean;
   doi?: string | null;
+  doi_deposit_status?: string | null;
+  doi_deposited_at?: string | null;
+  doi_deposit_error?: string | null;
 }
 
 export default function AdminBooksPage() {
