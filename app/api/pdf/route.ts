@@ -1,6 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 
+// Extracts the relative storage path inside the publications bucket if the database contains a full URL.
+function cleanStoragePath(pathOrUrl: string): string {
+  if (!pathOrUrl) return '';
+  
+  // Handle full Supabase URLs or other HTTP links
+  if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
+    const publicationsIndex = pathOrUrl.indexOf('/publications/');
+    if (publicationsIndex !== -1) {
+      return pathOrUrl.substring(publicationsIndex + '/publications/'.length);
+    }
+  }
+  
+  return pathOrUrl;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -22,7 +37,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 });
     }
 
-    const storagePath = article.pdf_url;
+    // Clean storage path to ensure relative bucket path
+    const storagePath = cleanStoragePath(article.pdf_url);
+    console.log('[PDF Route] Request for Article ID:', articleId);
+    console.log('[PDF Route] Raw DB URL:', article.pdf_url);
+    console.log('[PDF Route] Cleaned Storage Path:', storagePath);
 
     if (article.status === 'published') {
       const { data: signedUrl, error: signError } = await supabaseAdmin.storage
@@ -30,7 +49,13 @@ export async function GET(request: NextRequest) {
         .createSignedUrl(storagePath, 3600);
 
       if (signError || !signedUrl) {
-        return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
+        console.error('[PDF Route] createSignedUrl error for published article:', signError);
+        return NextResponse.json({ 
+          error: 'Failed to generate download link',
+          details: signError?.message || 'Unknown sign error',
+          path: storagePath,
+          rawUrl: article.pdf_url
+        }, { status: 500 });
       }
       return NextResponse.redirect(signedUrl.signedUrl);
     }
@@ -95,12 +120,19 @@ export async function GET(request: NextRequest) {
       .createSignedUrl(storagePath, 3600);
 
     if (signError || !signedUrl) {
-      return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
+      console.error('[PDF Route] createSignedUrl error for unpublished article:', signError);
+      return NextResponse.json({ 
+        error: 'Failed to generate download link',
+        details: signError?.message || 'Unknown sign error',
+        path: storagePath,
+        rawUrl: article.pdf_url
+      }, { status: 500 });
     }
 
     return NextResponse.redirect(signedUrl.signedUrl);
 
   } catch (e: any) {
+    console.error('[PDF Route] Unexpected handler crash:', e);
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
 }
