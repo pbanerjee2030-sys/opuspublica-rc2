@@ -62,36 +62,6 @@ const addresses = [
   },
 ];
 
-const books = [
-  {
-    id: 1,
-    slug: "grace-timekeepers",
-    title: "GRACE: Timekeepers of Ancient Cultural Legacy",
-    description: "A profound exploration of the urgent need to preserve ancient cultures and traditions.",
-    author: "Francisca Oliviera et al.",
-    status: "Available Now",
-    coverImage: "/books/GRACE-Timekeepers-of-Ancient-Cultural-Legacy.png"
-  },
-  {
-    id: 2,
-    slug: "echoes-of-the-himalayas",
-    title: "Echoes of the Himalayas: Poems of Awe & Spiritual Discovery",
-    description: "A remarkable fusion of cultural immersion and recollections conveyed with lyrical gentleness.",
-    author: "Verender Bangroo",
-    status: "Available Now",
-    coverImage: "/books/Echoes of the Himalayas.png"
-  },
-  {
-    id: 3,
-    slug: "bhagavad-gita-ballot-box",
-    title: "From the Bhagavad Gita to the Ballot Box",
-    description: "Applying Krishna's Teachings to Politics.",
-    author: "Arindam Bhattacharya",
-    status: "Available Now",
-    coverImage: "/books/From the Bhagavad Gita to the Ballot Box.png"
-  }
-];
-
 export const revalidate = 0;
 
 export default async function Home() {
@@ -105,6 +75,17 @@ export default async function Home() {
     }
   } catch (e) {
     console.error('Error querying journals database:', e);
+  }
+
+  let dbBooks: any[] = [];
+  try {
+    const { data } = await (supabase as any).from('books').select('*');
+    if (data && data.length > 0) {
+      const slugOrder = ['grace-timekeepers', 'echoes-of-the-himalayas', 'bhagavad-gita-ballot-box'];
+      dbBooks = [...data].sort((a, b) => slugOrder.indexOf(a.slug) - slugOrder.indexOf(b.slug));
+    }
+  } catch (e) {
+    console.error('Error querying books database:', e);
   }
 
   let latestArticles: ArticleData[] = [];
@@ -344,55 +325,67 @@ export default async function Home() {
           </header>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {books.map((book) => (
-              <div 
-                key={book.id}
-                className="group relative bg-[#13131A] border border-zinc-800/60 rounded-xl overflow-hidden hover:border-[#C9A84C]/30 transition-all duration-500 shadow-md hover:shadow-xl hover:shadow-[#C9A84C]/5 flex flex-col"
-              >
-                {/* Cover Image */}
-                <div className="relative w-full h-48 overflow-hidden bg-zinc-900">
-                  <Image
-                    src={book.coverImage}
-                    alt={`${book.title} Cover`}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
-                    priority
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#13131A] via-transparent to-transparent opacity-60" />
-                  <div className="absolute top-3 right-3 z-20">
-                    <span className="text-[8px] uppercase tracking-widest font-bold bg-[#C9A84C]/90 text-[#13131A] px-2 py-0.5 rounded-full">
-                      {book.status}
-                    </span>
+            {dbBooks.map((book) => {
+              const displayAuthor = book.authors && book.authors.length > 0
+                ? (book.authors.length > 1 ? `${book.authors[0].name} et al.` : book.authors[0].name)
+                : 'Unknown Author';
+
+              return (
+                <div 
+                  key={book.id}
+                  className="group relative bg-[#13131A] border border-zinc-800/60 rounded-xl overflow-hidden hover:border-[#C9A84C]/30 transition-all duration-500 shadow-md hover:shadow-xl hover:shadow-[#C9A84C]/5 flex flex-col"
+                >
+                  {/* Cover Image */}
+                  <div className="relative w-full h-48 overflow-hidden bg-zinc-900">
+                    {book.cover_image ? (
+                      <Image
+                        src={book.cover_image}
+                        alt={`${book.title} Cover`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
+                        priority
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#8B1A1A]/10">
+                        <BookOpen className="w-10 h-10 text-[#8B1A1A]/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#13131A] via-transparent to-transparent opacity-60" />
+                    <div className="absolute top-3 right-3 z-20">
+                      <span className="text-[8px] uppercase tracking-widest font-bold bg-[#C9A84C]/90 text-[#13131A] px-2 py-0.5 rounded-full">
+                        {book.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="relative p-4 space-y-2 flex-1 flex flex-col">
+                    <h3 className="text-sm font-serif font-bold text-white line-clamp-2 leading-snug group-hover:text-[#C9A84C] transition-colors duration-300">
+                      {book.title}
+                    </h3>
+                    <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed flex-1">
+                      {book.description}
+                    </p>
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <User className="w-3 h-3 text-[#C9A84C]" />
+                      <span className="text-[10px] text-zinc-500 font-medium">{displayAuthor}</span>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-4 pb-4">
+                    <Link
+                      href={`/books/${book.slug}`}
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-[#C9A84C]/10 border border-zinc-800 hover:border-[#C9A84C]/30 text-zinc-300 hover:text-[#C9A84C] text-[11px] font-bold rounded-lg transition-all duration-300"
+                    >
+                      View Details
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </div>
                 </div>
-
-                {/* Content */}
-                <div className="relative p-4 space-y-2 flex-1 flex flex-col">
-                  <h3 className="text-sm font-serif font-bold text-white line-clamp-2 leading-snug group-hover:text-[#C9A84C] transition-colors duration-300">
-                    {book.title}
-                  </h3>
-                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed flex-1">
-                    {book.description}
-                  </p>
-                  <div className="flex items-center gap-1.5 pt-1">
-                    <User className="w-3 h-3 text-[#C9A84C]" />
-                    <span className="text-[10px] text-zinc-500 font-medium">{book.author}</span>
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="px-4 pb-4">
-                  <Link
-                    href={`/books/${book.slug}`}
-                    className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-[#C9A84C]/10 border border-zinc-800 hover:border-[#C9A84C]/30 text-zinc-300 hover:text-[#C9A84C] text-[11px] font-bold rounded-lg transition-all duration-300"
-                  >
-                    View Details
-                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>

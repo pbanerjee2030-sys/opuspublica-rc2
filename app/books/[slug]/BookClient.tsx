@@ -1,6 +1,5 @@
 'use client';
 
-import { Book } from '@/lib/data';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowLeft, BookOpen, Download, User, Calendar, Globe } from 'lucide-react';
@@ -8,18 +7,62 @@ import { motion } from 'framer-motion';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 
+export interface BookAuthor {
+  name: string;
+  role: string;
+}
+
+export interface BookTestimonial {
+  quote: string;
+  author: string;
+  title: string;
+}
+
+export interface Book {
+  id: string;
+  slug: string;
+  title: string;
+  subtitle?: string | null;
+  cover_image?: string | null;
+  authors: BookAuthor[];
+  isbn?: string | null;
+  isbn_ebook?: string | null;
+  publication_date?: string | null;
+  pages?: number | null;
+  language?: string | null;
+  format?: string | null;
+  price?: string | null;
+  description: string;
+  long_description?: string | null;
+  table_of_contents?: string[] | null;
+  testimonials?: BookTestimonial[] | null;
+  categories: string[];
+  tags: string[];
+  status: string;
+  is_available: boolean;
+  doi?: string | null;
+  has_sample?: boolean;
+  sample_path?: string;
+  download_path?: string;
+  external_url?: string;
+}
+
 interface Props {
   book: Book;
 }
 
-const coverMap: Record<number, string> = {
-  1: '/books/GRACE-Timekeepers-of-Ancient-Cultural-Legacy.png',
-  2: '/books/Echoes of the Himalayas.png',
-  3: '/books/From the Bhagavad Gita to the Ballot Box.png',
-};
-
 export default function BookClient({ book }: Props) {
-  const coverSrc = coverMap[book.id] || book.coverImage;
+  const coverSrc = book.cover_image;
+
+  // Dynamically build the formats array from isbn and isbn_ebook
+  const formats = [];
+  if (book.isbn) {
+    formats.push({ name: 'Paperback', price: book.price || '', isbn: book.isbn });
+  }
+  if (book.isbn_ebook) {
+    formats.push({ name: 'E-book', price: book.price || '', isbn: book.isbn_ebook });
+  }
+
 
   return (
     <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col font-sans">
@@ -108,8 +151,8 @@ export default function BookClient({ book }: Props) {
                     <div>
                       <span className="text-white/40 block text-xs mb-0.5">Price</span>
                       <span className="text-[#C9A84C] font-semibold">
-                        {book.formats && book.formats.length > 0
-                          ? `${book.formats.find(f => f.name === 'Ebook')?.price || ''} - ${book.formats.find(f => f.name === 'Paperback')?.price || ''}`
+                        {formats && formats.length > 0
+                          ? `${formats.find(f => f.name === 'E-book')?.price || ''} - ${formats.find(f => f.name === 'Paperback')?.price || ''}`
                           : book.price}
                       </span>
                     </div>
@@ -123,7 +166,7 @@ export default function BookClient({ book }: Props) {
                     </div>
                     <div>
                       <span className="text-white/40 block text-xs mb-0.5">Published</span>
-                      <span className="text-white font-medium">{book.publicationDate}</span>
+                      <span className="text-white font-medium">{book.publication_date}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -148,7 +191,7 @@ export default function BookClient({ book }: Props) {
                   <h2 className="text-2xl font-serif text-[#8B1A1A] mb-4 font-semibold">Synopsis</h2>
                   <div className="space-y-4 text-base sm:text-lg leading-relaxed text-[#1A1A2E]/80">
                     <p className="font-medium text-[#1A1A2E]">{book.description}</p>
-                    <p>{book.longDescription}</p>
+                    <p>{book.long_description}</p>
                   </div>
                 </motion.div>
 
@@ -185,7 +228,7 @@ export default function BookClient({ book }: Props) {
               {/* Right Column: Table of Contents & Specifications */}
               <div className="lg:col-span-1 space-y-8">
                 {/* Table of Contents */}
-                {book.tableOfContents && book.tableOfContents.length > 0 && (
+                {book.table_of_contents && book.table_of_contents.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -196,7 +239,7 @@ export default function BookClient({ book }: Props) {
                       Table of Contents
                     </h3>
                     <ul className="space-y-3">
-                      {book.tableOfContents.map((chapter, index) => (
+                      {book.table_of_contents.map((chapter, index) => (
                         <li key={index} className="flex gap-3 text-[#1A1A2E]/80 text-sm sm:text-base">
                           <span className="text-[#C9A84C] font-semibold">{index + 1}.</span>
                           <span>{chapter}</span>
@@ -225,7 +268,7 @@ export default function BookClient({ book }: Props) {
                       <span className="text-[#1A1A2E]/50">Pages</span>
                       <span className="font-medium text-[#1A1A2E]">{book.pages}</span>
                     </div>
-                    {book.formats && book.formats.map((format, idx) => (
+                    {formats && formats.map((format, idx) => (
                       <div key={idx} className="space-y-1 pt-1 border-b border-[#1A1A2E]/5 pb-2 last:border-b-0 last:pb-0 last:border-t-0">
                         <span className="font-serif font-semibold text-[#8B1A1A] text-xs uppercase tracking-wider block">
                           {format.name} Format
@@ -267,9 +310,9 @@ export default function BookClient({ book }: Props) {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-4">
-                  {book.hasSample && book.samplePath && (
+                  {book.has_sample && book.sample_path && (
                     <a
-                      href={book.samplePath}
+                      href={book.sample_path}
                       download
                       className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#C9A84C] text-[#C9A84C] hover:bg-[#C9A84C]/10 font-semibold rounded-lg text-sm transition-all"
                     >
@@ -277,9 +320,9 @@ export default function BookClient({ book }: Props) {
                       Download Sample
                     </a>
                   )}
-                  {book.isAvailable && (
+                  {book.is_available && (
                     <a
-                      href={book.externalUrl || '#'}
+                      href={book.external_url || '#'}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#1A1A2E] font-semibold rounded-lg text-sm transition-all transform hover:scale-105"
                     >
                       <BookOpen className="w-4 h-4" />

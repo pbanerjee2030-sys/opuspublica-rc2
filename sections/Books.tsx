@@ -3,7 +3,9 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Book, ArrowRight } from 'lucide-react';
-import { books } from '@/lib/data';
+import { supabase } from '@/lib/supabase';
+import { useEffect, useState } from 'react';
+import { Book as BookType } from '@/app/books/[slug]/BookClient';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -20,17 +22,27 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-const coverMap: Record<number, string> = {
-  1: '/GRACE-Timekeepers-of-Ancient-Cultural-Legacy-user-preview.png',
-  2: '/Echoes-of-the-Himalayas-user-preview.png',
-  3: '/From-the-Bhagavad-Gita-to-the-Ballot-Box-Applying-Krishnas-Teachings-to-Politics-user-preview.png',
-};
-
 export default function Books() {
+  const [dbBooks, setDbBooks] = useState<BookType[]>([]);
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1
   });
+
+  useEffect(() => {
+    async function fetchBooks() {
+      const { data, error } = await (supabase as any)
+        .from('books')
+        .select('*');
+      if (!error && data) {
+        const slugOrder = ['grace-timekeepers', 'echoes-of-the-himalayas', 'bhagavad-gita-ballot-box'];
+        const sorted = [...data].sort((a, b) => slugOrder.indexOf(a.slug) - slugOrder.indexOf(b.slug));
+        setDbBooks(sorted);
+      }
+    }
+    fetchBooks();
+  }, []);
+
 
   return (
     <section id="books" className="py-20 bg-[#1A1A2E]">
@@ -57,13 +69,8 @@ export default function Books() {
           animate={inView ? "visible" : "hidden"}
           className="grid grid-cols-1 md:grid-cols-3 gap-8"
         >
-          {books.map((book) => {
-            const prices = book.formats && book.formats.length > 0
-              ? book.formats.map(f => parseFloat(f.price.replace('$', ''))).sort((a, b) => a - b)
-              : [];
-            const displayPrice = prices.length > 1
-              ? `$${prices[0].toFixed(2)} - $${prices[prices.length - 1].toFixed(2)}`
-              : book.price;
+          {dbBooks.map((book) => {
+            const displayPrice = book.price;
 
             return (
               <motion.div
@@ -75,9 +82,9 @@ export default function Books() {
                   <div className="bg-white/5 rounded-lg p-6 border border-white/10 hover:border-[#C9A84C] transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-[#C9A84C]/10 h-full flex flex-col">
                     <div className="flex justify-center mb-4">
                       <div className="w-32 h-40 bg-gradient-to-br from-[#8B1A1A] to-[#C9A84C] rounded-lg flex items-center justify-center relative overflow-hidden">
-                        {coverMap[book.id] ? (
+                        {book.cover_image ? (
                           <Image
-                            src={coverMap[book.id]}
+                            src={book.cover_image}
                             alt={`${book.title} Cover`}
                             fill
                             sizes="128px"
