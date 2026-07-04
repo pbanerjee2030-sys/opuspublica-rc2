@@ -16,6 +16,16 @@ function cleanStoragePath(pathOrUrl: string): string {
   return pathOrUrl;
 }
 
+// Ensures that the signed URL target redirect is always absolute.
+function toAbsoluteUrl(signedUrl: string): string {
+  if (signedUrl.startsWith('http://') || signedUrl.startsWith('https://')) {
+    return signedUrl;
+  }
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const path = signedUrl.startsWith('/') ? signedUrl : `/${signedUrl}`;
+  return `${supabaseUrl}${path}`;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -57,7 +67,10 @@ export async function GET(request: NextRequest) {
           rawUrl: article.pdf_url
         }, { status: 500 });
       }
-      return NextResponse.redirect(signedUrl.signedUrl);
+      
+      const absoluteUrl = toAbsoluteUrl(signedUrl.signedUrl);
+      console.log('[PDF Route] Published Redirect - Raw:', signedUrl.signedUrl, 'Absolute:', absoluteUrl);
+      return NextResponse.redirect(absoluteUrl);
     }
 
     const authHeader = request.headers.get('Authorization');
@@ -129,7 +142,9 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
-    return NextResponse.redirect(signedUrl.signedUrl);
+    const absoluteUrl = toAbsoluteUrl(signedUrl.signedUrl);
+    console.log('[PDF Route] Unpublished Redirect - Raw:', signedUrl.signedUrl, 'Absolute:', absoluteUrl);
+    return NextResponse.redirect(absoluteUrl);
 
   } catch (e: any) {
     console.error('[PDF Route] Unexpected handler crash:', e);
