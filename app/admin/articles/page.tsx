@@ -28,6 +28,7 @@ interface Article {
   published_at: string | null;
   created_at: string;
   rejection_reason: string | null;
+  content_needs_review?: boolean;
   journals: { name: string; slug: string } | null;
   article_authors: { co_author_name: string | null; profiles: { id: string; full_name: string; email?: string } | null }[] | null;
 }
@@ -294,7 +295,14 @@ export default function ArticlesPage() {
                 {filteredArticles.map((article) => (
                   <tr key={article.id} className="hover:bg-zinc-800/20 transition-colors">
                     <td className="px-5 py-4">
-                      <p className="text-sm text-white font-medium truncate max-w-[300px]">{article.title}</p>
+                      <div className="flex flex-col gap-1 items-start">
+                        <p className="text-sm text-white font-medium truncate max-w-[300px]" title={article.title}>{article.title}</p>
+                        {article.content_needs_review && (
+                          <span className="px-1.5 py-0.5 rounded bg-amber-950/60 text-amber-400 text-[10px] font-semibold border border-amber-900/30">
+                            Draft content — pending editorial review
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-zinc-500 mt-0.5 md:hidden">{article.journals?.name}</p>
                     </td>
                     <td className="px-5 py-4 hidden md:table-cell">
