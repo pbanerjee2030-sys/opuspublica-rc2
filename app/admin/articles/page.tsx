@@ -328,7 +328,7 @@ export default function ArticlesPage() {
                         </button>
                         {article.pdf_url && (
                           <a
-                            href={article.pdf_url}
+                            href={`/api/pdf?id=${article.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
