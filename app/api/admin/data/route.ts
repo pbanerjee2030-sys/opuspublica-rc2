@@ -78,6 +78,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data });
     }
 
+    // books: admin/editor only
+    if (entity === 'books') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      const { data, error } = await (supabaseAdmin as any).from('books').select('*').order('title');
+      if (error) throw error;
+      return NextResponse.json({ data });
+    }
+
     // users: admin only
     if (entity === 'users') {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin']);
@@ -290,6 +300,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data });
     }
 
+    if (entity === 'books') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Only admins/editors can create books' }, { status: 403 });
+      const { data, error } = await (supabaseAdmin as any).from('books').insert(body).select().single();
+      if (error) throw error;
+
+      await logAuditEvent({
+        actorId: user.id,
+        action: 'book_created' as any,
+        targetType: 'journal' as any,
+        targetId: (data as any)?.id,
+        metadata: { title: body.title, slug: body.slug },
+      });
+
+      return NextResponse.json({ data });
+    }
+
     if (entity === 'reviewer_assignments') {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
       if (!profile) return NextResponse.json({ error: 'Only admins/editors can assign reviewers' }, { status: 403 });
@@ -365,6 +392,23 @@ export async function PATCH(request: NextRequest) {
       if (!profile) return NextResponse.json({ error: 'Only admins can modify journals' }, { status: 403 });
       const { error } = await (supabaseAdmin as any).from('journals').update(updates).eq('id', id);
       if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
+    if (entity === 'books') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Only admins/editors can modify books' }, { status: 403 });
+      const { error } = await (supabaseAdmin as any).from('books').update(updates).eq('id', id);
+      if (error) throw error;
+
+      await logAuditEvent({
+        actorId: user.id,
+        action: 'book_updated' as any,
+        targetType: 'journal' as any,
+        targetId: id,
+        metadata: { ...updates },
+      });
+
       return NextResponse.json({ success: true });
     }
 
@@ -463,6 +507,30 @@ export async function DELETE(request: NextRequest) {
         targetType: 'journal',
         targetId: id,
         metadata: { journal_name: journal?.name },
+      });
+
+      return NextResponse.json({ success: true });
+    }
+
+    if (entity === 'books') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Only admins/editors can delete books' }, { status: 403 });
+
+      const { data: book } = await (supabaseAdmin as any)
+        .from('books')
+        .select('title')
+        .eq('id', id)
+        .single();
+
+      const { error } = await (supabaseAdmin as any).from('books').delete().eq('id', id);
+      if (error) throw error;
+
+      await logAuditEvent({
+        actorId: user.id,
+        action: 'book_deleted' as any,
+        targetType: 'journal' as any,
+        targetId: id,
+        metadata: { title: book?.title },
       });
 
       return NextResponse.json({ success: true });

@@ -24,12 +24,14 @@ import {
   ExternalLink,
   ClipboardCheck,
   BarChart3,
+  Book,
 } from 'lucide-react';
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/articles', label: 'Articles', icon: FileText },
   { href: '/admin/journals', label: 'Journals', icon: BookOpen },
+  { href: '/admin/books', label: 'Books', icon: Book },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/reviewers', label: 'Reviews', icon: Shield },
   { href: '/admin/reviewer-workload', label: 'Reviewer Workload', icon: BarChart3 },
