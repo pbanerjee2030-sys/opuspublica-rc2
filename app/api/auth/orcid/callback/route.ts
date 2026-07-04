@@ -44,6 +44,10 @@ function verifyState(signedState: string, secret: string): boolean {
 }
 
 export async function GET(request: NextRequest) {
+  const host = request.headers.get('host') || 'opuspublica.org';
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const origin = `${proto}://${host}`;
+
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const code = url.searchParams.get('code');
@@ -63,21 +67,21 @@ export async function GET(request: NextRequest) {
   const clientId = process.env.ORCID_CLIENT_ID;
 
   if (!clientSecret || !clientId) {
-    const fallbackUrl = new URL('/', request.url);
+    const fallbackUrl = new URL('/', origin);
     fallbackUrl.searchParams.set('orcid_error', 'ORCID client is not configured on the server.');
     return cleanResponse(fallbackUrl);
   }
 
   // 1. Verify CSRF State
   if (!state || !savedState || state !== savedState) {
-    const errorUrl = new URL('/', request.url);
+    const errorUrl = new URL('/', origin);
     errorUrl.searchParams.set('orcid_error', 'CSRF verification failed: State mismatch or missing.');
     return cleanResponse(errorUrl);
   }
 
   // 2. Verify signature of state
   if (!verifyState(state, clientSecret)) {
-    const errorUrl = new URL('/', request.url);
+    const errorUrl = new URL('/', origin);
     errorUrl.searchParams.set('orcid_error', 'CSRF verification failed: Invalid state signature.');
     return cleanResponse(errorUrl);
   }
@@ -87,13 +91,13 @@ export async function GET(request: NextRequest) {
   const [stateUserId] = statePayload.split(':');
 
   if (errorParam) {
-    const profileUrl = new URL(`/profile/${stateUserId}`, request.url);
+    const profileUrl = new URL(`/profile/${stateUserId}`, origin);
     profileUrl.searchParams.set('orcid_error', `ORCID authentication failed: ${errorParam}`);
     return cleanResponse(profileUrl);
   }
 
   if (!code) {
-    const profileUrl = new URL(`/profile/${stateUserId}`, request.url);
+    const profileUrl = new URL(`/profile/${stateUserId}`, origin);
     profileUrl.searchParams.set('orcid_error', 'No authorization code provided.');
     return cleanResponse(profileUrl);
   }
@@ -101,14 +105,11 @@ export async function GET(request: NextRequest) {
   // 4. Verify requesting user is authenticated & matches stateUserId
   const { user, profile } = await getServerUserAndProfileAdminBypass() as { user: any; profile: any };
   if (!user || !profile || user.id !== stateUserId) {
-    const loginUrl = new URL('/login', request.url);
+    const loginUrl = new URL('/login', origin);
     return cleanResponse(loginUrl);
   }
 
   try {
-    const host = request.headers.get('host') || 'opuspublica.org';
-    const proto = request.headers.get('x-forwarded-proto') || 'https';
-    const origin = `${proto}://${host}`;
     const callbackUri = `${origin}/api/auth/orcid/callback`;
 
     // 5. Exchange code for token
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
     if (!tokenRes.ok) {
       const errDetail = await tokenRes.text();
       console.error('ORCID Token Exchange failed:', errDetail);
-      const profileUrl = new URL(`/profile/${user.id}`, request.url);
+      const profileUrl = new URL(`/profile/${user.id}`, origin);
       profileUrl.searchParams.set('orcid_error', 'Failed to exchange code for ORCID access token.');
       return cleanResponse(profileUrl);
     }
@@ -139,7 +140,7 @@ export async function GET(request: NextRequest) {
     const orcidId = tokenData.orcid;
 
     if (!orcidId) {
-      const profileUrl = new URL(`/profile/${user.id}`, request.url);
+      const profileUrl = new URL(`/profile/${user.id}`, origin);
       profileUrl.searchParams.set('orcid_error', 'ORCID API did not return an ORCID iD.');
       return cleanResponse(profileUrl);
     }
@@ -156,13 +157,13 @@ export async function GET(request: NextRequest) {
 
     if (checkError) {
       console.error('Database query error checking ORCID uniqueness:', checkError);
-      const profileUrl = new URL(`/profile/${user.id}`, request.url);
+      const profileUrl = new URL(`/profile/${user.id}`, origin);
       profileUrl.searchParams.set('orcid_error', 'Database verification error.');
       return cleanResponse(profileUrl);
     }
 
     if (existingProfile) {
-      const profileUrl = new URL(`/profile/${user.id}`, request.url);
+      const profileUrl = new URL(`/profile/${user.id}`, origin);
       profileUrl.searchParams.set(
         'orcid_error',
         `This ORCID iD is already linked to another profile (${existingProfile.full_name || 'another user'}).`
@@ -184,7 +185,7 @@ export async function GET(request: NextRequest) {
       // so it's expected to be rare, not a bug if it happens.
       if ((updateError as any).code === '23505') {
         console.warn('ORCID uniqueness race caught at DB level for', orcidId);
-        const profileUrl = new URL(`/profile/${user.id}`, request.url);
+        const profileUrl = new URL(`/profile/${user.id}`, origin);
         profileUrl.searchParams.set(
           'orcid_error',
           'This ORCID iD was just linked to another profile. Please try again.'
@@ -193,19 +194,19 @@ export async function GET(request: NextRequest) {
       }
 
       console.error('Failed to update profile ORCID iD:', updateError);
-      const profileUrl = new URL(`/profile/${user.id}`, request.url);
+      const profileUrl = new URL(`/profile/${user.id}`, origin);
       profileUrl.searchParams.set('orcid_error', 'Failed to save ORCID iD to your profile.');
       return cleanResponse(profileUrl);
     }
 
     // Redirect to profile with success indicator
-    const successUrl = new URL(`/profile/${user.id}`, request.url);
+    const successUrl = new URL(`/profile/${user.id}`, origin);
     successUrl.searchParams.set('orcid_connected', 'true');
     return cleanResponse(successUrl);
 
   } catch (err: any) {
     console.error('Unexpected error in ORCID callback:', err);
-    const profileUrl = new URL(`/profile/${stateUserId}`, request.url);
+    const profileUrl = new URL(`/profile/${stateUserId}`, origin);
     profileUrl.searchParams.set('orcid_error', 'An unexpected error occurred during ORCID connection.');
     return cleanResponse(profileUrl);
   }

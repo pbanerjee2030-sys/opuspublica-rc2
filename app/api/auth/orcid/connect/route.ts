@@ -42,6 +42,10 @@ async function getServerUserAndProfileAdminBypass() {
 }
 
 export async function GET(request: NextRequest) {
+  const host = request.headers.get('host') || 'opuspublica.org';
+  const proto = request.headers.get('x-forwarded-proto') || 'https';
+  const origin = `${proto}://${host}`;
+
   try {
     const { user, profile } = await getServerUserAndProfileAdminBypass() as { user: any; profile: any };
     
@@ -53,7 +57,7 @@ export async function GET(request: NextRequest) {
     const clientSecret = process.env.ORCID_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      const redirectUrl = new URL(`/profile/${user.id}`, request.url);
+      const redirectUrl = new URL(`/profile/${user.id}`, origin);
       redirectUrl.searchParams.set('orcid_error', 'ORCID client is not configured on the server.');
       return NextResponse.redirect(redirectUrl);
     }
@@ -63,9 +67,6 @@ export async function GET(request: NextRequest) {
     const dataToSign = `${user.id}:${randomVal}`;
     const signedState = signState(dataToSign, clientSecret);
 
-    const host = request.headers.get('host') || 'opuspublica.org';
-    const proto = request.headers.get('x-forwarded-proto') || 'https';
-    const origin = `${proto}://${host}`;
     const callbackUri = `${origin}/api/auth/orcid/callback`;
 
     // Construct the ORCID Authorize URL
