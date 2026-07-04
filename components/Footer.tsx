@@ -18,6 +18,7 @@ const legalLinks = [
   { href: '/cookies', label: 'Cookie Policy' },
   { href: '/policies/corrections-and-retractions', label: 'Corrections Policy' },
   { href: '/policies/research-ethics', label: 'Research Ethics' },
+  { href: '/policies/open-access-licensing', label: 'Open Access & Licensing' },
 ];
 
 const TwitterIcon = ({ className }: { className?: string }) => (

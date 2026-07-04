@@ -298,6 +298,15 @@ export default async function JournalLandingPage({ params }: Props) {
                       </li>
                     ))}
                   </ul>
+                  <div className="mt-5 pt-4 border-t border-[#1A1A2E]/5 text-xs text-[#1A1A2E]/60 leading-normal">
+                    This journal is fully open access. All published content is licensed under the{' '}
+                    <Link 
+                      href="/policies/open-access-licensing" 
+                      className="text-[#8B1A1A] hover:text-[#C9A84C] font-semibold underline"
+                    >
+                      Open Access & Licensing Policy (CC BY 4.0)
+                    </Link>.
+                  </div>
                 </div>
 
                 {boardMembers.length > 0 && (
