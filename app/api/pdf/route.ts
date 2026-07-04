@@ -25,10 +25,14 @@ export async function GET(request: NextRequest) {
     const storagePath = article.pdf_url;
 
     if (article.status === 'published') {
-      const { data } = supabaseAdmin.storage
+      const { data: signedUrl, error: signError } = await supabaseAdmin.storage
         .from('publications')
-        .getPublicUrl(storagePath);
-      return NextResponse.redirect(data.publicUrl);
+        .createSignedUrl(storagePath, 3600);
+
+      if (signError || !signedUrl) {
+        return NextResponse.json({ error: 'Failed to generate download link' }, { status: 500 });
+      }
+      return NextResponse.redirect(signedUrl.signedUrl);
     }
 
     const authHeader = request.headers.get('Authorization');
