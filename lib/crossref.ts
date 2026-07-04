@@ -196,3 +196,102 @@ ${crossmarkXml}${fundingXml}        <doi_data>
   </body>
 </doi_batch>`;
 }
+
+/**
+ * Generates Crossref metadata deposit XML for Books (Monographs)
+ */
+export function generateBookCrossrefXml(bookData: {
+  title: string;
+  doi: string;
+  url: string;
+  publication_date?: string | null;
+  isbn?: string | null;
+  isbn_ebook?: string | null;
+  authors: Array<{
+    name: string;
+    role?: string | null;
+  }>;
+}): string {
+  const batchId = `deposit_${bookData.doi.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
+  const timestamp = Date.now();
+  
+  let year = '';
+  if (bookData.publication_date) {
+    const match = bookData.publication_date.match(/\d{4}/);
+    if (match) {
+      year = match[0];
+    }
+  }
+  if (!year) {
+    year = String(new Date().getFullYear());
+  }
+
+  const escapedTitle = escapeXml(bookData.title);
+  const escapedDoi = escapeXml(bookData.doi);
+  const escapedUrl = escapeXml(bookData.url);
+
+  // Contributors XML
+  let contributorsXml = '';
+  if (bookData.authors && bookData.authors.length > 0) {
+    contributorsXml = '    <contributors>\n';
+    bookData.authors.forEach((author, index) => {
+      const { given, surname } = splitName(author.name);
+      const seq = index === 0 ? 'first' : 'additional';
+      contributorsXml += `      <person_name sequence="${seq}" contributor_role="author">\n`;
+      if (given) {
+        contributorsXml += `        <given_name>${escapeXml(given)}</given_name>\n`;
+      }
+      contributorsXml += `        <surname>${escapeXml(surname)}</surname>\n`;
+      contributorsXml += `      </person_name>\n`;
+    });
+    contributorsXml += '    </contributors>';
+  }
+
+  // ISBN XML
+  let isbnXml = '';
+  const cleanIsbn = bookData.isbn?.trim() || '';
+  const cleanIsbnEbook = bookData.isbn_ebook?.trim() || '';
+
+  if (cleanIsbn || cleanIsbnEbook) {
+    if (cleanIsbn) {
+      isbnXml += `    <isbn media_type="print">${escapeXml(cleanIsbn)}</isbn>\n`;
+    }
+    if (cleanIsbnEbook) {
+      isbnXml += `    <isbn media_type="electronic">${escapeXml(cleanIsbnEbook)}</isbn>\n`;
+    }
+  } else {
+    isbnXml += `    <noisbn reason="archive_volume"/>\n`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://www.crossref.org/schemas/crossref5.3.1.xsd">
+  <head>
+    <doi_batch_id>${batchId}</doi_batch_id>
+    <timestamp>${timestamp}</timestamp>
+    <depositor>
+      <depositor_name>Opus Publica</depositor_name>
+      <email_address>admin@opuspublica.com</email_address>
+    </depositor>
+    <registrant>Advocacy Unified Network</registrant>
+  </head>
+  <body>
+    <book book_type="monograph">
+      <book_metadata language="en">
+        <titles><title>${escapedTitle}</title></titles>
+        ${contributorsXml}
+        <publication_date>
+          <year>${year}</year>
+        </publication_date>
+        ${isbnXml.trim()}
+        <publisher>
+          <publisher_name>Opus Publica</publisher_name>
+        </publisher>
+        <doi_data>
+          <doi>${escapedDoi}</doi>
+          <resource>${escapedUrl}</resource>
+        </doi_data>
+      </book_metadata>
+    </book>
+  </body>
+</doi_batch>`;
+}

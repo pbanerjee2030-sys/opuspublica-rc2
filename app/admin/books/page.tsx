@@ -78,6 +78,7 @@ export default function AdminBooksPage() {
     table_of_contents: '',
     categories: '',
     tags: '',
+    doi: '',
   });
 
   // Repeatable array rows
@@ -87,6 +88,63 @@ export default function AdminBooksPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [userRole, setUserRole] = useState<string>('author');
+  const [minting, setMinting] = useState(false);
+
+  const handleMintDoi = async () => {
+    if (!editingBook) return;
+    if (!form.doi.trim()) {
+      showToast('error', 'A DOI must be assigned first.');
+      return;
+    }
+    if (form.doi.trim() !== (editingBook.doi || '')) {
+      showToast('error', 'Please save the new DOI first by clicking "Save Changes" before minting.');
+      return;
+    }
+
+    setMinting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/doi/mint?type=book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ bookId: editingBook.id }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'DOI deposit failed');
+      }
+
+      showToast('success', 'DOI deposit successfully submitted to Crossref.');
+      
+      setEditingBook({
+        ...editingBook,
+        doi: form.doi.trim(),
+        doi_deposit_status: data.status,
+        doi_deposited_at: new Date().toISOString(),
+        doi_deposit_error: null,
+      });
+
+      fetchBooks();
+    } catch (e: any) {
+      showToast('error', e.message || 'Failed to mint DOI');
+      
+      setEditingBook({
+        ...editingBook,
+        doi_deposit_status: 'failed',
+        doi_deposit_error: e.message || 'Deposit failed',
+      });
+      fetchBooks();
+    } finally {
+      setMinting(false);
+    }
+  };
 
   useEffect(() => {
     fetchBooks();
@@ -140,6 +198,7 @@ export default function AdminBooksPage() {
       table_of_contents: '',
       categories: '',
       tags: '',
+      doi: '',
     });
     setAuthors([{ name: '', role: 'Author' }]);
     setTestimonials([]);
@@ -167,6 +226,7 @@ export default function AdminBooksPage() {
       table_of_contents: book.table_of_contents ? book.table_of_contents.join('\n') : '',
       categories: book.categories ? book.categories.join('\n') : '',
       tags: book.tags ? book.tags.join('\n') : '',
+      doi: book.doi || '',
     });
     setAuthors(book.authors && book.authors.length > 0 ? book.authors : [{ name: '', role: 'Author' }]);
     setTestimonials(book.testimonials && book.testimonials.length > 0 ? book.testimonials : []);
@@ -211,6 +271,7 @@ export default function AdminBooksPage() {
         table_of_contents: parseArray(form.table_of_contents),
         categories: parseArray(form.categories),
         tags: parseArray(form.tags),
+        doi: form.doi.trim() || null,
       };
 
       if (editingBook) {
@@ -563,8 +624,80 @@ export default function AdminBooksPage() {
                       placeholder="$25.99"
                     />
                   </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                      DOI Prefix/Identifier
+                    </label>
+                    <input
+                      type="text"
+                      value={form.doi}
+                      onChange={(e) => setForm({ ...form, doi: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] font-mono"
+                      placeholder="e.g. 10.5555/grace-timekeepers"
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* Section 2.5: DOI Registration Status (Only when editing and DOI is set) */}
+              {editingBook && (
+                <div className="space-y-4">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] border-b border-zinc-800 pb-1.5">
+                    DOI Registration Status
+                  </p>
+                  <div className="p-4 bg-zinc-950/40 border border-zinc-800/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-400 font-medium">Status:</span>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          editingBook.doi_deposit_status === 'submitted'
+                            ? 'bg-green-950/40 text-green-400 border border-green-900/30'
+                            : editingBook.doi_deposit_status === 'failed'
+                            ? 'bg-red-950/40 text-red-400 border border-red-900/30'
+                            : 'bg-zinc-800/40 text-zinc-400 border border-zinc-700/30'
+                        }`}>
+                          {editingBook.doi_deposit_status || 'not_submitted'}
+                        </span>
+                      </div>
+                      {editingBook.doi_deposit_status === 'failed' && editingBook.doi_deposit_error && (
+                        <p className="text-[10px] text-red-400 font-mono mt-1 max-w-xl truncate">
+                          {editingBook.doi_deposit_error}
+                        </p>
+                      )}
+                      {editingBook.doi_deposit_status === 'submitted' && editingBook.doi_deposited_at && (
+                        <p className="text-[10px] text-zinc-500 mt-1 font-sans">
+                          Deposited at: {new Date(editingBook.doi_deposited_at).toLocaleString()}
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      {editingBook.doi_deposit_status !== 'submitted' ? (
+                        editingBook.doi ? (
+                          <button
+                            type="button"
+                            onClick={handleMintDoi}
+                            disabled={minting}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#C9A84C] hover:bg-[#D4AF37] disabled:opacity-50 text-[#13131A] text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            {minting ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Minting...
+                              </>
+                            ) : (
+                              'Mint DOI via Crossref'
+                            )}
+                          </button>
+                        ) : (
+                          <span className="text-xs text-zinc-500 italic">Save a DOI first to enable deposition.</span>
+                        )
+                      ) : (
+                        <span className="text-xs text-green-400 font-medium">DOI successfully minted.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Section 3: Synopsis & Description */}
               <div className="space-y-4">

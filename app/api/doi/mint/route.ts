@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { generateCrossrefXml } from '@/lib/crossref';
+import { generateCrossrefXml, generateBookCrossrefXml } from '@/lib/crossref';
 
 export async function POST(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const queryType = searchParams.get('type');
+
     let body;
     try {
       body = await request.json();
@@ -11,10 +14,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid JSON request body.' }, { status: 400 });
     }
 
-    const { articleId } = body;
+    const type = queryType || body.type || 'article';
+    const id = body.bookId || body.articleId;
 
-    if (!articleId) {
-      return NextResponse.json({ error: 'Missing articleId in request body.' }, { status: 400 });
+    if (!id) {
+      return NextResponse.json({ error: 'Missing bookId or articleId in request body.' }, { status: 400 });
     }
 
     const authHeader = request.headers.get('Authorization');
@@ -45,6 +49,104 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Forbidden. Admin or Editor role required to mint DOI.' }, { status: 403 });
     }
 
+    const username = process.env.CROSSREF_USERNAME || '';
+    const password = process.env.CROSSREF_PASSWORD || '';
+
+    if (!username || !password) {
+      return NextResponse.json({ 
+        error: 'Missing Crossref Credentials. Environment parameters must be configured for live deposition.' 
+      }, { status: 500 });
+    }
+
+    // ----------------------------------------------------
+    // BOOK DEPOSIT BRANCH
+    // ----------------------------------------------------
+    if (type === 'book') {
+      const { data: book, error: bookError } = await supabaseAdmin
+        .from('books')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (bookError || !book) {
+        return NextResponse.json({ error: `Book with ID ${id} not found.` }, { status: 404 });
+      }
+
+      if (!book.doi) {
+        return NextResponse.json({ error: 'Book does not have a pre-assigned DOI in the database.' }, { status: 400 });
+      }
+
+      const host = request.headers.get('host') || 'opuspublica.org';
+      const proto = request.headers.get('x-forwarded-proto') || 'https';
+      const origin = `${proto}://${host}`;
+      const bookUrl = `${origin}/books/${book.slug}`;
+
+      const xmlString = generateBookCrossrefXml({
+        title: book.title,
+        doi: book.doi,
+        url: bookUrl,
+        publication_date: book.publication_date,
+        isbn: book.isbn,
+        isbn_ebook: book.isbn_ebook,
+        authors: book.authors || [],
+      });
+
+      const formData = new FormData();
+      formData.append('operation', 'doDeposit');
+      formData.append('login_id', username);
+      formData.append('login_passwd', password);
+
+      const xmlBlob = new Blob([xmlString], { type: 'application/xml' });
+      formData.append('fname', xmlBlob, `deposit_book_${id}.xml`);
+
+      const response = await fetch('https://api.crossref.org/v2/deposits', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const responseText = await response.text();
+
+      if (response.ok) {
+        await (supabaseAdmin as any)
+          .from('books')
+          .update({
+            doi_deposit_status: 'submitted',
+            doi_deposited_at: new Date().toISOString(),
+            doi_deposit_error: null,
+          })
+          .eq('id', id);
+
+        return NextResponse.json({
+          status: 'submitted',
+          statusCode: response.status,
+          message: 'DOI batch queued for submission to Crossref successfully.',
+          doi: book.doi,
+          xml: xmlString,
+          crossrefResponse: responseText,
+        });
+      } else {
+        await (supabaseAdmin as any)
+          .from('books')
+          .update({
+            doi_deposit_status: 'failed',
+            doi_deposit_error: responseText || `HTTP ${response.status}`,
+          })
+          .eq('id', id);
+
+        return NextResponse.json({
+          status: 'failed',
+          statusCode: response.status,
+          error: 'Crossref endpoint rejected the deposit request.',
+          details: responseText,
+          xml: xmlString,
+        }, { status: 502 });
+      }
+    }
+
+    // ----------------------------------------------------
+    // ARTICLE DEPOSIT BRANCH (Original logic, untouched)
+    // ----------------------------------------------------
+    const articleId = id;
     const { data: article, error: articleError } = await supabaseAdmin
       .from('articles')
       .select(`
@@ -123,15 +225,6 @@ export async function POST(request: Request) {
       funderId: article.funder_id,
     });
 
-    const username = process.env.CROSSREF_USERNAME || '';
-    const password = process.env.CROSSREF_PASSWORD || '';
-
-    if (!username || !password) {
-      return NextResponse.json({ 
-        error: 'Missing Crossref Credentials. Environment parameters must be configured for live deposition.' 
-      }, { status: 500 });
-    }
-
     const formData = new FormData();
     formData.append('operation', 'doDeposit');
     formData.append('login_id', username);
@@ -179,6 +272,7 @@ export async function POST(request: Request) {
         statusCode: response.status,
         error: 'Crossref endpoint rejected the deposit request.',
         details: responseText,
+        xml: xmlString,
       }, { status: 502 });
     }
 
