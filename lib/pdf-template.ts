@@ -5,7 +5,7 @@ interface ArticleData {
   title: string;
   abstract: string | null;
   content: string | null;
-  keywords: string | null;
+  keywords: string[] | string | null;
   doi: string | null;
   published_at: string | null;
   journal_name: string | null;
@@ -22,6 +22,12 @@ export function renderArticleHtml(article: ArticleData): string {
   const sanitizedContent = article.content
     ? sanitizeHtmlServer(article.content)
     : '<p><em>No content available.</em></p>';
+
+  const keywordsArray = Array.isArray(article.keywords)
+    ? article.keywords
+    : typeof article.keywords === 'string'
+      ? article.keywords.split(',').map((k) => k.trim())
+      : [];
 
   const authorNames = article.authors.map((a) => a.name).join(', ');
   const affiliations = article.authors
@@ -330,6 +336,30 @@ export function renderArticleHtml(article: ArticleData): string {
       padding: 1px 4px;
     }
 
+    .body-content table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 20px 0;
+      font-size: 9.5pt;
+    }
+    .body-content table th, .body-content table td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .body-content table th {
+      background: #f5f5f8;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    .body-content img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 20px auto;
+      border-radius: 4px;
+    }
+
     /* ── License & Citation Footer ── */
     .license-section {
       margin-top: 40px;
@@ -413,11 +443,11 @@ export function renderArticleHtml(article: ArticleData): string {
   ` : ''}
 
   <!-- Keywords -->
-  ${article.keywords ? `
+  ${keywordsArray.length > 0 ? `
   <div class="keywords-section">
     <div class="section-label">Keywords</div>
     <div class="keywords-list">
-      ${article.keywords.split(',').map((kw: string) => `<span class="keyword-tag">${escapeHtml(kw.trim())}</span>`).join(' ')}
+      ${keywordsArray.map((kw: string) => `<span class="keyword-tag">${escapeHtml(kw)}</span>`).join(' ')}
     </div>
   </div>
   ` : ''}

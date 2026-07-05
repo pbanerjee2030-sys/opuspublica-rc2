@@ -25,6 +25,11 @@ import type { DatabaseJournal } from '@/lib/types';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TiptapLink from '@tiptap/extension-link';
+import { Image as TiptapImage } from '@tiptap/extension-image';
+import { Table as TiptapTable } from '@tiptap/extension-table';
+import { TableRow as TiptapTableRow } from '@tiptap/extension-table-row';
+import { TableCell as TiptapTableCell } from '@tiptap/extension-table-cell';
+import { TableHeader as TiptapTableHeader } from '@tiptap/extension-table-header';
 
 export default function SubmitArticlePage() {
   const [session, setSession] = useState<any>(null);
@@ -71,9 +76,59 @@ export default function SubmitArticlePage() {
           class: 'text-[#8B1A1A] underline hover:text-[#C9A84C]',
         },
       }),
+      TiptapImage.configure({
+        HTMLAttributes: {
+          class: 'max-w-full h-auto rounded-lg my-4',
+        },
+      }),
+      TiptapTable.configure({
+        resizable: true,
+        HTMLAttributes: {
+          class: 'border-collapse table-auto w-full my-4 border border-zinc-300',
+        },
+      }),
+      TiptapTableRow,
+      TiptapTableCell.configure({
+        HTMLAttributes: {
+          class: 'border border-zinc-300 p-2 text-sm',
+        },
+      }),
+      TiptapTableHeader.configure({
+        HTMLAttributes: {
+          class: 'border border-zinc-300 p-2 font-bold text-sm bg-zinc-100',
+        },
+      }),
     ],
     content: '<p>Write your manuscript body here...</p>',
     immediatelyRender: false,
+    editorProps: {
+      transformPastedHTML(html) {
+        if (typeof window === 'undefined') return html;
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const links = doc.querySelectorAll('a');
+          links.forEach((link) => {
+            const href = link.getAttribute('href');
+            if (href) {
+              const hashIndex = href.indexOf('#');
+              if (hashIndex !== -1) {
+                const hash = href.substring(hashIndex);
+                // Strip if it starts with '#' or is a Word-style anchor/bookmark
+                if (href.startsWith('#') || hash.startsWith('#_') || hash.includes('_Toc') || hash.includes('__anchor')) {
+                  const textNode = doc.createTextNode(link.textContent || '');
+                  link.parentNode?.replaceChild(textNode, link);
+                }
+              }
+            }
+          });
+          return doc.body.innerHTML;
+        } catch (e) {
+          console.error('Error transforming pasted HTML:', e);
+          return html;
+        }
+      }
+    }
   });
 
   // Verify H1 restriction: attempt to set content with an <h1> tag and log the resulting HTML.
@@ -366,12 +421,36 @@ export default function SubmitArticlePage() {
           color: rgba(26, 26, 46, 0.8);
           margin: 1em 0;
         }
-        .ProseMirror a {
-          color: #8B1A1A;
-          text-decoration: underline;
-        }
         .ProseMirror a:hover {
           color: #C9A84C;
+        }
+        .ProseMirror table {
+          border-collapse: collapse;
+          table-layout: fixed;
+          width: 100%;
+          margin: 1.5em 0;
+          overflow: hidden;
+        }
+        .ProseMirror table td,
+        .ProseMirror table th {
+          min-width: 1em;
+          border: 1px solid #ced4da;
+          padding: 8px 12px;
+          vertical-align: top;
+          box-sizing: border-box;
+          position: relative;
+        }
+        .ProseMirror table th {
+          font-weight: bold;
+          text-align: left;
+          background-color: #f1f3f5;
+        }
+        .ProseMirror img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+          margin: 1.5em auto;
+          border-radius: 6px;
         }
       `}</style>
       <div className="h-16"></div>
@@ -781,6 +860,30 @@ export default function SubmitArticlePage() {
                         className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('link') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
                       >
                         Link
+                      </button>
+                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = window.prompt('Enter Image URL:');
+                          if (url) {
+                            editor.chain().focus().setImage({ src: url }).run();
+                          }
+                        }}
+                        className="px-2.5 py-1.5 rounded hover:bg-black/5 text-[#1A1A2E]/80 font-semibold"
+                        title="Insert Image"
+                      >
+                        Image
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
+                        }}
+                        className="px-2.5 py-1.5 rounded hover:bg-black/5 text-[#1A1A2E]/80 font-semibold"
+                        title="Insert Table"
+                      >
+                        Table
                       </button>
                     </div>
                   )}

@@ -10,7 +10,8 @@ export function sanitizeHtmlServer(dirty: string): string {
       'p', 'br', 'strong', 'em', 'u', 'ol', 'ul', 'li', 'a',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'blockquote', 'code', 'pre', 'sup', 'sub', 'span',
+      'img', 'table', 'tbody', 'thead', 'tr', 'th', 'td',
     ],
-    ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'src', 'alt', 'title', 'colspan', 'rowspan', 'style'],
   });
 }

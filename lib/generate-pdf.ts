@@ -7,7 +7,7 @@ interface ArticleForPdf {
   title: string;
   abstract: string | null;
   content: string | null;
-  keywords: string | null;
+  keywords: string[] | string | null;
   doi: string | null;
   published_at: string | null;
   journal_name: string | null;
