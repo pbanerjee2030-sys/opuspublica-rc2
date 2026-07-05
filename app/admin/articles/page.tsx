@@ -33,6 +33,7 @@ interface Article {
   content_needs_review?: boolean;
   journals: { name: string; slug: string } | null;
   article_authors: { co_author_name: string | null; profiles: { id: string; full_name: string; email?: string } | null }[] | null;
+  use_author_pdf_as_final?: boolean;
 }
 
 type Tab = 'pending' | 'published' | 'rejected';
@@ -471,6 +472,29 @@ export default function ArticlesPage() {
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Abstract</label>
                 <p className="text-sm text-zinc-400 mt-1 leading-relaxed">{selectedArticle.abstract || 'No abstract available.'}</p>
+              </div>
+              <div className="flex items-center gap-2 py-3 border-t border-b border-zinc-800/60 my-2">
+                <input
+                  type="checkbox"
+                  id="use_author_pdf_as_final_toggle"
+                  checked={selectedArticle.use_author_pdf_as_final || false}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    try {
+                      await adminUpdate('articles', selectedArticle.id, { use_author_pdf_as_final: checked });
+                      // Update local state
+                      setArticles(prev => prev.map(a => a.id === selectedArticle.id ? { ...a, use_author_pdf_as_final: checked } : a));
+                      setSelectedArticle(prev => prev ? { ...prev, use_author_pdf_as_final: checked } : null);
+                      showToast('success', `Toggle updated: ${checked ? 'using author PDF as final' : 'using generated house PDF'}`);
+                    } catch (err: any) {
+                      showToast('error', err.message || 'Failed to update toggle');
+                    }
+                  }}
+                  className="w-4 h-4 rounded border-zinc-800 bg-zinc-900 text-[#C9A84C] focus:ring-[#C9A84C]"
+                />
+                <label htmlFor="use_author_pdf_as_final_toggle" className="text-xs font-semibold text-zinc-300 cursor-pointer">
+                  Use author's original PDF upload as the final published version (skips layout generation)
+                </label>
               </div>
               {selectedArticle.rejection_reason && (
                 <div>

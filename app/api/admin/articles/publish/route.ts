@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const { data: article, error: fetchError } = await supabaseAdmin
       .from('articles')
       .select(`
-        id, title, abstract, content, keywords, doi, status, published_at,
+        id, title, abstract, content, keywords, doi, status, published_at, pdf_url, use_author_pdf_as_final,
         journals ( name, issn ),
         article_authors (
           co_author_name,
@@ -104,47 +104,53 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Build author data for PDF template
-    const authors = (article.article_authors || []).map((aa: any) => ({
-      name: aa.profiles?.full_name || aa.co_author_name || 'Unknown Author',
-      affiliation: aa.profiles?.affiliation || null,
-    }));
+    let publishedPdfUrl = '';
+    
+    if (article.use_author_pdf_as_final) {
+      publishedPdfUrl = article.pdf_url || '';
+      console.log(`[Publish] Skipping PDF generation. Using author's PDF as final: ${publishedPdfUrl}`);
+    } else {
+      // Build author data for PDF template
+      const authors = (article.article_authors || []).map((aa: any) => ({
+        name: aa.profiles?.full_name || aa.co_author_name || 'Unknown Author',
+        affiliation: aa.profiles?.affiliation || null,
+      }));
 
-    if (authors.length === 0) {
-      authors.push({ name: 'Unknown Author', affiliation: null });
-    }
-
-    // Generate PDF
-    const pdfArticleData = {
-      id: article.id,
-      title: article.title,
-      abstract: article.abstract,
-      content: article.content,
-      keywords: article.keywords,
-      doi: article.doi,
-      published_at: action === 'publish' ? new Date().toISOString() : article.published_at,
-      journal_name: article.journals?.name || null,
-      journal_issn: article.journals?.issn || null,
-      authors,
-    };
-
-    let publishedPdfUrl: string;
-    try {
-      publishedPdfUrl = await generatePublishedPdf(pdfArticleData);
-    } catch (pdfError: any) {
-      console.error('[Publish] PDF generation failed:', pdfError);
-      // If publishing, the status is already updated — return success with a warning
-      if (action === 'publish') {
-        return NextResponse.json({
-          success: true,
-          warning: 'Article published but PDF generation failed. You can regenerate it later.',
-          pdfError: pdfError.message,
-        });
+      if (authors.length === 0) {
+        authors.push({ name: 'Unknown Author', affiliation: null });
       }
-      return NextResponse.json(
-        { error: `PDF generation failed: ${pdfError.message}` },
-        { status: 500 }
-      );
+
+      // Generate PDF
+      const pdfArticleData = {
+        id: article.id,
+        title: article.title,
+        abstract: article.abstract,
+        content: article.content,
+        keywords: article.keywords,
+        doi: article.doi,
+        published_at: action === 'publish' ? new Date().toISOString() : article.published_at,
+        journal_name: article.journals?.name || null,
+        journal_issn: article.journals?.issn || null,
+        authors,
+      };
+
+      try {
+        publishedPdfUrl = await generatePublishedPdf(pdfArticleData);
+      } catch (pdfError: any) {
+        console.error('[Publish] PDF generation failed:', pdfError);
+        // If publishing, the status is already updated — return success with a warning
+        if (action === 'publish') {
+          return NextResponse.json({
+            success: true,
+            warning: 'Article published but PDF generation failed. You can regenerate it later.',
+            pdfError: pdfError.message,
+          });
+        }
+        return NextResponse.json(
+          { error: `PDF generation failed: ${pdfError.message}` },
+          { status: 500 }
+        );
+      }
     }
 
     // Update published_pdf_url

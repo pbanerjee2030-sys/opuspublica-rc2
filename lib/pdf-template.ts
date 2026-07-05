@@ -290,6 +290,15 @@ export function renderArticleHtml(article: ArticleData): string {
       margin-bottom: 8px;
     }
 
+    .body-content h4 {
+      font-family: var(--font-serif);
+      font-size: 11pt;
+      font-weight: 600;
+      color: var(--navy);
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+
     .body-content p {
       margin-bottom: 10px;
       text-align: justify;

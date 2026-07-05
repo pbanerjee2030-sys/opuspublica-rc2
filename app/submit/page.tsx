@@ -69,7 +69,7 @@ export default function SubmitArticlePage() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3] } }),
+      StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
       TiptapLink.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -110,16 +110,9 @@ export default function SubmitArticlePage() {
           const links = doc.querySelectorAll('a');
           links.forEach((link) => {
             const href = link.getAttribute('href');
-            if (href) {
-              const hashIndex = href.indexOf('#');
-              if (hashIndex !== -1) {
-                const hash = href.substring(hashIndex);
-                // Strip if it starts with '#' or is a Word-style anchor/bookmark
-                if (href.startsWith('#') || hash.startsWith('#_') || hash.includes('_Toc') || hash.includes('__anchor')) {
-                  const textNode = doc.createTextNode(link.textContent || '');
-                  link.parentNode?.replaceChild(textNode, link);
-                }
-              }
+            if (href && href.startsWith('#')) {
+              const textNode = doc.createTextNode(link.textContent || '');
+              link.parentNode?.replaceChild(textNode, link);
             }
           });
           return doc.body.innerHTML;
@@ -400,6 +393,12 @@ export default function SubmitArticlePage() {
         }
         .ProseMirror h3 {
           font-size: 1.25em;
+          font-weight: bold;
+          margin-top: 1.2em;
+          margin-bottom: 0.6em;
+        }
+        .ProseMirror h4 {
+          font-size: 1.1em;
           font-weight: bold;
           margin-top: 1.2em;
           margin-bottom: 0.6em;
@@ -821,6 +820,13 @@ export default function SubmitArticlePage() {
                         className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
                       >
                         H3
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 4 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                      >
+                        H4
                       </button>
                       <div className="h-4 w-px bg-black/10 mx-1" />
                       <button

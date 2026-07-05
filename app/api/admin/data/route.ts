@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
         .from('articles')
         .select(`
           id, title, abstract, status, doi, pdf_url, published_pdf_url, published_at, created_at, rejection_reason,
-          doi_deposit_status, doi_deposited_at, doi_deposit_error, content_needs_review,
+          doi_deposit_status, doi_deposited_at, doi_deposit_error, content_needs_review, use_author_pdf_as_final,
           journals ( name, slug ),
           article_authors ( co_author_name, profiles ( id, full_name, email ) )
         `)
