@@ -64,7 +64,7 @@ export default function SubmitArticlePage() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({ heading: { levels: [2, 3] } }),
       TiptapLink.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -75,6 +75,14 @@ export default function SubmitArticlePage() {
     content: '<p>Write your manuscript body here...</p>',
     immediatelyRender: false,
   });
+
+  // Verify H1 restriction: attempt to set content with an <h1> tag and log the resulting HTML.
+  useEffect(() => {
+    if (editor) {
+      editor.commands.setContent('<h1>Test H1</h1><p>Paragraph</p>');
+      console.log('Resulting HTML after attempting H1 insertion:', editor.getHTML());
+    }
+  }, [editor]);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);

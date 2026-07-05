@@ -16,6 +16,7 @@ import {
   AlertCircle,
   X,
   Loader2,
+  RefreshCw,
 } from 'lucide-react';
 
 interface Article {
@@ -25,6 +26,7 @@ interface Article {
   status: string;
   doi: string | null;
   pdf_url: string | null;
+  published_pdf_url: string | null;
   published_at: string | null;
   created_at: string;
   rejection_reason: string | null;
@@ -48,6 +50,7 @@ export default function ArticlesPage() {
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -106,21 +109,27 @@ export default function ArticlesPage() {
 
       const mintData = await mintRes.json();
 
-      // Update article status
-      await adminUpdate('articles', article.id, {
-        status: 'published',
-        published_at: new Date().toISOString(),
+      // Publish article + generate house-styled PDF via the new publish route
+      const publishRes = await fetch('/api/admin/articles/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ articleId: article.id, action: 'publish' }),
       });
+
+      const publishData = await publishRes.json();
+      if (!publishRes.ok) throw new Error(publishData.error || 'Failed to publish');
 
       // Send notification
       const author = article.article_authors?.[0]?.profiles;
       if (author) {
-        const { data: { session } } = await supabase.auth.getSession();
         fetch('/api/notifications', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({
             type: 'article_published',
@@ -133,12 +142,40 @@ export default function ArticlesPage() {
         }).catch(() => {});
       }
 
-      showToast('success', `Article published${mintData.status === 'submitted' ? ' and DOI minted' : ''}`);
+      const pdfNote = publishData.warning ? ' (PDF generation pending)' : ' with house PDF';
+      showToast('success', `Article published${mintData.status === 'submitted' ? ' and DOI minted' : ''}${pdfNote}`);
       fetchArticles();
     } catch (e: any) {
       showToast('error', e.message || 'Failed to approve article');
     } finally {
       setApprovingId(null);
+    }
+  };
+
+  const handleRegeneratePdf = async (article: Article) => {
+    setRegeneratingId(article.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/admin/articles/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ articleId: article.id, action: 'regenerate' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to regenerate PDF');
+
+      showToast('success', 'Published PDF regenerated successfully');
+      fetchArticles();
+    } catch (e: any) {
+      showToast('error', e.message || 'Failed to regenerate PDF');
+    } finally {
+      setRegeneratingId(null);
     }
   };
 
@@ -365,6 +402,21 @@ export default function ArticlesPage() {
                               Reject
                             </button>
                           </>
+                        )}
+                        {article.status === 'published' && (
+                          <button
+                            onClick={() => handleRegeneratePdf(article)}
+                            disabled={regeneratingId === article.id}
+                            className="px-3 py-1.5 bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 text-[#C9A84C] text-xs font-bold rounded-lg border border-[#C9A84C]/30 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                            title="Regenerate Published PDF"
+                          >
+                            {regeneratingId === article.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <RefreshCw className="w-3.5 h-3.5" />
+                            )}
+                            <span className="hidden xl:inline">Regen PDF</span>
+                          </button>
                         )}
                       </div>
                     </td>
