@@ -93,7 +93,7 @@ export default function ArticlesPage() {
         const slug = article.journals?.slug || 'journal';
         const prefix = slug.replace(/-/g, '').substring(0, 15);
         const suffix = article.id.replace(/-/g, '').substring(0, 8);
-        doi = `10.57939/${prefix}.v1i1.${suffix}`;
+        doi = `10.62692/${prefix}.v1i1.${suffix}`;
 
         await adminUpdate('articles', article.id, { doi });
       }

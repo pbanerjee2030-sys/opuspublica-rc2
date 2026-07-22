@@ -23,7 +23,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 CROSSREF_EMAIL=your-email@institution.edu
 CROSSREF_API_KEY=your-crossref-key
-CROSSREF_PREFIX=10.57939
+CROSSREF_PREFIX=10.62692
 RESEND_API_KEY=re_your-resend-key
 NEXT_PUBLIC_SITE_URL=https://www.opuspublica.com
 ```

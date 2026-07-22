@@ -32,7 +32,7 @@ const sections: SettingSection[] = [
 
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('general');
-  const [doiPrefix, setDoiPrefix] = useState('10.57939');
+  const [doiPrefix, setDoiPrefix] = useState('10.62692');
 
   useEffect(() => {
     fetchDoiPrefix();
