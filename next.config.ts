@@ -51,8 +51,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/journals/:path*',
-        destination: '/:path*',
+        source: '/journals/:path+',
+        destination: '/:path+',
         permanent: true,
       },
     ];

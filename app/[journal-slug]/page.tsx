@@ -38,9 +38,30 @@ export async function generateMetadata({ params }: Props) {
     return { title: 'Journal Not Found | Opus Publica' };
   }
 
+  const rawDesc = dbJournal.description || '';
+  const cleanDesc = rawDesc
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const truncatedDesc = cleanDesc.length > 155
+    ? cleanDesc.slice(0, 152).trimEnd() + '...'
+    : cleanDesc;
+
+  const canonicalUrl = `https://opuspublica.com/${journalSlug}`;
+
   return {
     title: `${dbJournal.name} | Opus Publica`,
-    description: dbJournal.description,
+    description: truncatedDesc,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${dbJournal.name} | Opus Publica`,
+      description: truncatedDesc,
+      type: 'website',
+      url: canonicalUrl,
+      siteName: 'Opus Publica',
+    },
   };
 }
 

@@ -51,9 +51,31 @@ export async function generateMetadata({ params }: Props) {
   const d = new Date(publishDate);
   const formattedDate = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
 
+  const rawAbstract = dbArticle.abstract || '';
+  const cleanAbstract = rawAbstract
+    .replace(/<[^>]*>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const truncatedAbstract = cleanAbstract.length > 155
+    ? cleanAbstract.slice(0, 152).trimEnd() + '...'
+    : cleanAbstract;
+
+  const canonicalUrl = `https://opuspublica.com/${journalSlug}/article/${id}`;
+
   return {
     title: `${articleTitle} | ${journalTitle} | Opus Publica`,
-    description: dbArticle.abstract,
+    description: truncatedAbstract,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `${articleTitle} | ${journalTitle}`,
+      description: truncatedAbstract,
+      type: 'article',
+      url: canonicalUrl,
+      siteName: 'Opus Publica',
+      ...(pdfUrl ? { images: [{ url: pdfUrl, width: 1200, height: 1600, alt: articleTitle }] } : {}),
+    },
     other: {
       'citation_title': articleTitle,
       'citation_author': authorsList.length > 0 ? authorsList : ['Anonymous'],

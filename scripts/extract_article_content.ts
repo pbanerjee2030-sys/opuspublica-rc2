@@ -100,6 +100,10 @@ async function run() {
       // 1. Collapse inline spaces & tabs
       let cleaned = rawText.replace(/[ \t\f\v]+/g, ' ');
       // 2. Normalize line endings
+      // WARNING: \r MUST be escaped as \r (carriage-return escape).
+      // Using bare /rn/g (without backslash before r) would corrupt
+      // words containing "rn" — e.g. "governance" → "gove\nance".
+      // The database already has this corruption from a prior run.
       cleaned = cleaned.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
       
       // 3. Separate paragraphs by checking for double newlines
@@ -109,6 +113,14 @@ async function run() {
         .filter((p: string) => p.length > 10); // ignore short layout headers/footers/page numbers
 
       console.log(`Re-constructed ${paragraphs.length} paragraphs.`);
+
+      // Safety guard: detect mid-word newlines (would indicate regex corruption)
+      const joined = paragraphs.join(' ');
+      if (/[a-z]\n[a-z]/.test(joined)) {
+        console.error(`❌ SAFETY GUARD: Mid-word newlines detected in processed text for article ${article.id}.`);
+        console.error('   This indicates a regex issue in the cleanup step above. Skipping this article.');
+        continue;
+      }
 
       const draftHtml = paragraphs.map((p: string) => `<p>${escapeHtml(p)}</p>`).join('\n');
 

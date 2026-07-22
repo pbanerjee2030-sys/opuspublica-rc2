@@ -105,10 +105,10 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
             <Link href="/#home" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Home
             </Link>
-            <Link href="/#journals" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
+            <Link href="/journals" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Journals
             </Link>
-            <Link href="/#books" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
+            <Link href="/books" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Books
             </Link>
             <Link href="/#about" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
@@ -239,14 +239,14 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
               Home
             </Link>
             <Link
-              href="/#journals"
+              href="/journals"
               className="block text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
               onClick={() => setIsOpen(false)}
             >
               Journals
             </Link>
             <Link
-              href="/#books"
+              href="/books"
               className="block text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
               onClick={() => setIsOpen(false)}
             >
