@@ -167,7 +167,7 @@ export default function SettingsPage() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Deposit Endpoint</label>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400 font-mono">api.crossref.org/deposits</div>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400 font-mono">doi.crossref.org/servlet/deposit</div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">DOI Prefix</label>

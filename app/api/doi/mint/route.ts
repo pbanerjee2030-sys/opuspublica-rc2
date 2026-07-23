@@ -99,7 +99,7 @@ export async function POST(request: Request) {
       const xmlBlob = new Blob([xmlString], { type: 'application/xml' });
       formData.append('fname', xmlBlob, `deposit_book_${id}.xml`);
 
-      const response = await fetch('https://api.crossref.org/v2/deposits', {
+      const response = await fetch('https://doi.crossref.org/servlet/deposit', {
         method: 'POST',
         body: formData,
       });
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
     const xmlBlob = new Blob([xmlString], { type: 'application/xml' });
     formData.append('fname', xmlBlob, `deposit_${articleId}.xml`);
 
-    const response = await fetch('https://api.crossref.org/v2/deposits', {
+    const response = await fetch('https://doi.crossref.org/servlet/deposit', {
       method: 'POST',
       body: formData,
     });
