@@ -26,16 +26,16 @@ const policySections = [
 
 export default function InstructionsClient() {
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E]">
+      <main className="flex-grow bg-bg">
         {/* Header Section */}
-        <section className="py-12 sm:py-16 bg-[#1A1A2E] border-b border-[#C9A84C]/10">
+        <section className="py-12 sm:py-16 bg-bg border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <Link 
               href="/" 
-              className="inline-flex items-center gap-2 text-[#C9A84C] hover:text-[#D4AF37] mb-6 text-sm transition-colors group font-medium"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent mb-6 text-sm transition-colors group font-medium"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Home
@@ -47,12 +47,12 @@ export default function InstructionsClient() {
               className="space-y-4"
             >
               <div className="flex items-center gap-4">
-                <FileText className="w-12 h-12 text-[#C9A84C]" />
+                <FileText className="w-12 h-12 text-accent" />
                 <div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#C9A84C] font-bold">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary font-bold">
                     Instructions for Authors
                   </h1>
-                  <p className="text-white/60 text-sm mt-1">
+                  <p className="text-text-secondary/70 text-sm mt-1">
                     Opus Publica — the publishing arm of Advocacy Unified Network
                   </p>
                 </div>
@@ -67,8 +67,8 @@ export default function InstructionsClient() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar Navigation */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-[#C9A84C] max-h-[calc(100vh-120px)] overflow-y-auto">
-                  <h3 className="text-[#8B1A1A] font-serif text-lg font-semibold mb-4">
+                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-accent max-h-[calc(100vh-120px)] overflow-y-auto">
+                  <h3 className="text-primary font-serif text-lg font-semibold mb-4">
                     On This Page
                   </h3>
                   <ul className="space-y-2 text-sm">
@@ -76,7 +76,7 @@ export default function InstructionsClient() {
                       <li key={section.id}>
                         <Link
                           href={`#${section.id}`}
-                          className="text-[#1A1A2E]/70 hover:text-[#8B1A1A] transition-colors block py-1 border-b border-[#1A1A2E]/5"
+                          className="text-[#1A1A2E]/70 hover:text-primary transition-colors block py-1 border-b border-[#1A1A2E]/5"
                         >
                           {section.title}
                         </Link>
@@ -94,13 +94,13 @@ export default function InstructionsClient() {
                   transition={{ delay: 0.2 }}
                   className="bg-white rounded-lg p-8 shadow-sm"
                 >
-                  <div className="prose prose-lg max-w-none prose-headings:text-[#8B1A1A] prose-headings:font-serif prose-a:text-[#C9A84C] prose-a:no-underline hover:prose-a:underline">
+                  <div className="prose prose-lg max-w-none prose-headings:text-primary prose-headings:font-serif prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
                     
                     {/* Section 1: Before You Submit */}
                     <div id="before-submit" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <CheckSquare className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <CheckSquare className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Before You Submit
                         </h2>
                       </div>
@@ -113,7 +113,7 @@ export default function InstructionsClient() {
                         <li>All listed authors have approved the final version and agree to its submission</li>
                         <li>
                           The manuscript complies with our{' '}
-                          <Link href="/policies/research-ethics" className="text-[#C9A84C] hover:underline font-semibold">
+                          <Link href="/policies/research-ethics" className="text-accent hover:underline font-semibold">
                             Research Ethics &amp; Misconduct Policy
                           </Link>
                         </li>
@@ -124,8 +124,8 @@ export default function InstructionsClient() {
                     {/* Section 2: Manuscript Format */}
                     <div id="format" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <FileEdit className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <FileEdit className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Manuscript Format
                         </h2>
                       </div>
@@ -159,8 +159,8 @@ export default function InstructionsClient() {
                     {/* Section 3: Submission Process */}
                     <div id="submission" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Send className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Send className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Submission Process
                         </h2>
                       </div>
@@ -182,8 +182,8 @@ export default function InstructionsClient() {
                     {/* Section 4: What Happens After Submission */}
                     <div id="after-submission" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Clock className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Clock className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           What Happens After Submission
                         </h2>
                       </div>
@@ -194,7 +194,7 @@ export default function InstructionsClient() {
                         <li>
                           <strong>Peer review</strong> — manuscripts that pass initial check are sent for peer review, as
                           described in our{' '}
-                          <Link href="/#journals" className="text-[#C9A84C] hover:underline font-semibold">
+                          <Link href="/#journals" className="text-accent hover:underline font-semibold">
                             Peer Review Policy
                           </Link>, typically taking 4–6 weeks
                         </li>
@@ -207,7 +207,7 @@ export default function InstructionsClient() {
                         <li>
                           <strong>Production and publication</strong> — accepted manuscripts are copyedited, assigned a
                           DOI, and published under our{' '}
-                          <Link href="/policies/open-access-licensing" className="text-[#C9A84C] hover:underline font-semibold">
+                          <Link href="/policies/open-access-licensing" className="text-accent hover:underline font-semibold">
                             Open Access &amp; Licensing Policy
                           </Link>
                         </li>
@@ -217,8 +217,8 @@ export default function InstructionsClient() {
                     {/* Section 5: Fees */}
                     <div id="fees" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Coins className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Coins className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Fees
                         </h2>
                       </div>
@@ -231,15 +231,15 @@ export default function InstructionsClient() {
                     {/* Section 6: Questions */}
                     <div id="questions" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <HelpCircle className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <HelpCircle className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Questions
                         </h2>
                       </div>
                       <p className="text-base sm:text-lg text-[#1A1A2E]/80 leading-relaxed font-serif">
                         For questions about a submission, formatting, or the review process, please contact the
                         relevant journal's editorial team, or write to us at{' '}
-                        <a href="mailto:editorial@opuspublica.com" className="text-[#C9A84C] hover:underline font-semibold">
+                        <a href="mailto:editorial@opuspublica.com" className="text-accent hover:underline font-semibold">
                           editorial@opuspublica.com
                         </a>.
                       </p>

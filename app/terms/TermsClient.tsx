@@ -477,17 +477,17 @@ const termSections = [
 
 export default function TermsClient() {
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans">
             
       {/* Spacer for Fixed Navbar */}
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E]">
+      <main className="flex-grow bg-bg">
         {/* Header */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#1A1A2E] via-[#8B1A1A]/30 to-[#1A1A2E] py-16 border-b border-[#C9A84C]/20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-bg via-primary/30 to-bg py-16 border-b border-border">
           <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-[#C9A84C]"></div>
-            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-[#C9A84C]"></div>
+            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-accent"></div>
+            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-accent"></div>
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
@@ -497,17 +497,17 @@ export default function TermsClient() {
               transition={{ duration: 0.6 }}
             >
               <div className="flex items-center gap-4 mb-4">
-                <FileText className="w-12 h-12 text-[#C9A84C]" />
+                <FileText className="w-12 h-12 text-accent" />
                 <div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#C9A84C]">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary">
                     Terms of Service
                   </h1>
-                  <p className="text-white/60 text-sm mt-1">
+                  <p className="text-text-secondary/70 text-sm mt-1">
                     Last Updated: 23.06.2026
                   </p>
                 </div>
               </div>
-              <p className="text-white/80 text-lg max-w-3xl leading-relaxed">
+              <p className="text-text-secondary text-lg max-w-3xl leading-relaxed">
                 Welcome to Opus Publica. These Terms of Service govern your access to and use of our 
                 website, services, content, and publications.
               </p>
@@ -516,13 +516,13 @@ export default function TermsClient() {
         </section>
 
         {/* Content */}
-        <section className="py-12 bg-[#F5F0E8] text-[#1A1A2E]">
+        <section className="py-12 bg-bg text-text">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar Navigation */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-[#C9A84C] max-h-[calc(100vh-120px)] overflow-y-auto">
-                  <h3 className="text-[#8B1A1A] font-serif text-lg font-semibold mb-4">
+                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-accent max-h-[calc(100vh-120px)] overflow-y-auto">
+                  <h3 className="text-primary font-serif text-lg font-semibold mb-4">
                     On This Page
                   </h3>
                   <ul className="space-y-2 text-sm">
@@ -530,7 +530,7 @@ export default function TermsClient() {
                       <li key={section.id}>
                         <Link
                           href={`#${section.id}`}
-                          className="text-[#1A1A2E]/70 hover:text-[#8B1A1A] transition-colors block py-1 border-b border-[#1A1A2E]/5"
+                          className="text-text-secondary/70 hover:text-primary transition-colors block py-1 border-b border-border/5"
                         >
                           {section.title}
                         </Link>
@@ -548,21 +548,21 @@ export default function TermsClient() {
                   transition={{ delay: 0.2 }}
                   className="bg-white rounded-lg p-8 shadow-sm"
                 >
-                  <div className="prose prose-lg max-w-none prose-headings:text-[#8B1A1A] prose-headings:font-serif prose-a:text-[#C9A84C] prose-a:no-underline hover:prose-a:underline">
+                  <div className="prose prose-lg max-w-none prose-headings:text-primary prose-headings:font-serif prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
                     {termSections.map((section) => {
                       const Icon = section.icon;
                       return (
                         <div key={section.id} id={section.id} className="mb-12 scroll-mt-24">
                           <div className="flex items-center gap-3 mb-4">
-                            <Icon className="w-6 h-6 text-[#C9A84C] flex-shrink-0" />
-                            <h2 className="text-2xl font-serif text-[#8B1A1A] m-0 font-semibold">
+                            <Icon className="w-6 h-6 text-accent flex-shrink-0" />
+                            <h2 className="text-2xl font-serif text-primary m-0 font-semibold">
                               {section.title}
                             </h2>
                           </div>
                           {section.content && (
                             <ul className="list-none space-y-2">
                               {section.content.map((item, i) => (
-                                <li key={i} className="text-[#1A1A2E]/80 leading-relaxed pl-4 border-l-2 border-[#C9A84C]/30 text-base">
+                                <li key={i} className="text-text-secondary leading-relaxed pl-4 border-l-2 border-accent/30 text-base">
                                   {item}
                                 </li>
                               ))}
@@ -572,12 +572,12 @@ export default function TermsClient() {
                             <div className="space-y-6">
                               {section.subsections.map((subsection) => (
                                 <div key={subsection.title}>
-                                  <h3 className="text-lg font-serif text-[#1A1A2E] mb-3 font-semibold">
+                                  <h3 className="text-lg font-serif text-text mb-3 font-semibold">
                                     {subsection.title}
                                   </h3>
                                   <ul className="list-none space-y-2">
                                     {subsection.content.map((item, i) => (
-                                      <li key={i} className="text-[#1A1A2E]/80 leading-relaxed pl-4 border-l-2 border-[#C9A84C]/30 text-base">
+                                <li key={i} className="text-text-secondary leading-relaxed pl-4 border-l-2 border-accent/30 text-base">
                                         {item}
                                       </li>
                                     ))}

@@ -66,15 +66,15 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 hover:bg-white/15 rounded text-xs font-bold transition-all text-[#C9A84C]"
+        className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface border border-border hover:bg-bg-alt rounded text-xs font-bold transition-all text-accent"
       >
         <Edit3 className="w-3.5 h-3.5" />
         Edit Profile
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-lg p-6 text-[#1A1A2E] shadow-2xl max-w-md w-full border-t-4 border-[#C9A84C] relative">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-surface border border-border rounded-lg p-6 text-text shadow-2xl max-w-md w-full border-t-4 border-accent relative">
             <button
               onClick={() => setIsOpen(false)}
               className="absolute right-4 top-4 p-1 hover:bg-black/5 rounded text-zinc-400 hover:text-zinc-650"
@@ -82,7 +82,7 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-xl font-serif font-bold text-[#1A1A2E] mb-4">Edit Profile Details</h3>
+            <h3 className="text-xl font-serif font-bold text-primary mb-4">Edit Profile Details</h3>
 
             {error && (
               <div className="p-3 bg-red-100 text-red-700 text-xs rounded mb-4">
@@ -92,7 +92,7 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
                   Full Name
                 </label>
                 <input
@@ -100,41 +100,41 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                  className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text placeholder:text-text-secondary/40 focus:outline-none focus:border-accent"
                   placeholder="e.g. Dr. Jane Smith"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
                   Biography
                 </label>
                 <textarea
                   rows={3}
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                  className="w-full px-3 py-2 bg-bg border border-border rounded text-sm text-text placeholder:text-text-secondary/40 focus:outline-none focus:border-accent font-sans resize-y"
                   placeholder="Tell us about your research experience..."
                 />
               </div>
 
               <div className="relative">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
                   Institutional Affiliation
                 </label>
                 <div className="relative">
-                  <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                  <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/50" />
                   <input
                     type="text"
                     value={affiliation}
                     onChange={(e) => handleRorSearchChange(e.target.value)}
                     onFocus={() => setShowRorSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowRorSuggestions(false), 200)}
-                    className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                    className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded text-sm text-text placeholder:text-text-secondary/40 focus:outline-none focus:border-accent"
                     placeholder="Search institution name..."
                   />
                   {showRorSuggestions && rorSuggestions.length > 0 && (
-                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                    <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-surface border border-border rounded shadow-lg text-xs text-text">
                       {rorSuggestions.map((item) => (
                         <div
                           key={item.id}
@@ -155,33 +155,33 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-1">
                   ROR ID
                 </label>
                 <div className="relative">
-                  <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                  <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/50" />
                   <input
                     type="text"
                     readOnly
                     value={rorId}
-                    className="w-full pl-9 pr-3 py-2 border border-zinc-200 text-zinc-500 rounded text-sm bg-zinc-100 cursor-not-allowed focus:outline-none"
+                    className="w-full pl-9 pr-3 py-2 border border-border text-text-secondary rounded text-sm bg-bg-alt cursor-not-allowed focus:outline-none"
                     placeholder="Selected institution's ROR ID"
                   />
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-black/10 flex justify-end gap-2">
+              <div className="pt-2 border-t border-border flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 border border-[#1A1A2E] hover:bg-black/5 text-[#1A1A2E] text-xs font-semibold rounded"
+                  className="px-4 py-2 bg-bg-alt text-text-secondary border border-border text-xs font-semibold rounded hover:bg-bg"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#8B1A1A] hover:bg-[#1A1A2E] text-white text-xs font-semibold rounded shadow transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-semibold rounded shadow transition-colors hover:bg-primary-hover"
                 >
                   {loading ? (
                     <>

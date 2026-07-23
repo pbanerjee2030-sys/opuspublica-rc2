@@ -172,7 +172,7 @@ export default function ReviewDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 text-[#C9A84C] animate-spin" />
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
@@ -180,7 +180,7 @@ export default function ReviewDetailPage() {
   if (!assignment) {
     return (
       <div className="text-center py-24">
-        <p className="text-zinc-500">Assignment not found.</p>
+        <p className="text-text-secondary">Assignment not found.</p>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export default function ReviewDetailPage() {
       )}
 
       {/* Back */}
-      <Link href="/reviewer" className="inline-flex items-center gap-2 text-sm text-[#C9A84C] hover:text-[#D4AF37] transition-colors">
+      <Link href="/reviewer" className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors">
         <ArrowLeft className="w-4 h-4" />
         Back to Dashboard
       </Link>
@@ -230,27 +230,27 @@ export default function ReviewDetailPage() {
       )}
 
       {/* Article Info */}
-      <div className="bg-[#111118] border border-zinc-800 rounded-xl p-6">
+      <div className="bg-surface border border-border rounded-xl p-6">
         <div className="flex items-center gap-2 mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] bg-[#C9A84C]/10 px-2 py-0.5 rounded-full">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-accent bg-accent/10 px-2 py-0.5 rounded-full">
             Peer Review
           </span>
           {article?.journals?.name && (
-            <span className="text-[10px] text-zinc-600 font-mono">{article.journals.name}</span>
+            <span className="text-[10px] text-text-secondary/40 font-mono">{article.journals.name}</span>
           )}
         </div>
-        <h1 className="text-xl sm:text-2xl font-serif font-bold text-white mb-3">
+        <h1 className="text-xl sm:text-2xl font-serif font-bold text-primary mb-3">
           {article?.title || 'Untitled Article'}
         </h1>
         {authors.length > 0 && (
-          <p className="text-sm text-zinc-400 mb-4">
-            <span className="font-semibold text-zinc-300">Authors:</span> {authors.join(', ')}
+          <p className="text-sm text-text-secondary mb-4">
+            <span className="font-semibold text-text-secondary">Authors:</span> {authors.join(', ')}
           </p>
         )}
         {article?.abstract && (
-          <div className="bg-zinc-900/50 rounded-lg p-4 border border-zinc-800/50">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Abstract</h3>
-            <p className="text-sm text-zinc-300 leading-relaxed">{article.abstract}</p>
+          <div className="bg-bg-alt/50 rounded-lg p-4 border border-border/50">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 mb-2">Abstract</h3>
+            <p className="text-sm text-text-secondary leading-relaxed">{article.abstract}</p>
           </div>
         )}
         {article?.pdf_url && (
@@ -258,7 +258,7 @@ export default function ReviewDetailPage() {
             href={`/api/pdf?id=${article.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm text-white rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-bg-alt hover:bg-bg-alt text-sm text-primary rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
             Download Manuscript PDF
@@ -268,14 +268,14 @@ export default function ReviewDetailPage() {
 
       {/* Review Form */}
       {!isCompleted && !isDeclined && (
-        <div className="bg-[#111118] border border-zinc-800 rounded-xl p-6 space-y-6">
-          <h2 className="text-lg font-serif font-bold text-white border-b border-zinc-800 pb-3">
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-6">
+          <h2 className="text-lg font-serif font-bold text-primary border-b border-border pb-3">
             Submit Your Review
           </h2>
 
           {/* Recommendation */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-3">
+            <label className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 block mb-3">
               Recommendation *
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -291,7 +291,7 @@ export default function ReviewDetailPage() {
                   className={`flex items-center justify-center gap-2 p-3 border rounded-lg text-sm font-bold transition-all ${
                     recommendation === value
                       ? `${color} border-current bg-current/10`
-                      : 'border-zinc-800 text-zinc-500 hover:text-white hover:border-zinc-600'
+                      : 'border-border text-text-secondary/60 hover:text-primary hover:border-text-secondary/40'
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -303,8 +303,8 @@ export default function ReviewDetailPage() {
 
           {/* Scores */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-3">
-              Ratings <span className="text-zinc-600 normal-case">(optional, 1-5)</span>
+            <label className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 block mb-3">
+              Ratings <span className="text-text-secondary/40 normal-case">(optional, 1-5)</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
@@ -314,7 +314,7 @@ export default function ReviewDetailPage() {
                 { key: 'significance', label: 'Significance' },
               ].map(({ key, label }) => (
                 <div key={key}>
-                  <p className="text-xs text-zinc-400 mb-1.5">{label}</p>
+                  <p className="text-xs text-text-secondary mb-1.5">{label}</p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((n) => (
                       <button
@@ -323,8 +323,8 @@ export default function ReviewDetailPage() {
                         onClick={() => setScores((prev) => ({ ...prev, [key]: prev[key as keyof typeof prev] === n ? null : n }))}
                         className={`w-8 h-8 rounded text-xs font-bold transition-all ${
                           scores[key as keyof typeof scores] === n
-                            ? 'bg-[#C9A84C] text-[#13131A]'
-                            : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:border-[#C9A84C]/50 hover:text-[#C9A84C]'
+                            ? 'bg-primary text-white'
+                            : 'bg-bg-alt border border-border text-text-secondary/60 hover:border-accent/50 hover:text-accent'
                         }`}
                       >
                         {n}
@@ -338,21 +338,21 @@ export default function ReviewDetailPage() {
 
           {/* Comments */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 block mb-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 block mb-2">
               Review Comments
             </label>
             <textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               rows={8}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] resize-none"
+              className="w-full bg-bg-alt border border-border rounded-lg px-4 py-3 text-sm text-primary placeholder:text-text-secondary/40 outline-none focus:border-accent resize-none"
               placeholder="Provide detailed feedback on methodology, originality, significance, clarity, and suggestions for improvement..."
             />
-            <p className="text-[10px] text-zinc-600 mt-1">These comments will be shared with the authors (anonymously if single-blind).</p>
+            <p className="text-[10px] text-text-secondary/40 mt-1">These comments will be shared with the authors (anonymously if single-blind).</p>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+          <div className="flex items-center justify-between pt-4 border-t border-border">
             <button
               onClick={handleDecline}
               disabled={saving}
@@ -363,7 +363,7 @@ export default function ReviewDetailPage() {
             <button
               onClick={handleSubmitReview}
               disabled={saving || !recommendation}
-              className="px-6 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-sm font-bold rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-2"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Submit Review
@@ -374,12 +374,12 @@ export default function ReviewDetailPage() {
 
       {/* Completed Review Display */}
       {isCompleted && (
-        <div className="bg-[#111118] border border-zinc-800 rounded-xl p-6 space-y-4">
-          <h2 className="text-lg font-serif font-bold text-white border-b border-zinc-800 pb-3">
+        <div className="bg-surface border border-border rounded-xl p-6 space-y-4">
+          <h2 className="text-lg font-serif font-bold text-primary border-b border-border pb-3">
             Your Review
           </h2>
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Recommendation</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 mb-1">Recommendation</p>
             <p className={`text-sm font-bold capitalize ${
               assignment.recommendation === 'accept' ? 'text-green-400' :
               assignment.recommendation === 'revise' ? 'text-yellow-400' : 'text-red-400'
@@ -389,19 +389,19 @@ export default function ReviewDetailPage() {
           </div>
           {assignment.comments && (
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-1">Comments</p>
-              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{assignment.comments}</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 mb-1">Comments</p>
+              <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">{assignment.comments}</p>
             </div>
           )}
           {assignment.scores && (
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2">Ratings</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-text-secondary/60 mb-2">Ratings</p>
               <div className="flex flex-wrap gap-4">
                 {(['originality', 'rigor', 'clarity', 'significance'] as const).map((key) => (
                   assignment.scores?.[key] != null && (
                     <div key={key} className="text-center">
-                      <p className="text-[10px] text-zinc-500 capitalize">{key}</p>
-                      <p className="text-sm font-bold text-[#C9A84C]">{assignment.scores[key]}/5</p>
+                      <p className="text-[10px] text-text-secondary/60 capitalize">{key}</p>
+                      <p className="text-sm font-bold text-accent">{assignment.scores[key]}/5</p>
                     </div>
                   )
                 ))}

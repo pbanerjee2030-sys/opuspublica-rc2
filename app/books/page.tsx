@@ -35,29 +35,29 @@ export default async function BooksPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D11] text-zinc-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans">
       <div className="h-16"></div>
 
       <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-[#C9A84C] hover:text-[#D4AF37] transition-colors group text-sm"
+            className="inline-flex items-center gap-2 text-accent hover:text-accent-hover transition-colors group text-sm"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Home
           </Link>
         </div>
 
-        <section className="py-12 bg-gradient-to-b from-[#0D0D11] via-[#13131A] to-[#0D0D11]">
+        <section className="py-12 bg-bg-alt">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <header className="mb-16 text-center">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] mb-3 font-mono">Policy Volumes</div>
-              <h1 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight">All Book Publications</h1>
-              <p className="text-sm text-zinc-400 mt-3 max-w-lg mx-auto leading-relaxed">
+                <div className="text-xs font-bold uppercase tracking-wider text-accent mb-3 font-mono">Policy Volumes</div>
+              <h1 className="text-3xl sm:text-4xl font-serif font-bold text-primary tracking-tight">All Book Publications</h1>
+              <p className="text-sm text-text-secondary mt-3 max-w-lg mx-auto leading-relaxed">
                 Monographs and collaborative edits offering historical depth to policy questions.
               </p>
-              <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mx-auto mt-6"></div>
+              <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent mx-auto mt-6"></div>
             </header>
 
             <div className="grid md:grid-cols-3 gap-8">
@@ -69,48 +69,48 @@ export default async function BooksPage() {
                 return (
                   <div
                     key={book.id}
-                    className="group relative bg-[#13131A] border border-zinc-800/60 rounded-xl overflow-hidden hover:border-[#C9A84C]/30 transition-all duration-500 shadow-md hover:shadow-xl hover:shadow-[#C9A84C]/5 flex flex-col"
+                    className="group relative bg-surface border border-border/60 rounded-xl overflow-hidden hover:border-accent/30 transition-all duration-500 shadow-md hover:shadow-xl flex flex-col"
                   >
-                    <div className="relative w-full h-48 overflow-hidden bg-zinc-900">
+                    <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-alt">
                       {book.cover_image ? (
                         <Image
                           src={book.cover_image}
                           alt={`${book.title} Cover`}
                           fill
                           sizes="(max-width: 768px) 100vw, 33vw"
-                          className="object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
+                          className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
                           priority
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#8B1A1A]/10">
-                          <BookOpen className="w-10 h-10 text-[#8B1A1A]/40" />
+                        <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                          <BookOpen className="w-10 h-10 text-accent/30" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#13131A] via-transparent to-transparent opacity-60" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
                       <div className="absolute top-3 right-3 z-20">
-                        <span className="text-[8px] uppercase tracking-widest font-bold bg-[#C9A84C]/90 text-[#13131A] px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] uppercase tracking-widest font-bold bg-accent/90 text-white px-2 py-0.5 rounded-full">
                           {book.status}
                         </span>
                       </div>
                     </div>
 
                     <div className="relative p-4 space-y-2 flex-1 flex flex-col">
-                      <h2 className="text-sm font-serif font-bold text-white line-clamp-2 leading-snug group-hover:text-[#C9A84C] transition-colors duration-300">
+                      <h2 className="text-sm font-serif font-bold text-primary line-clamp-2 leading-snug group-hover:text-accent transition-colors duration-300">
                         {book.title}
                       </h2>
-                      <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed flex-1">
+                      <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed flex-1">
                         {book.description}
                       </p>
                       <div className="flex items-center gap-1.5 pt-1">
-                        <User className="w-3 h-3 text-[#C9A84C]" />
-                        <span className="text-[10px] text-zinc-500 font-medium">{displayAuthor}</span>
+                        <User className="w-3 h-3 text-accent" />
+                        <span className="text-xs text-text-secondary/60 font-medium">{displayAuthor}</span>
                       </div>
                     </div>
 
                     <div className="px-4 pb-4">
                       <Link
                         href={`/books/${book.slug}`}
-                        className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-[#C9A84C]/10 border border-zinc-800 hover:border-[#C9A84C]/30 text-zinc-300 hover:text-[#C9A84C] text-[11px] font-bold rounded-lg transition-all duration-300"
+                        className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-bg-alt hover:bg-accent/10 border border-border hover:border-accent/30 text-text-secondary hover:text-accent text-sm font-bold rounded-lg transition-all duration-300"
                       >
                         View Details
                         <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -122,10 +122,10 @@ export default async function BooksPage() {
             </div>
 
             {dbBooks.length === 0 && (
-              <div className="text-center py-16 bg-[#13131A]/60 border border-zinc-800 rounded-xl">
-                <BookOpen className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-                <h2 className="text-lg font-bold text-zinc-300">No books available yet</h2>
-                <p className="text-xs text-zinc-500 mt-2">Books will appear here once published.</p>
+              <div className="text-center py-16 bg-surface/60 border border-border rounded-xl">
+                <BookOpen className="w-12 h-12 text-text-secondary/30 mx-auto mb-4" />
+                <h2 className="text-lg font-bold text-text-secondary">No books available yet</h2>
+                <p className="text-sm text-text-secondary/60 mt-2">Books will appear here once published.</p>
               </div>
             )}
           </div>

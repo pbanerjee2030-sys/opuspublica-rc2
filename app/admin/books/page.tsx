@@ -41,6 +41,7 @@ interface Book {
   language: string | null;
   format: string | null;
   price: string | null;
+  ebook_price: string | null;
   description: string;
   long_description: string | null;
   table_of_contents: string[] | null;
@@ -74,6 +75,7 @@ export default function AdminBooksPage() {
     language: 'English',
     format: 'Paperback, E-book',
     price: '',
+    ebook_price: '',
     status: 'Available Now',
     is_available: true,
     description: '',
@@ -227,6 +229,7 @@ export default function AdminBooksPage() {
       language: 'English',
       format: 'Paperback, E-book',
       price: '',
+      ebook_price: '',
       status: 'Available Now',
       is_available: true,
       description: '',
@@ -255,6 +258,7 @@ export default function AdminBooksPage() {
       language: book.language || 'English',
       format: book.format || 'Paperback, E-book',
       price: book.price || '',
+      ebook_price: book.ebook_price || '',
       status: book.status || 'Available Now',
       is_available: book.is_available ?? true,
       description: book.description || '',
@@ -298,6 +302,7 @@ export default function AdminBooksPage() {
         language: form.language.trim() || null,
         format: form.format.trim() || null,
         price: form.price.trim() || null,
+        ebook_price: form.ebook_price.trim() || null,
         status: form.status.trim() || 'Available Now',
         is_available: form.is_available,
         description: form.description.trim(),
@@ -693,7 +698,7 @@ export default function AdminBooksPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
-                      Price Label
+                      Price (Paperback)
                     </label>
                     <input
                       type="text"
@@ -701,6 +706,18 @@ export default function AdminBooksPage() {
                       onChange={(e) => setForm({ ...form, price: e.target.value })}
                       className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
                       placeholder="$25.99"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
+                      Price (E-book)
+                    </label>
+                    <input
+                      type="text"
+                      value={form.ebook_price}
+                      onChange={(e) => setForm({ ...form, ebook_price: e.target.value })}
+                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                      placeholder="$9.99"
                     />
                   </div>
                   <div>

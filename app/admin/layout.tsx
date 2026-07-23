@@ -25,6 +25,7 @@ import {
   ClipboardCheck,
   BarChart3,
   Book,
+  MessageSquare,
 } from 'lucide-react';
 
 const navItems = [
@@ -37,6 +38,7 @@ const navItems = [
   { href: '/admin/reviewer-workload', label: 'Reviewer Workload', icon: BarChart3 },
   { href: '/admin/compliance', label: 'Compliance', icon: ClipboardCheck },
   { href: '/admin/doi-monitor', label: 'DOI Monitor', icon: ExternalLink },
+  { href: '/admin/contact-queries', label: 'Contact Queries', icon: MessageSquare },
   { href: '/admin/audit-log', label: 'Audit Log', icon: History },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];

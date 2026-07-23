@@ -73,7 +73,7 @@ export default function SubmitArticlePage() {
       TiptapLink.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-[#8B1A1A] underline hover:text-[#C9A84C]',
+          class: 'text-primary underline hover:text-accent',
         },
       }),
       TiptapImage.configure({
@@ -84,18 +84,18 @@ export default function SubmitArticlePage() {
       TiptapTable.configure({
         resizable: true,
         HTMLAttributes: {
-          class: 'border-collapse table-auto w-full my-4 border border-zinc-300',
+          class: 'border-collapse table-auto w-full my-4 border border-border',
         },
       }),
       TiptapTableRow,
       TiptapTableCell.configure({
         HTMLAttributes: {
-          class: 'border border-zinc-300 p-2 text-sm',
+          class: 'border border-border p-2 text-sm',
         },
       }),
       TiptapTableHeader.configure({
         HTMLAttributes: {
-          class: 'border border-zinc-300 p-2 font-bold text-sm bg-zinc-100',
+          class: 'border border-border p-2 font-bold text-sm bg-bg-alt',
         },
       }),
     ],
@@ -375,7 +375,7 @@ export default function SubmitArticlePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       <style>{`
         .ProseMirror {
           min-height: 300px;
@@ -414,14 +414,14 @@ export default function SubmitArticlePage() {
           margin-bottom: 1em;
         }
         .ProseMirror blockquote {
-          border-left: 4px solid #8B1A1A;
+          border-left: 4px solid var(--color-primary);
           padding-left: 1em;
           font-style: italic;
-          color: rgba(26, 26, 46, 0.8);
+          color: var(--color-text-secondary);
           margin: 1em 0;
         }
         .ProseMirror a:hover {
-          color: #C9A84C;
+          color: var(--color-accent);
         }
         .ProseMirror table {
           border-collapse: collapse;
@@ -433,7 +433,7 @@ export default function SubmitArticlePage() {
         .ProseMirror table td,
         .ProseMirror table th {
           min-width: 1em;
-          border: 1px solid #ced4da;
+          border: 1px solid var(--color-border);
           padding: 8px 12px;
           vertical-align: top;
           box-sizing: border-box;
@@ -442,7 +442,7 @@ export default function SubmitArticlePage() {
         .ProseMirror table th {
           font-weight: bold;
           text-align: left;
-          background-color: #f1f3f5;
+          background-color: var(--color-bg-alt);
         }
         .ProseMirror img {
           max-width: 100%;
@@ -454,25 +454,25 @@ export default function SubmitArticlePage() {
       `}</style>
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E] py-12 px-4 sm:px-6">
+      <main className="flex-grow bg-bg py-12 px-4 sm:px-6">
         
         {loadingSession && (
           <div className="max-w-md mx-auto py-24 text-center space-y-4">
-            <Loader2 className="w-12 h-12 text-[#C9A84C] animate-spin mx-auto" />
-            <p className="text-white/80">Checking user session...</p>
+            <Loader2 className="w-12 h-12 text-accent animate-spin mx-auto" />
+            <p className="text-text-secondary">Checking user session...</p>
           </div>
         )}
 
         {!loadingSession && !session && (
           <div className="max-w-2xl mx-auto py-6">
             {!showAuthForm ? (
-              <div className="bg-[#F5F0E8] text-[#1A1A2E] rounded-lg p-10 text-center shadow-xl border-t-4 border-[#8B1A1A] space-y-6">
-                <div className="w-16 h-16 bg-[#8B1A1A]/10 text-[#8B1A1A] rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <div className="bg-surface text-text rounded-xl p-10 text-center shadow-sm border border-border border-t-4 border-t-primary space-y-6">
+                <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
                   <Lock className="w-8 h-8" />
                 </div>
                 <div className="space-y-2">
-                  <h2 className="text-2xl font-serif font-bold text-[#1A1A2E]">Manuscript Submission Restricted</h2>
-                  <p className="text-sm text-[#1A1A2E]/70 max-w-md mx-auto leading-relaxed">
+                  <h2 className="text-2xl font-serif font-bold text-primary">Manuscript Submission Restricted</h2>
+                  <p className="text-sm text-text-secondary max-w-md mx-auto leading-relaxed">
                     Access to the Author Submission Portal is restricted to registered researchers. You must be authenticated to submit abstracts and PDF manuscripts for editorial review.
                   </p>
                 </div>
@@ -480,20 +480,20 @@ export default function SubmitArticlePage() {
                 <div className="pt-2">
                   <button
                     onClick={() => setShowAuthForm(true)}
-                    className="px-6 py-3 bg-[#8B1A1A] hover:bg-[#1A1A2E] text-white font-bold text-sm rounded shadow hover:shadow-lg transition-all"
+                    className="px-6 py-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-lg transition-all"
                   >
                     Log in or Register to Submit
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg p-8 text-[#1A1A2E] shadow-xl border-t-4 border-[#C9A84C] max-w-md mx-auto">
+              <div className="bg-surface rounded-xl p-8 text-text shadow-sm border border-border border-t-4 border-t-accent max-w-md mx-auto">
                 <div className="text-center mb-6">
-                  <BookOpen className="w-10 h-10 text-[#8B1A1A] mx-auto mb-2" />
-                  <h2 className="text-2xl font-serif font-bold text-[#1A1A2E]">
+                  <BookOpen className="w-10 h-10 text-primary mx-auto mb-2" />
+                  <h2 className="text-2xl font-serif font-bold text-primary">
                     {isRegistering ? 'Create Author Account' : 'Author Submission Portal'}
                   </h2>
-                  <p className="text-sm text-[#1A1A2E]/70 mt-1">
+                  <p className="text-sm text-text-secondary mt-1">
                     {isRegistering 
                       ? 'Register to submit manuscripts for editorial review.' 
                       : 'Sign in to access secure manuscript uploads.'}
@@ -501,14 +501,14 @@ export default function SubmitArticlePage() {
                 </div>
 
                 {authError && (
-                  <div className="p-3 bg-red-100 text-red-700 text-sm rounded mb-4 flex items-center gap-2">
+                  <div className="p-3 bg-red-100 text-red-700 text-sm rounded-lg mb-4 flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0" />
                     <span className="leading-tight">{authError}</span>
                   </div>
                 )}
 
                 {authSuccess && (
-                  <div className="p-3 bg-green-100 text-green-700 text-sm rounded mb-4 flex items-center gap-2">
+                  <div className="p-3 bg-green-100 text-green-700 text-sm rounded-lg mb-4 flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 flex-shrink-0" />
                     <span className="leading-tight">{authSuccess}</span>
                   </div>
@@ -517,17 +517,17 @@ export default function SubmitArticlePage() {
                 <form onSubmit={handleAuthSubmit} className="space-y-4">
                   {isRegistering && (
                     <div>
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                         Full Name
                       </label>
                       <div className="relative">
-                        <User className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                        <User className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                         <input
                           type="text"
                           required
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                          className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                           placeholder="e.g. Dr. Jane Smith"
                         />
                       </div>
@@ -535,35 +535,35 @@ export default function SubmitArticlePage() {
                   )}
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                       Email Address
                     </label>
                     <div className="relative">
-                      <Mail className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                      <Mail className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                       <input
                         type="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                        className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                         placeholder="e.g. researcher@institution.edu"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                       Password
                     </label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                      <Lock className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                       <input
                         type="password"
                         required
                         minLength={6}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                        className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                         placeholder="Min 6 characters"
                       />
                     </div>
@@ -572,44 +572,44 @@ export default function SubmitArticlePage() {
                   {isRegistering && (
                     <>
                       <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                           ORCID iD <span className="font-normal normal-case tracking-normal">(Optional)</span>
                         </label>
                         <div className="relative">
-                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                           <input
                             type="text"
                             value={orcid}
                             onChange={(e) => setOrcid(e.target.value)}
                             pattern="^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
-                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                            className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                             placeholder="0000-0002-1234-5678"
                           />
                         </div>
-                        <p className="text-[10px] text-[#1A1A2E]/40 mt-0.5">16-digit identifier from orcid.org</p>
+                        <p className="text-[10px] text-text-secondary/60 mt-1">16-digit identifier from orcid.org</p>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                           Institutional Affiliation <span className="font-normal normal-case tracking-normal">(Optional)</span>
                         </label>
                         <div className="relative">
-                          <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                           <input
                             type="text"
                             value={affiliation}
                             onChange={(e) => handleRorSearchChange(e.target.value)}
                             onFocus={() => setShowRorSuggestions(true)}
                             onBlur={() => setTimeout(() => setShowRorSuggestions(false), 200)}
-                            className="w-full pl-9 pr-3 py-2 border border-black/10 rounded text-sm focus:outline-none focus:border-[#8B1A1A]"
+                            className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                             placeholder="Type to search institution..."
                           />
                           {showRorSuggestions && rorSuggestions.length > 0 && (
-                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-48 overflow-y-auto bg-surface border border-border rounded-lg shadow-sm text-xs text-text">
                               {rorSuggestions.map((item) => (
                                 <div
                                   key={item.id}
-                                  className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                                  className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                                   onMouseDown={() => {
                                     setAffiliation(item.name);
                                     setRorId(item.id);
@@ -617,7 +617,7 @@ export default function SubmitArticlePage() {
                                   }}
                                 >
                                   <strong>{item.name}</strong>
-                                  <span className="block text-[9px] text-zinc-500 font-mono">{item.id}</span>
+                                  <span className="block text-[9px] text-text-secondary/60 font-mono">{item.id}</span>
                                 </div>
                               ))}
                             </div>
@@ -626,16 +626,16 @@ export default function SubmitArticlePage() {
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                           ROR ID
                         </label>
                         <div className="relative">
-                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-[#1A1A2E]/50" />
+                          <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                           <input
                             type="text"
                             readOnly
                             value={rorId}
-                            className="w-full pl-9 pr-3 py-2 border border-zinc-200 text-zinc-500 rounded text-sm bg-zinc-100 cursor-not-allowed focus:outline-none"
+                            className="w-full pl-9 pr-3 py-2 border border-border text-text-secondary/70 rounded-lg text-sm bg-bg-alt cursor-not-allowed outline-none"
                             placeholder="Selected institution's ROR ID"
                           />
                         </div>
@@ -646,7 +646,7 @@ export default function SubmitArticlePage() {
                   <button
                     type="submit"
                     disabled={authLoading}
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-[#1A1A2E] hover:bg-[#8B1A1A] text-white font-semibold text-sm rounded shadow hover:shadow-md transition-colors"
+                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-lg transition-colors"
                   >
                     {authLoading ? (
                       <>
@@ -659,14 +659,14 @@ export default function SubmitArticlePage() {
                   </button>
                 </form>
 
-                <div className="mt-4 pt-4 border-t border-[#1A1A2E]/10 text-center">
+                <div className="mt-4 pt-4 border-t border-border text-center">
                   <button
                     onClick={() => {
                       setIsRegistering(!isRegistering);
                       setAuthError(null);
                       setOrcid('');
                     }}
-                    className="text-xs text-[#8B1A1A] hover:underline font-semibold"
+                    className="text-xs text-accent hover:underline font-semibold"
                   >
                     {isRegistering ? 'Already have an account? Sign In' : 'Need an author account? Register'}
                   </button>
@@ -679,30 +679,30 @@ export default function SubmitArticlePage() {
 
         {!loadingSession && session && submissionSuccess && (
           <div className="max-w-2xl mx-auto">
-            <div className="bg-[#F5F0E8] text-[#1A1A2E] rounded-lg p-8 shadow-xl border-t-4 border-green-600 text-center">
+            <div className="bg-surface text-text rounded-xl p-8 shadow-sm border border-border border-t-4 border-t-green-600 text-center">
               <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
               
-              <h2 className="text-3xl font-serif font-bold text-[#1A1A2E]">Submission Successful</h2>
-              <p className="text-sm text-[#1A1A2E]/70 mt-2 max-w-md mx-auto">
+              <h2 className="text-3xl font-serif font-bold text-primary">Submission Successful</h2>
+              <p className="text-sm text-text-secondary mt-2 max-w-md mx-auto">
                 Thank you! Your academic manuscript has been securely uploaded and queued in our editorial pending reviews folder.
               </p>
 
-              <div className="my-6 p-4 bg-white/60 border border-black/5 rounded text-left space-y-2 text-xs font-mono text-black/80 max-w-md mx-auto">
-                <div><span className="font-semibold text-black">Article ID:</span> {submittedId}</div>
-                <div><span className="font-semibold text-black">File Bucket:</span> publications</div>
-                <div><span className="font-semibold text-black">Status:</span> pending_review</div>
+              <div className="my-6 p-4 bg-bg-alt border border-border rounded-lg text-left space-y-2 text-xs font-mono text-text-secondary max-w-md mx-auto">
+                <div><span className="font-semibold text-primary">Article ID:</span> {submittedId}</div>
+                <div><span className="font-semibold text-primary">File Bucket:</span> publications</div>
+                <div><span className="font-semibold text-primary">Status:</span> pending_review</div>
               </div>
 
               <div className="flex flex-col sm:flex-row justify-center gap-3">
                 <button
                   onClick={() => setSubmissionSuccess(false)}
-                  className="inline-flex items-center justify-center px-5 py-2.5 bg-[#8B1A1A] hover:bg-[#1A1A2E] text-white text-sm font-semibold rounded transition-colors shadow"
+                  className="inline-flex items-center justify-center px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-colors"
                 >
                   Submit Another Manuscript
                 </button>
                 <Link
                   href="/"
-                  className="inline-flex items-center justify-center px-5 py-2.5 border border-[#1A1A2E] hover:bg-[#1A1A2E] hover:text-white text-[#1A1A2E] text-sm font-semibold rounded transition-all"
+                  className="inline-flex items-center justify-center px-5 py-2.5 border border-border bg-bg-alt text-text-secondary hover:bg-primary hover:text-white text-sm font-semibold rounded-lg transition-all"
                 >
                   Return to Home
                 </Link>
@@ -714,39 +714,39 @@ export default function SubmitArticlePage() {
         {!loadingSession && session && !submissionSuccess && (
           <div className="max-w-3xl mx-auto">
             
-            <header className="border-b border-[#C9A84C]/20 pb-4 mb-8 flex justify-between items-center">
+            <header className="border-b border-accent/20 pb-4 mb-8 flex justify-between items-center">
               <div>
-                <h1 className="text-3xl font-serif text-[#C9A84C]">Submit Manuscript</h1>
-                <p className="text-sm text-white/70 mt-1">
+                <h1 className="text-3xl font-serif text-primary">Submit Manuscript</h1>
+                <p className="text-sm text-text-secondary mt-1">
                   Upload abstracts, author listings, and PDF galleys to the editorial review folder.
                 </p>
               </div>
               <button
                 onClick={async () => { await supabase.auth.signOut(); setSession(null); }}
-                className="text-xs text-red-400 hover:text-red-300 font-semibold uppercase tracking-wider"
+                className="text-xs text-red-500 hover:text-red-700 font-semibold uppercase tracking-wider"
               >
                 Sign Out
               </button>
             </header>
 
-            <form onSubmit={handleFormSubmit} className="bg-[#F5F0E8] text-[#1A1A2E] rounded-lg p-6 sm:p-8 shadow-xl space-y-6">
+            <form onSubmit={handleFormSubmit} className="bg-surface text-text rounded-xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
               
               {submissionError && (
-                <div className="p-3 bg-red-100 text-red-700 text-sm rounded flex items-center gap-2">
+                <div className="p-3 bg-red-100 text-red-700 text-sm rounded-lg flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   <span>{submissionError}</span>
                 </div>
               )}
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                   Target Academic Journal
                 </label>
                 <select
                   required
                   value={selectedJournalId}
                   onChange={(e) => setSelectedJournalId(e.target.value)}
-                  className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                  className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent transition-colors"
                 >
                   {journals.map((journal) => (
                     <option key={journal.id} value={journal.id}>
@@ -757,7 +757,7 @@ export default function SubmitArticlePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                   Manuscript Title
                 </label>
                 <input
@@ -765,13 +765,13 @@ export default function SubmitArticlePage() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                  className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                   placeholder="e.g. Theoretical Implications of SAARC Region Tariff Corridor Policies"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                   Abstract
                 </label>
                 <textarea
@@ -779,75 +779,75 @@ export default function SubmitArticlePage() {
                   rows={6}
                   value={abstract}
                   onChange={(e) => setAbstract(e.target.value)}
-                  className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                  className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors font-sans resize-y"
                   placeholder="Provide a comprehensive academic summary of the research study, findings, and methodologies."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                   Manuscript Body *
                 </label>
-                <div className="border border-black/10 rounded overflow-hidden bg-white focus-within:border-[#8B1A1A]">
+                <div className="border border-border rounded-lg overflow-hidden bg-surface focus-within:border-accent transition-colors">
                   {/* Toolbar */}
                   {editor && (
-                    <div className="flex flex-wrap items-center gap-1 bg-[#1A1A2E]/5 border-b border-black/10 p-2 text-xs">
+                    <div className="flex flex-wrap items-center gap-1 bg-bg-alt border-b border-border p-2 text-xs">
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleBold().run()}
-                        className={`px-2.5 py-1.5 rounded font-bold hover:bg-black/5 ${editor.isActive('bold') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded font-bold hover:bg-accent/10 ${editor.isActive('bold') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         B
                       </button>
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleItalic().run()}
-                        className={`px-2.5 py-1.5 rounded italic hover:bg-black/5 ${editor.isActive('italic') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded italic hover:bg-accent/10 ${editor.isActive('italic') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         I
                       </button>
-                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <div className="h-4 w-px bg-border mx-1" />
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 2 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 2 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         H2
                       </button>
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 3 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 3 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         H3
                       </button>
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-black/5 ${editor.isActive('heading', { level: 4 }) ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 4 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         H4
                       </button>
-                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <div className="h-4 w-px bg-border mx-1" />
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleBulletList().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('bulletList') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('bulletList') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         Bullet List
                       </button>
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('orderedList') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('orderedList') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         Numbered List
                       </button>
-                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <div className="h-4 w-px bg-border mx-1" />
                       <button
                         type="button"
                         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('blockquote') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('blockquote') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         Quote
                       </button>
@@ -863,11 +863,11 @@ export default function SubmitArticlePage() {
                           }
                           editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
                         }}
-                        className={`px-2.5 py-1.5 rounded hover:bg-black/5 ${editor.isActive('link') ? 'bg-[#8B1A1A] text-white' : 'text-[#1A1A2E]/80'}`}
+                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('link') ? 'bg-primary text-white' : 'text-text-secondary'}`}
                       >
                         Link
                       </button>
-                      <div className="h-4 w-px bg-black/10 mx-1" />
+                      <div className="h-4 w-px bg-border mx-1" />
                       <button
                         type="button"
                         onClick={() => {
@@ -876,7 +876,7 @@ export default function SubmitArticlePage() {
                             editor.chain().focus().setImage({ src: url }).run();
                           }
                         }}
-                        className="px-2.5 py-1.5 rounded hover:bg-black/5 text-[#1A1A2E]/80 font-semibold"
+                        className="px-2.5 py-1.5 rounded hover:bg-accent/10 text-text-secondary font-semibold"
                         title="Insert Image"
                       >
                         Image
@@ -886,7 +886,7 @@ export default function SubmitArticlePage() {
                         onClick={() => {
                           editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
                         }}
-                        className="px-2.5 py-1.5 rounded hover:bg-black/5 text-[#1A1A2E]/80 font-semibold"
+                        className="px-2.5 py-1.5 rounded hover:bg-accent/10 text-text-secondary font-semibold"
                         title="Insert Table"
                       >
                         Table
@@ -895,22 +895,22 @@ export default function SubmitArticlePage() {
                   )}
 
                   {/* Editor Content Area */}
-                  <div className="prose prose-sm max-w-none text-[#1A1A2E] leading-relaxed">
+                  <div className="prose prose-sm max-w-none text-text leading-relaxed">
                     <EditorContent editor={editor} />
                   </div>
                 </div>
-                <p className="text-[10px] text-zinc-500 mt-1">Provide the full text body of the manuscript. Format with headings, lists, quotes, and links using the toolbar above.</p>
+                <p className="text-[10px] text-text-secondary/60 mt-1">Provide the full text body of the manuscript. Format with headings, lists, quotes, and links using the toolbar above.</p>
               </div>
 
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70">
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
                     Co-Authors Names (Optional)
                   </label>
                   <button
                     type="button"
                     onClick={handleAddCoAuthor}
-                    className="inline-flex items-center gap-1 text-xs text-[#8B1A1A] hover:text-[#1A1A2E] font-bold"
+                    className="inline-flex items-center gap-1 text-xs text-accent hover:text-primary font-bold"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Author
@@ -919,37 +919,37 @@ export default function SubmitArticlePage() {
 
                 <div className="space-y-2 mt-2">
                   {coAuthors.map((author, index) => (
-                    <div key={index} className="space-y-2 bg-white/30 p-4 rounded-lg border border-black/5">
+                    <div key={index} className="space-y-2 bg-bg-alt p-4 rounded-lg border border-border">
                       <div className="flex gap-2 items-center">
-                        <Users className="w-4 h-4 text-black/40 flex-shrink-0" />
+                        <Users className="w-4 h-4 text-text-secondary/70 flex-shrink-0" />
                         <input
                           type="text"
                           value={author.name}
                           onChange={(e) => handleCoAuthorChange(index, e.target.value)}
-                          className="flex-grow px-3 py-1.5 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                          className="flex-grow px-3 py-1.5 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                           placeholder="Co-author full name"
                         />
                         <button
                           type="button"
                           onClick={() => handleRemoveCoAuthor(index)}
-                          className="p-1.5 text-red-600 hover:bg-red-50 rounded animate-pulse"
+                          className="p-1.5 text-red-500 hover:bg-red-50 rounded"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                       <div className="flex gap-2 items-center ml-6">
-                        <Fingerprint className="w-3.5 h-3.5 text-black/30 flex-shrink-0" />
+                        <Fingerprint className="w-3.5 h-3.5 text-text-secondary/60 flex-shrink-0" />
                         <input
                           type="text"
                           value={author.orcid}
                           onChange={(e) => handleCoAuthorOrcidChange(index, e.target.value)}
                           pattern="^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
-                          className="flex-grow px-3 py-1 border border-black/10 rounded text-xs bg-white focus:outline-none focus:border-[#8B1A1A]"
+                          className="flex-grow px-3 py-1 bg-bg border border-border rounded-lg text-xs text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                           placeholder="ORCID iD (optional)"
                         />
                       </div>
                       <div className="flex gap-2 items-center ml-6 relative">
-                        <BookOpen className="w-3.5 h-3.5 text-black/30 flex-shrink-0" />
+                        <BookOpen className="w-3.5 h-3.5 text-text-secondary/60 flex-shrink-0" />
                         <div className="flex-grow relative">
                           <input
                             type="text"
@@ -969,15 +969,15 @@ export default function SubmitArticlePage() {
                                 }
                               }, 200);
                             }}
-                            className="w-full px-3 py-1 border border-black/10 rounded text-xs bg-white focus:outline-none focus:border-[#8B1A1A]"
+                            className="w-full px-3 py-1 bg-bg border border-border rounded-lg text-xs text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                             placeholder="Type to search institution (ROR ID)..."
                           />
                           {author.showSuggestions && author.suggestions && author.suggestions.length > 0 && (
-                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                            <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-surface border border-border rounded-lg shadow-sm text-xs text-text">
                               {author.suggestions.map((item: any) => (
                                 <div
                                   key={item.id}
-                                  className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                                  className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                                   onMouseDown={() => {
                                     const updated = [...coAuthors];
                                     updated[index].affiliationName = item.name;
@@ -987,7 +987,7 @@ export default function SubmitArticlePage() {
                                   }}
                                 >
                                   <strong>{item.name}</strong>
-                                  <span className="block text-[8px] text-zinc-500 font-mono">{item.id}</span>
+                                  <span className="block text-[8px] text-text-secondary/60 font-mono">{item.id}</span>
                                 </div>
                               ))}
                             </div>
@@ -1002,20 +1002,20 @@ export default function SubmitArticlePage() {
                     </div>
                   ))}
                   {coAuthors.length === 0 && (
-                    <p className="text-xs text-[#1A1A2E]/40 italic">No co-authors added yet.</p>
+                    <p className="text-xs text-text-secondary/50 italic">No co-authors added yet.</p>
                   )}
                 </div>
               </div>
 
               {/* Funding Section */}
-              <div className="bg-white/40 border border-black/5 rounded-lg p-5 space-y-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1A1A2E]/70 border-b border-black/5 pb-1">
+              <div className="bg-bg-alt border border-border rounded-lg p-5 space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary border-b border-border pb-1">
                   Funding & Grant Details (Optional)
                 </h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="relative">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                       Funder Name
                     </label>
                     <input
@@ -1024,15 +1024,15 @@ export default function SubmitArticlePage() {
                       onChange={(e) => handleFunderSearchChange(e.target.value)}
                       onFocus={() => setShowFunderSuggestions(true)}
                       onBlur={() => setTimeout(() => setShowFunderSuggestions(false), 200)}
-                      className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                      className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                       placeholder="Search Funder Registry (e.g. Wellcome)..."
                     />
                     {showFunderSuggestions && funderSuggestions.length > 0 && (
-                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-white border border-black/10 rounded shadow-lg text-xs text-[#1A1A2E]">
+                      <div className="absolute left-0 right-0 z-50 mt-1 max-h-40 overflow-y-auto bg-surface border border-border rounded-lg shadow-sm text-xs text-text">
                         {funderSuggestions.map((item) => (
                           <div
                             key={item.uri}
-                            className="p-2 hover:bg-black/5 cursor-pointer border-b border-black/5 last:border-0 text-left"
+                            className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                             onMouseDown={() => {
                               setFunderName(item.name);
                               setFunderId(item.uri);
@@ -1040,7 +1040,7 @@ export default function SubmitArticlePage() {
                             }}
                           >
                             <strong>{item.name}</strong>
-                            <span className="block text-[9px] text-zinc-500 font-mono">{item.uri}</span>
+                            <span className="block text-[9px] text-text-secondary/60 font-mono">{item.uri}</span>
                           </div>
                         ))}
                       </div>
@@ -1053,14 +1053,14 @@ export default function SubmitArticlePage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                       Grant/Award Number
                     </label>
                     <input
                       type="text"
                       value={funderAwardNumber}
                       onChange={(e) => setFunderAwardNumber(e.target.value)}
-                      className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                      className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                       placeholder="e.g. WT-12345"
                     />
                   </div>
@@ -1068,13 +1068,13 @@ export default function SubmitArticlePage() {
               </div>
 
               {/* Section: Academic Declarations & Metadata */}
-              <div className="bg-white/40 border border-black/5 rounded-lg p-5 space-y-4">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-[#1A1A2E]/70 border-b border-black/5 pb-1">
+              <div className="bg-bg-alt border border-border rounded-lg p-5 space-y-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-text-secondary border-b border-border pb-1">
                   Academic Declarations &amp; Metadata
                 </h3>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                     Keywords * (Specify 4-6 keywords)
                   </label>
                   <input
@@ -1082,14 +1082,14 @@ export default function SubmitArticlePage() {
                     required
                     value={keywords}
                     onChange={(e) => setKeywords(e.target.value)}
-                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A]"
+                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors"
                     placeholder="Comma-separated (e.g. public policy, ancient legacy, governance). Minimum 4-6 keywords."
                   />
-                  <p className="text-[10px] text-zinc-500 mt-1">Specify 4 to 6 keywords separated by commas as requested by the Instructions for Authors.</p>
+                  <p className="text-[10px] text-text-secondary/60 mt-1">Specify 4 to 6 keywords separated by commas as requested by the Instructions for Authors.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                     Conflict of Interest Declaration *
                   </label>
                   <textarea
@@ -1097,43 +1097,43 @@ export default function SubmitArticlePage() {
                     rows={3}
                     value={conflictOfInterest}
                     onChange={(e) => setConflictOfInterest(e.target.value)}
-                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors font-sans resize-y"
                     placeholder="Declare any potential conflict of interest."
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                     Data Availability Statement (Optional)
                   </label>
                   <textarea
                     rows={3}
                     value={dataAvailability}
                     onChange={(e) => setDataAvailability(e.target.value)}
-                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors font-sans resize-y"
                     placeholder="Describe where the data supporting the research can be accessed."
                   />
-                  <p className="text-[10px] text-zinc-500 mt-1">Provide details on the availability of datasets, code, or other research materials.</p>
+                  <p className="text-[10px] text-text-secondary/60 mt-1">Provide details on the availability of datasets, code, or other research materials.</p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-1">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
                     Ethics Approval Statement (Optional)
                   </label>
                   <textarea
                     rows={3}
                     value={ethicsApproval}
                     onChange={(e) => setEthicsApproval(e.target.value)}
-                    className="w-full px-3 py-2 border border-black/10 rounded text-sm bg-white focus:outline-none focus:border-[#8B1A1A] font-sans resize-y"
+                    className="w-full px-3 py-2 bg-bg border border-border rounded-lg text-sm text-text placeholder:text-text-secondary/40 outline-none focus:border-accent transition-colors font-sans resize-y"
                     placeholder="Required if research involved human subjects, animal testing, surveys, or interviews."
                   />
-                  <p className="text-[10px] text-zinc-500 mt-1">Provide approval details from your Institutional Review Board (IRB) or Ethics Committee.</p>
+                  <p className="text-[10px] text-text-secondary/60 mt-1">Provide approval details from your Institutional Review Board (IRB) or Ethics Committee.</p>
                 </div>
               </div>
 
-              <div className="border border-dashed border-black/20 rounded-lg p-6 bg-white/40 text-center">
-                <Upload className="w-10 h-10 text-[#8B1A1A] mx-auto mb-2" />
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#1A1A2E]/70 mb-2">
+              <div className="border border-dashed border-border rounded-lg p-6 bg-bg-alt text-center">
+                <Upload className="w-10 h-10 text-primary mx-auto mb-2" />
+                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
                   Manuscript Upload (.PDF format only)
                 </label>
                 
@@ -1148,7 +1148,7 @@ export default function SubmitArticlePage() {
 
                 <label
                   htmlFor="pdf-manuscript-file-input"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-[#8B1A1A] text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white rounded text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg text-xs font-bold cursor-pointer transition-colors"
                 >
                   <FileText className="w-4 h-4" />
                   {pdfFile ? 'Replace PDF Document' : 'Choose PDF File'}
@@ -1162,10 +1162,10 @@ export default function SubmitArticlePage() {
                 )}
               </div>
 
-              <div className="pt-4 border-t border-black/10 flex justify-end gap-3">
+              <div className="pt-4 border-t border-border flex justify-end gap-3">
                 <Link
                   href="/"
-                  className="px-5 py-2.5 border border-[#1A1A2E] hover:bg-black/5 text-[#1A1A2E] text-sm font-semibold rounded transition-colors"
+                  className="px-5 py-2.5 border border-border bg-bg-alt text-text-secondary hover:bg-primary hover:text-white text-sm font-semibold rounded-lg transition-colors"
                 >
                   Cancel
                 </Link>
@@ -1173,7 +1173,7 @@ export default function SubmitArticlePage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#8B1A1A] hover:bg-[#1A1A2E] text-white font-semibold text-sm rounded shadow hover:shadow-md transition-colors"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-lg transition-colors"
                 >
                   {isSubmitting ? (
                     <>

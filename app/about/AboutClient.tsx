@@ -19,9 +19,9 @@ export default function AboutClient() {
   });
 
   return (
-    <div className="min-h-screen bg-[#1A1A2E]">
+    <div className="min-h-screen bg-bg">
       <div className="h-16"></div>
-      <main className="py-20 bg-[#F5F0E8]">
+      <main className="py-20 bg-bg-alt">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <motion.div
             ref={ref}
@@ -30,15 +30,15 @@ export default function AboutClient() {
             transition={{ duration: 0.6 }}
           >
             <div className="text-center mb-12">
-              <h1 className="text-3xl sm:text-4xl font-serif text-[#8B1A1A] mb-3">
+              <h1 className="text-3xl sm:text-4xl font-serif text-primary mb-3">
                 About Opus Publica
               </h1>
-              <div className="w-24 h-1 bg-[#C9A84C] mx-auto mb-4"></div>
+              <div className="w-24 h-1 bg-accent mx-auto mb-4"></div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               <div className="space-y-6">
-                <div className="relative w-full max-w-[280px] h-20 bg-white p-2 rounded-lg shadow-sm border border-zinc-200 overflow-hidden flex items-center justify-center">
+                <div className="relative w-full max-w-[280px] h-20 bg-surface p-2 rounded-lg shadow-sm border border-border overflow-hidden flex items-center justify-center">
                   <Image
                     src="/Opus%20Publica%20flat%20logo.jpg"
                     alt="Opus Publica Flat Logo"
@@ -47,13 +47,13 @@ export default function AboutClient() {
                     className="object-contain p-2"
                   />
                 </div>
-                <p className="text-[#1A1A2E]/80 leading-relaxed">
+                <p className="text-text leading-relaxed text-justify">
                   Opus Publica is a leading global platform for public policy research and publishing, dedicated to advancing knowledge that drives real-world impact.
                 </p>
-                <p className="text-[#1A1A2E]/80 leading-relaxed">
+                <p className="text-text leading-relaxed text-justify">
                   Established in 2023 and affiliated with the globally respected Advocacy Unified Network, Opus Publica operates from its headquarters in The Hague, Netherlands, with a presence in New York, USA, Durban, South Africa, and Kathmandu, Nepal.
                 </p>
-                <p className="text-[#1A1A2E]/80 leading-relaxed">
+                <p className="text-text leading-relaxed text-justify">
                   Our diverse network of journals covers critical areas such as sustainable development, international relations, civil rights, art and culture, environmental policy, and beyond.
                 </p>
               </div>
@@ -65,13 +65,13 @@ export default function AboutClient() {
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={inView ? { opacity: 1, scale: 1 } : {}}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-surface rounded-lg p-4 text-center shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <item.icon className="w-8 h-8 text-[#C9A84C] mx-auto mb-2" />
-                    <h4 className="text-[#8B1A1A] font-serif font-semibold text-sm">
+                    <item.icon className="w-8 h-8 text-accent mx-auto mb-2" />
+                    <h4 className="text-primary font-serif font-semibold text-sm">
                       {item.label}
                     </h4>
-                    <p className="text-[#1A1A2E]/60 text-xs">{item.desc}</p>
+                    <p className="text-text-secondary text-xs">{item.desc}</p>
                   </motion.div>
                 ))}
               </div>

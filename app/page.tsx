@@ -12,10 +12,10 @@ import {
   Mail, 
   MapPin, 
   Building2,
+  Search,
 } from 'lucide-react';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
-import SearchBar from '@/components/SearchBar';
 import type { DatabaseJournal } from '@/lib/types';
 
 const JOURNAL_COVER_MAP: Record<string, string> = {
@@ -128,39 +128,50 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D11] text-zinc-100 flex flex-col font-sans selection:bg-[#C9A84C] selection:text-[#0D0D11]">
-      
-      {/* HERO SECTION */}
-      <section id="home" className="relative overflow-hidden pt-32 pb-20 border-b border-zinc-900 bg-gradient-to-b from-[#13131A] via-[#0D0D11] to-[#0D0D11]">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#C9A84C]/5 rounded-full filter blur-3xl pointer-events-none"></div>
-        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-[#8B1A1A]/3 rounded-full filter blur-3xl pointer-events-none"></div>
+    <div className="min-h-screen bg-bg text-text flex flex-col">
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 space-y-8">
+      {/* HERO SECTION */}
+      <section id="home" className="pt-32 pb-20 border-b border-border bg-bg">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
           <div className="space-y-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-              <GraduationCap className="w-3.5 h-3.5 text-[#C9A84C]" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-xs font-bold uppercase tracking-wider text-accent">
+              <GraduationCap className="w-3.5 h-3.5" />
               Open Access Academic Repository
             </span>
-            <h1 className="text-4xl sm:text-6xl font-serif font-extrabold text-white tracking-tight leading-tight max-w-4xl mx-auto">
-              Advancing Global <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#C9A84C] via-amber-200 to-[#C9A84C]">Policy &amp; Research</span>
+            <h1 className="text-4xl sm:text-5xl font-serif font-bold text-primary tracking-tight leading-tight max-w-4xl mx-auto">
+              Advancing Global Policy &amp; Research
             </h1>
-            <p className="text-sm sm:text-base text-zinc-400 max-w-2xl mx-auto font-sans leading-relaxed">
+            <p className="text-sm sm:text-base text-text-secondary max-w-2xl mx-auto leading-relaxed">
               Bridging classical statecraft and contemporary global governance through peer-reviewed research, open-access journals, and authoritative books.
             </p>
           </div>
 
-          <SearchBar placeholder="Search articles, DOIs, authors, or subjects..." className="max-w-2xl mx-auto" />
+          <div className="max-w-xl mx-auto">
+            <div className="flex border border-border">
+              <div className="flex items-center pl-4 pr-3 bg-surface border-r border-border">
+                <Search className="w-4 h-4 text-text-secondary/60" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search articles, DOIs, authors..."
+                className="flex-1 py-3 px-3 bg-surface text-sm text-text placeholder:text-text-secondary/40 outline-none"
+              />
+              <button className="px-5 py-3 bg-primary text-white text-sm font-semibold tracking-wider uppercase hover:bg-primary-hover transition-colors">
+                Search
+              </button>
+            </div>
+          </div>
 
           <div className="flex justify-center items-center gap-4 pt-2">
             <a
               href="#journals"
-              className="px-6 py-3 bg-[#8B1A1A] hover:bg-[#1A1A2E] text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-lg"
+              className="px-6 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
             >
               Explore Journals
             </a>
             <Link
               href="/submit"
-              className="px-6 py-3 border border-zinc-800 hover:border-[#C9A84C]/50 hover:bg-white/5 text-zinc-300 hover:text-white text-xs font-bold uppercase tracking-wider rounded-lg transition-all"
+              className="px-6 py-3 border border-border hover:border-accent/50 text-text-secondary hover:text-text text-sm font-semibold rounded-lg transition-all"
             >
               Submit Manuscript
             </Link>
@@ -168,20 +179,93 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* DYNAMIC JOURNALS GRID */}
-      <section id="journals" className="py-20 border-b border-zinc-900 bg-[#0D0D11]">
+      {/* LATEST RESEARCH FEED — most prominent */}
+      <section className="py-20 border-b border-border bg-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
+          <header className="mb-12">
+            <div className="w-12 h-px bg-accent mb-4"></div>
+            <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Latest Research</h2>
+            <p className="text-sm text-text-secondary mt-1.5 max-w-md leading-relaxed">
+              Recently approved papers and policy briefs indexed on Opus Publica.
+            </p>
+          </header>
+
+          {latestArticles.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-6">
+              {latestArticles.map((article) => (
+                <Link 
+                  key={article.id}
+                  href={`/${article.journal_slug}/article/${article.id}`}
+                  className="bg-surface border border-border hover:border-accent/25 rounded-xl p-6 block hover:shadow-sm transition-all group"
+                >
+                  <div className="flex flex-col h-full justify-between space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-xs uppercase font-bold tracking-wider text-text-secondary">
+                        <span className="text-accent font-semibold">{article.journal_name}</span>
+                        <span className="text-accent">|</span>
+                        <span className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {new Date(article.published_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </div>
+
+                      <h3 className="text-base font-serif font-bold text-primary group-hover:text-accent transition-colors leading-snug">
+                        {article.title}
+                      </h3>
+
+                      <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed">
+                        {article.abstract}
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-border flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs text-text-secondary">
+                        <User className="w-3.5 h-3.5" />
+                        {article.author_name}
+                      </span>
+                      <span className="text-xs font-semibold text-accent group-hover:text-accent-hover transition-colors flex items-center gap-0.5">
+                        Read Paper
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-surface border border-border rounded-xl">
+              <BookOpen className="w-12 h-12 text-text-secondary/30 mx-auto mb-4" />
+              <h3 className="text-lg font-bold text-text">No published articles yet</h3>
+              <p className="text-sm text-text-secondary mt-2">Articles will appear here once published by editors.</p>
+            </div>
+          )}
+
+          <div className="text-center pt-10">
+              <p className="text-sm text-text-secondary">
+                Need to search older indexes? Use the search bar above to scan all historical volumes.
+              </p>
+          </div>
+        </div>
+      </section>
+
+      {/* JOURNALS GRID */}
+      <section id="journals" className="py-20 border-b border-border bg-bg-alt">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
           <header className="mb-12 flex justify-between items-end">
             <div>
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] mb-2 font-mono">Academic Portals</div>
-              <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Active Journals</h2>
-              <p className="text-xs text-zinc-400 mt-1.5 max-w-md leading-relaxed">
+              <div className="w-12 h-px bg-accent mb-4"></div>
+              <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Active Journals</h2>
+              <p className="text-sm text-text-secondary mt-1.5 max-w-md leading-relaxed">
                 Indexed repositories addressing international relations, human rights, finance, and ecology.
               </p>
             </div>
             <div className="hidden sm:block">
-              <span className="text-xs text-zinc-500 font-medium">
+              <span className="text-sm text-text-secondary/60 font-medium">
                 {dbJournals.length} active publication tracks
               </span>
             </div>
@@ -194,41 +278,38 @@ export default async function Home() {
                 <Link
                   key={journal.id}
                   href={`/${journal.slug}`}
-                  className="bg-[#13131A] border border-zinc-800 hover:border-[#C9A84C]/30 rounded-xl overflow-hidden flex flex-col group shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+                  className="bg-surface border border-border hover:border-accent/30 rounded-xl overflow-hidden flex flex-col group shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
                 >
-                  {/* Cover Image */}
-                  <div className="relative w-full h-36 overflow-hidden bg-zinc-900">
+                  <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-alt">
                     {cover ? (
                       <Image
                         src={cover}
                         alt={`${journal.name} Cover`}
                         fill
-                        sizes="(max-width: 768px) 100vw, 25vw"
-                        className="object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#8B1A1A]/10">
-                        <BookOpen className="w-10 h-10 text-[#8B1A1A]/40" />
+                      <div className="w-full h-full flex items-center justify-center bg-accent/5">
+                        <BookOpen className="w-8 h-8 text-accent/30" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#13131A] via-transparent to-transparent opacity-70" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
                   </div>
 
-                  {/* Content */}
                   <div className="p-4 space-y-2 flex-1 flex flex-col">
-                    <h3 className="text-sm font-serif font-bold text-white group-hover:text-[#C9A84C] transition-colors leading-tight line-clamp-2">
+                    <h3 className="text-sm font-serif font-bold text-primary group-hover:text-accent transition-colors leading-tight line-clamp-2">
                       {journal.name}
                     </h3>
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed font-sans flex-1">
+                    <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed flex-1">
                       {journal.description}
                     </p>
                   </div>
 
-                  {/* Footer */}
                   <div className="px-4 pb-4">
-                    <div className="flex items-center justify-between pt-3 border-t border-zinc-900">
-                      <span className="text-[10px] font-mono text-zinc-500">View Journal</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-[#C9A84C] group-hover:translate-x-1 transition-transform" />
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
+                      <span className="text-xs text-text-secondary/60">View Journal</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-accent group-hover:translate-x-1 transition-transform" />
                     </div>
                   </div>
                 </Link>
@@ -238,90 +319,16 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* LATEST RESEARCH FEED */}
-      <section className="py-20 border-b border-zinc-900 bg-[#0D0D11]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <header className="mb-12">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] mb-2 font-mono">Research Feed</div>
-            <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Latest Research</h2>
-            <p className="text-xs text-zinc-400 mt-1.5 max-w-md leading-relaxed">
-              Recently approved papers, case studies, and policy briefs indexed on Opus Publica.
-            </p>
-          </header>
-
-          {latestArticles.length > 0 ? (
-            <div className="grid md:grid-cols-2 gap-6">
-              {latestArticles.map((article) => (
-                <Link 
-                  key={article.id}
-                  href={`/${article.journal_slug}/article/${article.id}`}
-                  className="bg-[#13131A]/60 border border-zinc-800/80 hover:border-[#C9A84C]/25 rounded-xl p-6 block hover:bg-[#13131A] transition-all group shadow-xs"
-                >
-                  <div className="flex flex-col h-full justify-between space-y-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-[10px] uppercase font-bold tracking-wider text-zinc-500">
-                        <span className="text-[#C9A84C] font-semibold">{article.journal_name}</span>
-                        <span>&#8226;</span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-zinc-500" />
-                          {new Date(article.published_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
-
-                      <h3 className="text-base font-serif font-bold text-white group-hover:text-[#C9A84C] transition-colors leading-snug">
-                        {article.title}
-                      </h3>
-                      
-                      <p className="text-xs text-zinc-400 line-clamp-2 leading-relaxed font-sans font-normal">
-                        {article.abstract}
-                      </p>
-                    </div>
-
-                    <div className="pt-4 border-t border-zinc-900/60 flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-xs text-zinc-400">
-                        <User className="w-3.5 h-3.5 text-zinc-500" />
-                        {article.author_name}
-                      </span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C]/70 group-hover:text-white transition-colors flex items-center gap-0.5">
-                        Read Paper
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-[#13131A]/60 border border-zinc-800 rounded-xl">
-              <BookOpen className="w-12 h-12 text-zinc-700 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-zinc-300">No published articles yet</h3>
-              <p className="text-xs text-zinc-500 mt-2">Articles will appear here once published by editors.</p>
-            </div>
-          )}
-
-          <div className="text-center pt-10">
-            <p className="text-xs text-zinc-500">
-              Need to search older indexes? Use the search bar in the hero section to scan all historical volumes.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* BOOKS DISPLAY */}
-      <section id="books" className="py-24 border-b border-zinc-900 bg-gradient-to-b from-[#0D0D11] via-[#13131A] to-[#0D0D11]">
+      <section id="books" className="py-20 border-b border-border bg-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <header className="mb-16 text-center">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[#C9A84C] mb-3 font-mono">Policy Volumes</div>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight">Recent Book Publications</h2>
-            <p className="text-sm text-zinc-400 mt-3 max-w-lg mx-auto leading-relaxed">
+
+          <header className="mb-12">
+            <div className="w-12 h-px bg-accent mb-4"></div>
+            <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Recent Book Publications</h2>
+            <p className="text-sm text-text-secondary mt-1.5 max-w-lg leading-relaxed">
               Monographs and collaborative edits offering historical depth to policy questions.
             </p>
-            <div className="w-16 h-0.5 bg-gradient-to-r from-transparent via-[#C9A84C] to-transparent mx-auto mt-6"></div>
           </header>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -333,54 +340,51 @@ export default async function Home() {
               return (
                 <div 
                   key={book.id}
-                  className="group relative bg-[#13131A] border border-zinc-800/60 rounded-xl overflow-hidden hover:border-[#C9A84C]/30 transition-all duration-500 shadow-md hover:shadow-xl hover:shadow-[#C9A84C]/5 flex flex-col"
+                  className="group relative bg-surface border border-border rounded-xl overflow-hidden hover:border-accent/30 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col"
                 >
-                  {/* Cover Image */}
-                  <div className="relative w-full h-48 overflow-hidden bg-zinc-900">
+                  <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-alt">
                     {book.cover_image ? (
                       <Image
                         src={book.cover_image}
                         alt={`${book.title} Cover`}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover object-top group-hover:scale-105 transition-transform duration-500 ease-out"
+                        className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
                         priority
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-[#8B1A1A]/10">
-                        <BookOpen className="w-10 h-10 text-[#8B1A1A]/40" />
+                      <div className="w-full h-full flex items-center justify-center bg-accent/5">
+                        <BookOpen className="w-8 h-8 text-accent/30" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#13131A] via-transparent to-transparent opacity-60" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
                     <div className="absolute top-3 right-3 z-20">
-                      <span className="text-[8px] uppercase tracking-widest font-bold bg-[#C9A84C]/90 text-[#13131A] px-2 py-0.5 rounded-full">
+                      <span className="text-[10px] uppercase tracking-widest font-bold bg-accent/90 text-primary px-2 py-0.5 rounded-full">
                         {book.status}
                       </span>
                     </div>
                   </div>
 
-                  {/* Content */}
                   <div className="relative p-4 space-y-2 flex-1 flex flex-col">
-                    <h3 className="text-sm font-serif font-bold text-white line-clamp-2 leading-snug group-hover:text-[#C9A84C] transition-colors duration-300">
+                    <h3 className="text-sm font-serif font-bold text-primary line-clamp-2 leading-snug group-hover:text-accent transition-colors duration-300">
                       {book.title}
                     </h3>
-                    <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed flex-1">
+                    <p className="text-sm text-text-secondary line-clamp-2 leading-relaxed flex-1">
                       {book.description}
                     </p>
                     <div className="flex items-center gap-1.5 pt-1">
-                      <User className="w-3 h-3 text-[#C9A84C]" />
-                      <span className="text-[10px] text-zinc-500 font-medium">{displayAuthor}</span>
+                      <User className="w-3 h-3 text-accent" />
+                      <span className="text-xs text-text-secondary/70 font-medium">{displayAuthor}</span>
                     </div>
                   </div>
 
-                  {/* Footer */}
                   <div className="px-4 pb-4">
                     <Link
                       href={`/books/${book.slug}`}
-                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-white/5 hover:bg-[#C9A84C]/10 border border-zinc-800 hover:border-[#C9A84C]/30 text-zinc-300 hover:text-[#C9A84C] text-[11px] font-bold rounded-lg transition-all duration-300"
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 bg-bg-alt hover:bg-accent/10 border border-border hover:border-accent/30 text-text-secondary hover:text-accent text-sm font-semibold rounded-lg transition-all duration-300"
                     >
                       View Details
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
                 </div>
@@ -391,14 +395,12 @@ export default async function Home() {
       </section>
 
       {/* ABOUT/MISSION SECTION */}
-      <section id="about" className="py-20 border-b border-zinc-900 bg-[#0D0D11]">
+      <section id="about" className="py-20 border-b border-border bg-bg-alt">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-6 max-w-4xl mx-auto mb-16">
-            <div className="w-12 h-12 rounded-full bg-[#C9A84C]/10 text-[#C9A84C] flex items-center justify-center mx-auto">
-              <Compass className="w-6 h-6" />
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">Academic Integrity &amp; Global Access</h2>
-            <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed font-sans font-normal">
+            <div className="w-12 h-px bg-accent mx-auto"></div>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold text-primary">Academic Integrity &amp; Global Access</h2>
+            <p className="text-sm text-text-secondary leading-relaxed max-w-2xl mx-auto">
               Opus Publica provides a multi-tenant environment facilitating rigorous academic vetting. All published manuscripts undergo rigorous peer review and receive formal Crossref DOIs for indexing integration in world databases, enabling researchers to discover cross-disciplinary insights.
             </p>
           </div>
@@ -409,10 +411,10 @@ export default async function Home() {
               { icon: BookOpen, value: String(latestArticles.length || 3), label: 'Published Papers' },
               { icon: User, value: '50+', label: 'Academic Contributors' },
             ].map((stat, i) => (
-              <div key={i} className="bg-[#13131A] border border-zinc-800 rounded-xl p-6 text-center hover:border-zinc-700 transition-colors">
-                <stat.icon className="w-6 h-6 text-[#C9A84C] mx-auto mb-3" />
-                <div className="text-2xl font-serif font-bold text-white">{stat.value}</div>
-                <div className="text-[10px] uppercase tracking-wider text-zinc-500 mt-1 font-bold">{stat.label}</div>
+              <div key={i} className="bg-surface border border-border rounded-xl p-6 text-center hover:shadow-sm transition-shadow">
+                <stat.icon className="w-5 h-5 text-accent mx-auto mb-3" />
+                <div className="text-2xl font-serif font-bold text-primary">{stat.value}</div>
+                <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -420,7 +422,7 @@ export default async function Home() {
           <div className="text-center mt-10">
             <Link
               href="/about"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-xs font-bold rounded-lg transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-all"
             >
               Learn More About Us
               <ArrowRight className="w-3.5 h-3.5" />
@@ -430,35 +432,36 @@ export default async function Home() {
       </section>
 
       {/* CONTACT & OFFICES SECTION */}
-      <section id="contact" className="py-20 bg-[#0D0D11]">
+      <section id="contact" className="py-20 bg-bg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <header className="mb-12 text-center">
-            <h2 className="text-2xl font-serif font-bold text-white">Global Offices</h2>
-            <p className="text-xs text-zinc-400 mt-1">Advocacy Unified Network Locations</p>
+          <header className="mb-12">
+            <div className="w-12 h-px bg-accent mb-4"></div>
+            <h2 className="text-2xl font-serif font-bold text-primary">Global Offices</h2>
+            <p className="text-sm text-text-secondary mt-1">Advocacy Unified Network Locations</p>
           </header>
 
           <div className="grid sm:grid-cols-3 gap-6">
             {addresses.slice(0, 3).map((addr, index) => (
               <div 
                 key={index}
-                className="bg-[#13131A] border border-zinc-800 rounded-xl p-6 flex flex-col justify-between hover:border-zinc-700 transition-colors"
+                className="bg-surface border border-border rounded-xl p-6 flex flex-col justify-between hover:shadow-sm transition-shadow"
               >
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     {index === 0 ? (
-                      <Building2 className="w-4 h-4 text-[#C9A84C]" />
+                      <Building2 className="w-4 h-4 text-accent" />
                     ) : index === 1 ? (
-                      <MapPin className="w-4 h-4 text-[#C9A84C]" />
+                      <MapPin className="w-4 h-4 text-accent" />
                     ) : (
-                      <Mail className="w-4 h-4 text-[#C9A84C]" />
+                      <Mail className="w-4 h-4 text-accent" />
                     )}
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-white">{addr.label}</h3>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-primary">{addr.label}</h3>
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed font-sans">{addr.address}</p>
+                  <p className="text-sm text-text-secondary leading-relaxed">{addr.address}</p>
                 </div>
-                
+
                 {addr.note && (
-                  <div className="mt-4 text-[10px] text-zinc-500 font-semibold uppercase font-mono">
+                  <div className="mt-4 text-xs text-text-secondary/60 font-semibold uppercase font-mono">
                     {addr.note}
                   </div>
                 )}
@@ -469,7 +472,7 @@ export default async function Home() {
           <div className="text-center mt-10">
             <Link
               href="/contact"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-xs font-bold rounded-lg transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-lg transition-all"
             >
               View All Offices & Contact
               <ArrowRight className="w-3.5 h-3.5" />

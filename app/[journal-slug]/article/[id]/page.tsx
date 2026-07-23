@@ -184,12 +184,12 @@ export default async function ArticleDetailPage({ params }: Props) {
           </Link>
         </div>
 
-        <section className="py-8 sm:py-12 bg-bg mt-6">
+        <section className="py-8 sm:py-12 bg-bg mt-6 text-justify">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
 
               <div className="lg:col-span-2 space-y-8">
-                <header className="space-y-4">
+                <header className="space-y-4 text-left">
                   <span className="inline-block px-3 py-1 bg-accent/10 text-accent font-semibold text-xs rounded uppercase tracking-wider">
                     Peer-Reviewed Research Paper
                   </span>
@@ -331,7 +331,7 @@ export default async function ArticleDetailPage({ params }: Props) {
                         className="inline-block hover:opacity-85 transition-opacity duration-150"
                       >
                         <img
-                          src="https://crossmark.crossref.org/button.svg"
+                          src="https://crossmark-cdn.crossref.org/images/logo-crossmark.svg"
                           alt="Crossmark Status"
                           className="h-7"
                         />

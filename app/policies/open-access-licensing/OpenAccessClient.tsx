@@ -27,16 +27,16 @@ const policySections = [
 
 export default function OpenAccessClient() {
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E]">
+      <main className="flex-grow bg-bg">
         {/* Header Section */}
-        <section className="py-12 sm:py-16 bg-[#1A1A2E] border-b border-[#C9A84C]/10">
+        <section className="py-12 sm:py-16 bg-bg border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <Link 
               href="/" 
-              className="inline-flex items-center gap-2 text-[#C9A84C] hover:text-[#D4AF37] mb-6 text-sm transition-colors group font-medium"
+              className="inline-flex items-center gap-2 text-accent hover:text-accent mb-6 text-sm transition-colors group font-medium"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Back to Home
@@ -48,12 +48,12 @@ export default function OpenAccessClient() {
               className="space-y-4"
             >
               <div className="flex items-center gap-4">
-                <FileText className="w-12 h-12 text-[#C9A84C]" />
+                <FileText className="w-12 h-12 text-accent" />
                 <div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#C9A84C] font-bold">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary font-bold">
                     Open Access & Licensing Policy
                   </h1>
-                  <p className="text-white/60 text-sm mt-1">
+                  <p className="text-text-secondary/70 text-sm mt-1">
                     Opus Publica — the publishing arm of Advocacy Unified Network
                   </p>
                 </div>
@@ -68,8 +68,8 @@ export default function OpenAccessClient() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
               {/* Sidebar Navigation */}
               <div className="lg:col-span-1">
-                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-[#C9A84C] max-h-[calc(100vh-120px)] overflow-y-auto">
-                  <h3 className="text-[#8B1A1A] font-serif text-lg font-semibold mb-4">
+                <div className="sticky top-24 bg-white rounded-lg p-6 shadow-sm border-l-4 border-accent max-h-[calc(100vh-120px)] overflow-y-auto">
+                  <h3 className="text-primary font-serif text-lg font-semibold mb-4">
                     On This Page
                   </h3>
                   <ul className="space-y-2 text-sm">
@@ -77,7 +77,7 @@ export default function OpenAccessClient() {
                       <li key={section.id}>
                         <Link
                           href={`#${section.id}`}
-                          className="text-[#1A1A2E]/70 hover:text-[#8B1A1A] transition-colors block py-1 border-b border-[#1A1A2E]/5"
+                          className="text-[#1A1A2E]/70 hover:text-primary transition-colors block py-1 border-b border-[#1A1A2E]/5"
                         >
                           {section.title}
                         </Link>
@@ -95,13 +95,13 @@ export default function OpenAccessClient() {
                   transition={{ delay: 0.2 }}
                   className="bg-white rounded-lg p-8 shadow-sm"
                 >
-                  <div className="prose prose-lg max-w-none prose-headings:text-[#8B1A1A] prose-headings:font-serif prose-a:text-[#C9A84C] prose-a:no-underline hover:prose-a:underline">
+                  <div className="prose prose-lg max-w-none prose-headings:text-primary prose-headings:font-serif prose-a:text-accent prose-a:no-underline hover:prose-a:underline">
                     
                     {/* Section 1: Our Commitment to Open Access */}
                     <div id="commitment" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Shield className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Shield className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Our Commitment to Open Access
                         </h2>
                       </div>
@@ -117,8 +117,8 @@ export default function OpenAccessClient() {
                     {/* Section 2: License */}
                     <div id="license" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <FileText className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <FileText className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           License
                         </h2>
                       </div>
@@ -133,7 +133,7 @@ export default function OpenAccessClient() {
                           href="https://creativecommons.org/licenses/by/4.0/" 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-[#C9A84C] hover:underline"
+                          className="text-accent hover:underline"
                         >
                           https://creativecommons.org/licenses/by/4.0/
                         </a>
@@ -143,8 +143,8 @@ export default function OpenAccessClient() {
                     {/* Section 3: What CC BY 4.0 Permits */}
                     <div id="permits" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Share2 className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Share2 className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           What CC BY 4.0 Permits
                         </h2>
                       </div>
@@ -174,8 +174,8 @@ export default function OpenAccessClient() {
                     {/* Section 4: Author Rights */}
                     <div id="author-rights" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Users className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Users className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Author Rights
                         </h2>
                       </div>
@@ -191,8 +191,8 @@ export default function OpenAccessClient() {
                     {/* Section 5: Article Processing Charges */}
                     <div id="apc" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Coins className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Coins className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Article Processing Charges
                         </h2>
                       </div>
@@ -209,8 +209,8 @@ export default function OpenAccessClient() {
                     {/* Section 6: Per-Journal Licensing */}
                     <div id="per-journal" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Bookmark className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Bookmark className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Per-Journal Licensing
                         </h2>
                       </div>
@@ -225,8 +225,8 @@ export default function OpenAccessClient() {
                     {/* Section 7: Archiving */}
                     <div id="archiving" className="mb-12 scroll-mt-24">
                       <div className="flex items-center gap-3 mb-4">
-                        <Archive className="w-6 h-6 text-[#8B1A1A]" />
-                        <h2 className="text-xl sm:text-2xl font-serif text-[#8B1A1A] font-bold !m-0">
+                        <Archive className="w-6 h-6 text-primary" />
+                        <h2 className="text-xl sm:text-2xl font-serif text-primary font-bold !m-0">
                           Archiving
                         </h2>
                       </div>

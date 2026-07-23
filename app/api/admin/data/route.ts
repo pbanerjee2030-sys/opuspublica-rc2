@@ -251,6 +251,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data });
     }
 
+    // contact_queries: admin/editor only
+    if (entity === 'contact_queries') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      const { data, error } = await (supabaseAdmin as any)
+        .from('contact_queries')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return NextResponse.json({ data });
+    }
+
     // audit_log: admin only (includes role-change history)
     if (entity === 'audit_log') {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin']);
@@ -466,6 +479,14 @@ export async function PATCH(request: NextRequest) {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
       if (!profile) return NextResponse.json({ error: 'Only admins/editors can modify board members' }, { status: 403 });
       const { error } = await (supabaseAdmin as any).from('editorial_board_members').update(updates).eq('id', id);
+      if (error) throw error;
+      return NextResponse.json({ success: true });
+    }
+
+    if (entity === 'contact_queries') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      const { error } = await (supabaseAdmin as any).from('contact_queries').update(updates).eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
     }

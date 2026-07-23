@@ -66,30 +66,30 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[#13131A] text-zinc-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       
       {/* Background Accent Gradients */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-zinc-700 via-[#C9A84C] to-zinc-700"></div>
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#C9A84C]/5 rounded-full filter blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#8B1A1A]/5 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-border via-accent to-border"></div>
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent/5 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full filter blur-3xl pointer-events-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-xs font-semibold uppercase tracking-wider mb-6 mx-4 sm:mx-0">
+        <Link href="/" className="inline-flex items-center gap-2 text-text-secondary hover:text-text transition-colors text-xs font-semibold uppercase tracking-wider mb-6 mx-4 sm:mx-0">
           <ArrowLeft className="w-4 h-4" />
           Back to Platform Home
         </Link>
 
         <div className="text-center mb-6">
-          <BookOpen className="w-10 h-10 text-[#C9A84C] mx-auto mb-2" />
-          <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Welcome Back</h2>
-          <p className="text-xs text-zinc-400 mt-2">
+          <BookOpen className="w-10 h-10 text-accent mx-auto mb-2" />
+          <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Welcome Back</h2>
+          <p className="text-xs text-text-secondary mt-2">
             Access secure manuscript submissions and editorial triage panels.
           </p>
         </div>
       </div>
 
       <div className="mt-2 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
-        <div className="bg-[#1C1C24] py-8 px-6 sm:px-10 rounded-xl border border-zinc-800 shadow-2xl space-y-6">
+        <div className="bg-surface py-8 px-6 sm:px-10 rounded-xl border border-border shadow-2xl space-y-6">
           
           {error && (
             <div className="p-3 bg-red-950/40 border border-red-900/40 text-red-400 text-xs rounded-lg flex items-center gap-2 animate-pulse">
@@ -107,17 +107,17 @@ function LoginForm() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
                 Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                <Mail className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                   placeholder="name@opuspublica.org"
                   disabled={loading || success}
                 />
@@ -125,17 +125,17 @@ function LoginForm() {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                <Lock className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                  className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                   placeholder="••••••••"
                   disabled={loading || success}
                 />
@@ -145,11 +145,11 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading || success}
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold text-sm rounded-lg shadow-md transition-colors"
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-primary text-white hover:bg-primary-hover font-semibold text-sm rounded-lg shadow-md transition-colors"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin text-black" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Authenticating...
                 </>
               ) : (
@@ -158,10 +158,10 @@ function LoginForm() {
             </button>
           </form>
 
-          <div className="pt-4 border-t border-zinc-800 text-center">
-            <p className="text-xs text-zinc-400">
+          <div className="pt-4 border-t border-border text-center">
+            <p className="text-xs text-text-secondary">
               Don&apos;t have an author account?{' '}
-              <Link href="/register" className="text-[#C9A84C] hover:underline font-bold">
+              <Link href="/register" className="text-accent hover:text-accent-hover hover:underline font-bold">
                 Create Account
               </Link>
             </p>
@@ -176,10 +176,10 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#13131A] text-zinc-100 flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-bg text-text-secondary flex items-center justify-center">
         <div className="text-center space-y-4">
-          <Loader2 className="w-10 h-10 text-[#C9A84C] animate-spin mx-auto" />
-          <p className="text-zinc-400 text-sm">Initializing secure session...</p>
+          <Loader2 className="w-10 h-10 text-accent animate-spin mx-auto" />
+          <p className="text-text-secondary text-sm">Initializing secure session...</p>
         </div>
       </div>
     }>

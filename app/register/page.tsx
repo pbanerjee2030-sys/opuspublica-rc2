@@ -107,29 +107,29 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#13131A] text-zinc-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-bg flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-zinc-700 via-[#C9A84C] to-zinc-700"></div>
-      <div className="absolute -top-40 -right-40 w-96 h-96 bg-[#C9A84C]/5 rounded-full filter blur-3xl pointer-events-none"></div>
-      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-[#8B1A1A]/5 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-border via-accent to-border"></div>
+      <div className="absolute -top-40 -right-40 w-96 h-96 bg-accent/5 rounded-full filter blur-3xl pointer-events-none"></div>
+      <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-primary/5 rounded-full filter blur-3xl pointer-events-none"></div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-        <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors text-xs font-semibold uppercase tracking-wider mb-6 mx-4 sm:mx-0">
+        <Link href="/" className="inline-flex items-center gap-2 text-text-secondary hover:text-text transition-colors text-xs font-semibold uppercase tracking-wider mb-6 mx-4 sm:mx-0">
           <ArrowLeft className="w-4 h-4" />
           Back to Platform Home
         </Link>
 
         <div className="text-center mb-6">
-          <BookOpen className="w-10 h-10 text-[#C9A84C] mx-auto mb-2" />
-          <h2 className="text-3xl font-serif font-bold text-white tracking-tight">Create Author Account</h2>
-          <p className="text-xs text-zinc-400 mt-2">
+          <BookOpen className="w-10 h-10 text-accent mx-auto mb-2" />
+          <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Create Author Account</h2>
+          <p className="text-xs text-text-secondary mt-2">
             Register to submit abstracts, author details, and PDF manuscripts.
           </p>
         </div>
       </div>
 
       <div className="mt-2 sm:mx-auto sm:w-full sm:max-w-md relative z-10 px-4 sm:px-0">
-        <div className="bg-[#1C1C24] py-8 px-6 sm:px-10 rounded-xl border border-zinc-800 shadow-2xl space-y-6">
+        <div className="bg-surface py-8 px-6 sm:px-10 rounded-xl border border-border shadow-2xl space-y-6">
           
           {error && (
             <div className="p-3 bg-red-950/40 border border-red-900/40 text-red-400 text-xs rounded-lg flex items-center gap-2">
@@ -147,7 +147,7 @@ export default function RegisterPage() {
 
           {emailConfirmRequired && (
             <div className="space-y-3">
-              <div className="p-3 bg-[#C9A84C]/10 border border-[#C9A84C]/30 text-[#C9A84C] text-xs rounded-lg flex items-start gap-2">
+              <div className="p-3 bg-accent/10 border border-accent/30 text-accent text-xs rounded-lg flex items-start gap-2">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>
                   <strong>Check your inbox.</strong> A confirmation link has been sent to <strong>{email}</strong>. 
@@ -162,13 +162,13 @@ export default function RegisterPage() {
                   setFullName('');
                   setOrcid('');
                 }}
-                className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm rounded-lg transition-colors"
+                className="w-full py-2.5 bg-bg-alt hover:bg-border text-text font-semibold text-sm rounded-lg transition-colors"
               >
                 Register a Different Email
               </button>
               <Link
                 href="/login"
-                className="block w-full py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] font-semibold text-sm rounded-lg transition-colors text-center"
+                className="block w-full py-2.5 bg-primary hover:bg-primary-hover text-white font-semibold text-sm rounded-lg transition-colors text-center"
               >
                 Go to Login
               </Link>
@@ -178,17 +178,17 @@ export default function RegisterPage() {
           {!emailConfirmRequired && !success && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
                   Full Name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                  <User className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                   <input
                     type="text"
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                     placeholder="e.g. Dr. Jane Smith"
                     disabled={loading}
                   />
@@ -196,17 +196,17 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
                   Email Address
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                  <Mail className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                     placeholder="e.g. researcher@institution.edu"
                     disabled={loading}
                   />
@@ -214,18 +214,18 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
                   Password
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                  <Lock className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                   <input
                     type="password"
                     required
                     minLength={6}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                     placeholder="Min 6 characters"
                     disabled={loading}
                   />
@@ -233,32 +233,32 @@ export default function RegisterPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">
-                  ORCID iD <span className="text-zinc-600 normal-case">(Optional)</span>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block">
+                  ORCID iD <span className="text-text-secondary/60 normal-case">(Optional)</span>
                 </label>
                 <div className="relative">
-                  <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-zinc-500" />
+                  <Fingerprint className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/60" />
                   <input
                     type="text"
                     value={orcid}
                     onChange={(e) => setOrcid(e.target.value)}
                     pattern="^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$"
-                    className="w-full pl-9 pr-3 py-2 bg-[#13131A] border border-zinc-800 rounded-lg text-sm text-white focus:outline-none focus:border-[#C9A84C] placeholder-zinc-600 transition-colors"
+                    className="w-full pl-9 pr-3 py-2 bg-bg border border-border rounded-lg text-sm text-text focus:outline-none focus:border-accent placeholder:text-text-secondary/40 transition-colors"
                     placeholder="0000-0002-1234-5678"
                     disabled={loading}
                   />
                 </div>
-                <p className="text-[9px] text-zinc-600">16-digit identifier from orcid.org</p>
+                <p className="text-[9px] text-text-secondary/60">16-digit identifier from orcid.org</p>
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold text-sm rounded-lg shadow-md transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-primary text-white hover:bg-primary-hover font-semibold text-sm rounded-lg shadow-md transition-colors"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-black" />
+                    <Loader2 className="w-4 h-4 animate-spin" />
                     Creating Account...
                   </>
                 ) : (
@@ -268,10 +268,10 @@ export default function RegisterPage() {
             </form>
           )}
 
-          <div className="pt-4 border-t border-zinc-800 text-center">
-            <p className="text-xs text-zinc-400">
+          <div className="pt-4 border-t border-border text-center">
+            <p className="text-xs text-text-secondary">
               Already have an author account?{' '}
-              <Link href="/login" className="text-[#C9A84C] hover:underline font-bold">
+              <Link href="/login" className="text-accent hover:text-accent-hover hover:underline font-bold">
                 Log In
               </Link>
             </p>

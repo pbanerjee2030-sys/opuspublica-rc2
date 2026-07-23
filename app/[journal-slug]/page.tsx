@@ -133,21 +133,21 @@ export default async function JournalLandingPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col">
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E]">
+      <main className="flex-grow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
           <Link
             href="/#journals"
-            className="inline-flex items-center gap-2 text-[#C9A84C] hover:text-[#D4AF37] transition-colors group text-sm sm:text-base"
+            className="inline-flex items-center gap-2 text-accent hover:text-accent-hover transition-colors group text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Journals
           </Link>
         </div>
 
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#1A1A2E] via-[#8B1A1A]/20 to-[#1A1A2E] py-16 sm:py-20 border-b border-[#C9A84C]/10">
+        <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/[0.02] to-bg py-16 sm:py-20 border-b border-accent/10">
           {/* Background cover image */}
           {JOURNAL_COVER_MAP[journalSlug] && (
             <div className="absolute inset-0 opacity-10">
@@ -158,18 +158,18 @@ export default async function JournalLandingPage({ params }: Props) {
                 sizes="100vw"
                 className="object-cover object-center"
               />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1A1A2E] via-[#1A1A2E]/80 to-[#1A1A2E]" />
+              <div className="absolute inset-0 bg-gradient-to-br from-bg via-bg/80 to-bg" />
             </div>
           )}
           <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-[#C9A84C]"></div>
-            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-[#C9A84C]"></div>
+            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-accent"></div>
+            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-accent"></div>
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
             <div className="flex flex-col sm:flex-row gap-8 items-start">
               {JOURNAL_COVER_MAP[journalSlug] && (
-                <div className="relative w-32 h-44 sm:w-40 sm:h-56 rounded-lg overflow-hidden shadow-2xl border border-white/10 flex-shrink-0">
+                <div className="relative w-32 h-44 sm:w-40 sm:h-56 rounded-lg overflow-hidden shadow-2xl border border-border flex-shrink-0">
                   <Image
                     src={JOURNAL_COVER_MAP[journalSlug]}
                     alt={`${dbJournal.name} Cover`}
@@ -180,17 +180,17 @@ export default async function JournalLandingPage({ params }: Props) {
                 </div>
               )}
               <div>
-                <span className="inline-block text-[#C9A84C] uppercase tracking-wider text-xs sm:text-sm font-semibold mb-2">
+                <span className="inline-block text-accent uppercase tracking-wider text-xs sm:text-sm font-semibold mb-2">
                   Academic Peer-Reviewed Journal
                 </span>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-[#C9A84C] mb-4 font-normal leading-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif text-accent mb-4 font-normal leading-tight">
                   {dbJournal.name}
                 </h1>
-                <p className="text-white/80 text-lg sm:text-xl max-w-4xl leading-relaxed">
+                <p className="text-text-secondary text-lg sm:text-xl max-w-4xl leading-relaxed">
                   {dbJournal.description}
                 </p>
                 {dbJournal.issn && (
-                  <p className="text-[#C9A84C]/70 text-xs sm:text-sm mt-4 font-mono">
+                  <p className="text-accent/70 text-xs sm:text-sm mt-4 font-mono">
                     ISSN: {dbJournal.issn}
                   </p>
                 )}
@@ -199,13 +199,13 @@ export default async function JournalLandingPage({ params }: Props) {
           </div>
         </section>
 
-        <section className="py-12 sm:py-16 bg-[#F5F0E8] text-[#1A1A2E]">
+        <section className="py-12 sm:py-16 bg-bg text-text">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               
               <div className="lg:col-span-2 space-y-8">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-serif text-[#8B1A1A] font-semibold border-b border-[#8B1A1A]/10 pb-3 mb-6">
+                  <h2 className="text-2xl sm:text-3xl font-serif text-primary font-semibold border-b border-primary/10 pb-3 mb-6">
                     Published Articles
                   </h2>
                   
@@ -214,27 +214,27 @@ export default async function JournalLandingPage({ params }: Props) {
                       {articlesList.map((article) => (
                         <article 
                           key={article.id}
-                          className="bg-white rounded-lg p-6 shadow-sm border border-black/5 hover:shadow-md transition-shadow duration-300"
+                          className="bg-surface rounded-lg p-6 shadow-sm border border-border hover:shadow-md transition-shadow duration-300"
                         >
-                          <span className="text-xs text-[#8B1A1A] font-semibold uppercase tracking-wider">
+                          <span className="text-xs text-primary font-semibold uppercase tracking-wider">
                             Research Article
                           </span>
                           
-                          <h3 className="text-xl font-serif text-[#1A1A2E] font-semibold mt-1 mb-2 hover:text-[#8B1A1A] transition-colors duration-200">
+                          <h3 className="text-xl font-serif text-primary font-semibold mt-1 mb-2 hover:text-accent transition-colors duration-200">
                             <Link href={`/${journalSlug}/article/${article.id}`}>
                               {article.title}
                             </Link>
                           </h3>
 
                           {article.authors && article.authors.length > 0 && (
-                            <div className="flex flex-wrap gap-2 text-sm text-[#1A1A2E]/70 mb-3 items-center">
-                              <span className="font-medium text-[#1A1A2E]/80">Authors:</span>
+                            <div className="flex flex-wrap gap-2 text-sm text-text-secondary mb-3 items-center">
+                              <span className="font-medium text-text-secondary">Authors:</span>
                               {article.authors.map((author: any, idx: number) => (
                                 <span key={author.id || idx}>
                                   {author.id ? (
                                     <Link 
                                       href={`/profile/${author.id}`}
-                                      className="underline hover:text-[#8B1A1A] transition-colors"
+                                      className="underline hover:text-accent transition-colors"
                                     >
                                       {author.full_name}
                                     </Link>
@@ -247,12 +247,12 @@ export default async function JournalLandingPage({ params }: Props) {
                             </div>
                           )}
 
-                          <p className="text-[#1A1A2E]/70 text-sm sm:text-base line-clamp-3 mb-4 leading-relaxed">
+                          <p className="text-text-secondary text-sm sm:text-base line-clamp-3 mb-4 leading-relaxed">
                             {article.abstract}
                           </p>
 
-                          <div className="flex items-center justify-between pt-3 border-t border-[#1A1A2E]/5">
-                            <div className="flex items-center gap-2 text-xs text-[#1A1A2E]/60">
+                          <div className="flex items-center justify-between pt-3 border-t border-border">
+                            <div className="flex items-center gap-2 text-xs text-text-secondary/70">
                               <Calendar className="w-3.5 h-3.5" />
                               <span>
                                 {new Date(article.publishedAt).toLocaleDateString('en-US', {
@@ -265,7 +265,7 @@ export default async function JournalLandingPage({ params }: Props) {
 
                             <Link
                               href={`/${journalSlug}/article/${article.id}`}
-                              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#8B1A1A] hover:text-[#C9A84C] transition-colors"
+                              className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-accent transition-colors"
                             >
                               Read Full Text
                               <BookOpen className="w-4 h-4" />
@@ -275,57 +275,57 @@ export default async function JournalLandingPage({ params }: Props) {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-white rounded-lg border border-black/5">
-                      <BookOpen className="w-10 h-10 text-zinc-300 mx-auto mb-3" />
-                      <h3 className="text-sm font-bold text-[#1A1A2E]/60">No articles published yet</h3>
-                      <p className="text-xs text-[#1A1A2E]/40 mt-1">Articles will appear here once published.</p>
+                    <div className="text-center py-12 bg-surface rounded-lg border border-border">
+                      <BookOpen className="w-10 h-10 text-text-secondary/30 mx-auto mb-3" />
+                      <h3 className="text-sm font-bold text-text-secondary/70">No articles published yet</h3>
+                      <p className="text-xs text-text-secondary/50 mt-1">Articles will appear here once published.</p>
                     </div>
                   )}
                 </div>
 
                 {(dbJournal.aims_and_scope || dbJournal.peer_review_process || dbJournal.license_type) && (
-                  <div className="bg-white rounded-lg p-8 shadow-sm border border-black/5 mt-8 space-y-6">
-                    <h2 className="text-2xl sm:text-3xl font-serif text-[#8B1A1A] font-semibold border-b border-[#8B1A1A]/10 pb-3 mb-6">
+                  <div className="bg-surface rounded-lg p-8 shadow-sm border border-border mt-8 space-y-6">
+                  <h2 className="text-2xl sm:text-3xl font-serif text-primary font-semibold border-b border-primary/10 pb-3 mb-6">
                       Editorial Policies
                     </h2>
 
                     {dbJournal.aims_and_scope && (
                       <div className="space-y-2">
-                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                        <h3 className="text-lg font-serif text-primary font-semibold">
                           Aims & Scope
                         </h3>
                         <SafeHtml
                           html={dbJournal.aims_and_scope}
-                          className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed font-serif"
+                          className="text-sm sm:text-base text-text-secondary leading-relaxed font-serif"
                         />
                       </div>
                     )}
 
                     {dbJournal.peer_review_process && (
-                      <div className="space-y-2 pt-4 border-t border-[#1A1A2E]/5">
-                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                      <div className="space-y-2 pt-4 border-t border-border">
+                        <h3 className="text-lg font-serif text-primary font-semibold">
                           Peer Review Process
                         </h3>
                         <SafeHtml
                           html={dbJournal.peer_review_process}
-                          className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed font-serif"
+                          className="text-sm sm:text-base text-text-secondary leading-relaxed font-serif"
                         />
                       </div>
                     )}
 
                     {dbJournal.license_type && (
-                      <div className="space-y-2 pt-4 border-t border-[#1A1A2E]/5">
-                        <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
+                      <div className="space-y-2 pt-4 border-t border-border">
+                        <h3 className="text-lg font-serif text-primary font-semibold">
                           Licensing
                         </h3>
-                        <p className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed">
+                        <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
                           Articles in this journal are published under the{' '}
                           {dbJournal.license_url ? (
                             <a
                               href={dbJournal.license_url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[#C9A84C] hover:underline font-semibold"
+                              className="text-accent hover:underline font-semibold"
                             >
                               {dbJournal.license_type}
                             </a>
@@ -342,8 +342,8 @@ export default async function JournalLandingPage({ params }: Props) {
 
               <div className="lg:col-span-1 space-y-8">
                 {dbJournal.cover_image && (
-                  <div className="bg-white rounded-lg p-3 shadow-sm border border-black/5 flex justify-center overflow-hidden">
-                    <div className="relative w-full aspect-[4/5] max-w-[280px] rounded-md overflow-hidden border border-zinc-200">
+                  <div className="bg-surface rounded-lg p-3 shadow-sm border border-border flex justify-center overflow-hidden">
+                    <div className="relative w-full aspect-[4/5] max-w-[280px] rounded-md overflow-hidden border border-border">
                       <Image
                         src={dbJournal.cover_image}
                         alt={`${dbJournal.name} Cover`}
@@ -355,32 +355,32 @@ export default async function JournalLandingPage({ params }: Props) {
                   </div>
                 )}
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-black/5">
-                  <h3 className="text-[#8B1A1A] font-serif text-xl font-semibold mb-3 border-b border-[#8B1A1A]/10 pb-2">
+                <div className="bg-surface rounded-lg p-6 shadow-sm border border-border">
+                  <h3 className="text-primary font-serif text-xl font-semibold mb-3 border-b border-primary/10 pb-2">
                     About the Journal
                   </h3>
-                  <p className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed">
+                  <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
                     {dbJournal.description}
                   </p>
                 </div>
 
-                <div className="bg-white rounded-lg p-6 shadow-sm border-l-4 border-[#C9A84C] border border-black/5">
-                  <h3 className="text-[#8B1A1A] font-serif text-xl font-semibold mb-4">
+                <div className="bg-surface rounded-lg p-6 shadow-sm border-l-4 border-accent border border-border">
+                  <h3 className="text-primary font-serif text-xl font-semibold mb-4">
                     Aims & Scope
                   </h3>
                   <ul className="space-y-3">
                     {focusAreas.map((area, index) => (
-                      <li key={index} className="flex items-start gap-2.5 text-[#1A1A2E]/80">
-                        <CheckCircle className="w-4 h-4 text-[#C9A84C] flex-shrink-0 mt-1" />
+                      <li key={index} className="flex items-start gap-2.5 text-text-secondary">
+                        <CheckCircle className="w-4 h-4 text-accent flex-shrink-0 mt-1" />
                         <span className="text-sm leading-snug">{area}</span>
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-5 pt-4 border-t border-[#1A1A2E]/5 text-xs text-[#1A1A2E]/60 leading-normal">
+                  <div className="mt-5 pt-4 border-t border-border text-xs text-text-secondary/70 leading-normal">
                     This journal is fully open access. All published content is licensed under the{' '}
                     <Link 
                       href="/policies/open-access-licensing" 
-                      className="text-[#8B1A1A] hover:text-[#C9A84C] font-semibold underline"
+                      className="text-primary hover:text-accent font-semibold underline"
                     >
                       Open Access & Licensing Policy (CC BY 4.0)
                     </Link>.
@@ -388,8 +388,8 @@ export default async function JournalLandingPage({ params }: Props) {
                 </div>
 
                 {boardMembers.length > 0 && (
-                  <div className="bg-white rounded-lg p-6 shadow-sm border border-black/5">
-                    <h3 className="text-[#8B1A1A] font-serif text-xl font-semibold mb-4 border-b border-[#8B1A1A]/10 pb-2 flex items-center gap-2">
+                  <div className="bg-surface rounded-lg p-6 shadow-sm border border-border">
+                    <h3 className="text-primary font-serif text-xl font-semibold mb-4 border-b border-primary/10 pb-2 flex items-center gap-2">
                       <Users className="w-5 h-5" />
                       Editorial Board
                     </h3>
@@ -397,7 +397,7 @@ export default async function JournalLandingPage({ params }: Props) {
                       {boardMembers.map((member) => (
                         <div key={member.id} className="flex items-start gap-3">
                           {member.photo_url ? (
-                            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-zinc-200">
+                            <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-border">
                               <Image
                                 src={member.photo_url}
                                 alt={member.full_name}
@@ -407,19 +407,19 @@ export default async function JournalLandingPage({ params }: Props) {
                               />
                             </div>
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-[#8B1A1A]/10 flex items-center justify-center flex-shrink-0">
-                              <span className="text-[#8B1A1A] font-serif font-bold text-sm">
+                            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                              <span className="text-primary font-serif font-bold text-sm">
                                 {member.full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                               </span>
                             </div>
                           )}
                           <div className="min-w-0">
-                            <p className="text-sm font-semibold text-[#1A1A2E] leading-tight">{member.full_name}</p>
+                            <p className="text-sm font-semibold text-text leading-tight">{member.full_name}</p>
                             {member.role && (
-                              <p className="text-xs text-[#8B1A1A] font-medium">{member.role}</p>
+                              <p className="text-xs text-primary font-medium">{member.role}</p>
                             )}
                             {(member.affiliation || member.country) && (
-                              <p className="text-xs text-[#1A1A2E]/60 mt-0.5">
+                              <p className="text-xs text-text-secondary/70 mt-0.5">
                                 {[member.affiliation, member.country].filter(Boolean).join(', ')}
                               </p>
                             )}
@@ -428,7 +428,7 @@ export default async function JournalLandingPage({ params }: Props) {
                                 href={`https://orcid.org/${member.orcid}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-[#C9A84C] hover:text-[#D4AF37] mt-1"
+                                className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover mt-1"
                               >
                                 <Fingerprint className="w-3 h-3" />
                                 {member.orcid}

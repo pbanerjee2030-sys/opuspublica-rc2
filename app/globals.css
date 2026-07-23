@@ -192,20 +192,6 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 0;
 }
 
-/* ── Links ── */
-
-a {
-  color: var(--color-primary);
-  text-decoration: underline;
-  text-decoration-color: var(--color-accent);
-  text-underline-offset: 2px;
-  transition: color var(--transition-fast);
-}
-
-a:hover {
-  color: var(--color-accent);
-}
-
 /* ── Utility: accent rules / section markers ── */
 
 .accent-rule {

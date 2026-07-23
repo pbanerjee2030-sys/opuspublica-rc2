@@ -90,7 +90,7 @@ export default function ReviewerDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-8 h-8 text-[#C9A84C] animate-spin" />
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
       </div>
     );
   }
@@ -98,22 +98,22 @@ export default function ReviewerDashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-serif font-bold text-white mb-2">Reviewer Dashboard</h1>
-        <p className="text-sm text-zinc-400">Manage your peer review assignments.</p>
+        <h1 className="text-3xl font-serif font-bold text-primary mb-2">Reviewer Dashboard</h1>
+        <p className="text-sm text-text-secondary">Manage your peer review assignments.</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <div className="bg-[#111118] border border-zinc-800 rounded-xl p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Total Assigned</p>
-          <p className="text-2xl font-bold text-white mt-1">{assignments.length}</p>
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-xs text-text-secondary/60 uppercase tracking-wider font-bold">Total Assigned</p>
+          <p className="text-2xl font-bold text-text mt-1">{assignments.length}</p>
         </div>
-        <div className="bg-[#111118] border border-zinc-800 rounded-xl p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Pending</p>
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-xs text-text-secondary/60 uppercase tracking-wider font-bold">Pending</p>
           <p className="text-2xl font-bold text-yellow-400 mt-1">{pendingCount}</p>
         </div>
-        <div className="bg-[#111118] border border-zinc-800 rounded-xl p-4">
-          <p className="text-xs text-zinc-500 uppercase tracking-wider font-bold">Completed</p>
+        <div className="bg-surface border border-border rounded-xl p-4">
+          <p className="text-xs text-text-secondary/60 uppercase tracking-wider font-bold">Completed</p>
           <p className="text-2xl font-bold text-green-400 mt-1">{completedCount}</p>
         </div>
       </div>
@@ -126,8 +126,8 @@ export default function ReviewerDashboard() {
             onClick={() => setFilter(f)}
             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors capitalize ${
               filter === f
-                ? 'bg-[#C9A84C] text-[#13131A]'
-                : 'bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                ? 'bg-primary text-white'
+                : 'bg-bg-alt/50 text-text-secondary hover:text-primary hover:bg-bg-alt'
             }`}
           >
             {f}
@@ -145,7 +145,7 @@ export default function ReviewerDashboard() {
               <Link
                 key={assignment.id}
                 href={`/reviewer/${assignment.id}`}
-                className="block bg-[#111118] border border-zinc-800 rounded-xl p-5 hover:border-[#C9A84C]/30 transition-all group"
+                className="block bg-surface border border-border rounded-xl p-5 hover:border-accent/30 transition-all group"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -155,22 +155,22 @@ export default function ReviewerDashboard() {
                         {status.label}
                       </span>
                       {assignment.articles?.journals?.name && (
-                        <span className="text-[10px] text-zinc-600 font-mono">
+                        <span className="text-[10px] text-text-secondary/40 font-mono">
                           {assignment.articles.journals.name}
                         </span>
                       )}
                     </div>
-                    <h3 className="text-sm font-serif font-bold text-white group-hover:text-[#C9A84C] transition-colors line-clamp-1">
+                    <h3 className="text-sm font-serif font-bold text-primary group-hover:text-accent transition-colors line-clamp-1">
                       {assignment.articles?.title || 'Untitled Article'}
                     </h3>
                     {assignment.articles?.abstract && (
-                      <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{assignment.articles.abstract}</p>
+                      <p className="text-xs text-text-secondary/60 mt-1 line-clamp-2">{assignment.articles.abstract}</p>
                     )}
-                    <p className="text-[10px] text-zinc-600 mt-2">
+                    <p className="text-[10px] text-text-secondary/40 mt-2">
                       Assigned {new Date(assignment.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
-                  <div className="text-zinc-600 group-hover:text-[#C9A84C] transition-colors">
+                  <div className="text-text-secondary/40 group-hover:text-accent transition-colors">
                     <FileText className="w-5 h-5" />
                   </div>
                 </div>
@@ -179,12 +179,12 @@ export default function ReviewerDashboard() {
           })}
         </div>
       ) : (
-        <div className="text-center py-16 bg-[#111118] border border-zinc-800 rounded-xl">
-          <BookOpen className="w-10 h-10 text-zinc-700 mx-auto mb-3" />
-          <p className="text-sm text-zinc-500 font-bold">
+        <div className="text-center py-16 bg-surface border border-border rounded-xl">
+          <BookOpen className="w-10 h-10 text-text-secondary/60 mx-auto mb-3" />
+          <p className="text-sm text-text-secondary/60 font-bold">
             {filter === 'all' ? 'No assignments yet' : `No ${filter} assignments`}
           </p>
-          <p className="text-xs text-zinc-600 mt-1">
+          <p className="text-xs text-text-secondary/40 mt-1">
             {filter === 'all' ? 'You will see review assignments here once editors assign you.' : ''}
           </p>
         </div>

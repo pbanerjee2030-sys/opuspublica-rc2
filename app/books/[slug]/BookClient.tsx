@@ -32,6 +32,7 @@ export interface Book {
   language?: string | null;
   format?: string | null;
   price?: string | null;
+  ebook_price?: string | null;
   description: string;
   long_description?: string | null;
   table_of_contents?: string[] | null;
@@ -63,22 +64,22 @@ export default function BookClient({ book }: Props) {
     formats.push({ name: 'Paperback', price: book.price || '', isbn: book.isbn });
   }
   if (book.isbn_ebook) {
-    formats.push({ name: 'E-book', price: book.price || '', isbn: book.isbn_ebook });
+    formats.push({ name: 'E-book', price: book.ebook_price || book.price || '', isbn: book.isbn_ebook });
   }
 
 
   return (
-    <div className="min-h-screen bg-[#1A1A2E] text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans">
             
       {/* Spacer for Fixed Navbar */}
       <div className="h-16"></div>
 
-      <main className="flex-grow bg-[#1A1A2E]">
+      <main className="flex-grow bg-bg">
         {/* Back Button */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8">
           <Link
             href="/#books"
-            className="inline-flex items-center gap-2 text-[#C9A84C] hover:text-[#D4AF37] transition-colors group text-sm font-medium"
+            className="inline-flex items-center gap-2 text-accent hover:text-accent-hover transition-colors group text-sm font-medium"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Books
@@ -86,10 +87,10 @@ export default function BookClient({ book }: Props) {
         </div>
 
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-[#1A1A2E] via-[#8B1A1A]/20 to-[#1A1A2E] py-16 sm:py-20">
+        <section className="relative overflow-hidden bg-gradient-to-br from-bg via-primary/5 to-bg py-16 sm:py-20">
           <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-[#C9A84C]"></div>
-            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-[#C9A84C]"></div>
+            <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-accent"></div>
+            <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-accent"></div>
           </div>
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
@@ -100,7 +101,7 @@ export default function BookClient({ book }: Props) {
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="relative w-36 h-48 sm:w-44 sm:h-60 rounded-lg overflow-hidden shadow-2xl shadow-black/40 border border-white/10 group"
+                  className="relative w-36 h-48 sm:w-44 sm:h-60 rounded-lg overflow-hidden shadow-2xl shadow-black/40 border border-border group bg-bg-alt"
                 >
                   {coverSrc ? (
                     <Image
@@ -109,10 +110,10 @@ export default function BookClient({ book }: Props) {
                       fill
                       sizes="(max-width: 640px) 144px, 176px"
                       priority
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-contain group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-[#8B1A1A] to-[#C9A84C] flex items-center justify-center">
+                    <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                       <BookOpen className="text-white w-16 h-16" />
                     </div>
                   )}
@@ -127,14 +128,14 @@ export default function BookClient({ book }: Props) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6 }}
                 >
-                  <span className="px-3 py-1 bg-[#C9A84C]/20 text-[#C9A84C] text-xs font-semibold rounded-full uppercase tracking-wider border border-[#C9A84C]/20">
+                  <span className="px-3 py-1 bg-accent/10 text-accent text-xs font-semibold rounded-full uppercase tracking-wider border border-accent/20">
                     {book.status}
                   </span>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-white mt-4 mb-2 leading-tight">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif text-primary mt-4 mb-2 leading-tight">
                     {book.title}
                   </h1>
                   {book.subtitle && (
-                    <p className="text-white/60 text-lg sm:text-xl font-light mb-4">
+                    <p className="text-text-secondary/70 text-lg sm:text-xl font-light mb-4">
                       {book.subtitle}
                     </p>
                   )}
@@ -142,34 +143,34 @@ export default function BookClient({ book }: Props) {
                   {/* Authors list with roles */}
                   <div className="flex flex-wrap gap-3 mb-6">
                     {book.authors.map((author, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5">
-                        <User className="w-3.5 h-3.5 text-[#C9A84C]" />
-                        <span className="text-white font-medium text-sm">{author.name}</span>
-                        <span className="text-white/40 text-xs">({author.role})</span>
+                      <div key={index} className="flex items-center gap-2 bg-surface border border-border rounded-lg px-3 py-1.5">
+                        <User className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-text font-medium text-sm">{author.name}</span>
+                        <span className="text-text-secondary/60 text-xs">({author.role})</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-white/5 border border-white/10 rounded-xl p-4 max-w-2xl text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-surface border border-border rounded-xl p-4 max-w-2xl text-sm">
                     <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Price</span>
-                      <span className="text-[#C9A84C] font-semibold">
+                      <span className="text-text-secondary/60 block text-xs mb-0.5">Price</span>
+                      <span className="text-accent font-semibold">
                         {formats && formats.length > 0
                           ? `${formats.find(f => f.name === 'E-book')?.price || ''} - ${formats.find(f => f.name === 'Paperback')?.price || ''}`
                           : book.price}
                       </span>
                     </div>
                     <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Format</span>
-                      <span className="text-white font-medium">{book.format}</span>
+                      <span className="text-text-secondary/60 block text-xs mb-0.5">Format</span>
+                      <span className="text-text font-medium">{book.format}</span>
                     </div>
                     <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Pages</span>
-                      <span className="text-white font-medium">{book.pages}</span>
+                      <span className="text-text-secondary/60 block text-xs mb-0.5">Pages</span>
+                      <span className="text-text font-medium">{book.pages}</span>
                     </div>
                     <div>
-                      <span className="text-white/40 block text-xs mb-0.5">Published</span>
-                      <span className="text-white font-medium">{book.publication_date}</span>
+                      <span className="text-text-secondary/60 block text-xs mb-0.5">Published</span>
+                      <span className="text-text font-medium">{book.publication_date}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -179,7 +180,7 @@ export default function BookClient({ book }: Props) {
         </section>
 
         {/* Content Section */}
-        <section className="py-16 bg-[#F5F0E8] text-[#1A1A2E]">
+        <section className="py-16 bg-bg-alt text-text">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
               {/* Left Column: Description & Testimonials */}
@@ -189,11 +190,11 @@ export default function BookClient({ book }: Props) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="bg-white rounded-xl p-8 shadow-sm border border-[#1A1A2E]/5"
+                  className="bg-surface rounded-xl p-8 shadow-sm border border-border"
                 >
-                  <h2 className="text-2xl font-serif text-[#8B1A1A] mb-4 font-semibold">Synopsis</h2>
-                  <div className="space-y-4 text-base sm:text-lg leading-relaxed text-[#1A1A2E]/80">
-                    <p className="font-medium text-[#1A1A2E]">{book.description}</p>
+                  <h2 className="text-2xl font-serif text-primary mb-4 font-semibold">Synopsis</h2>
+                  <div className="space-y-4 text-base sm:text-lg leading-relaxed text-text-secondary">
+                    <p className="font-medium text-text">{book.description}</p>
                     <p>{book.long_description}</p>
                   </div>
                 </motion.div>
@@ -206,18 +207,18 @@ export default function BookClient({ book }: Props) {
                     transition={{ delay: 0.3 }}
                     className="space-y-6"
                   >
-                    <h2 className="text-2xl font-serif text-[#8B1A1A] font-semibold">Praise for the Book</h2>
+                    <h2 className="text-2xl font-serif text-primary font-semibold">Praise for the Book</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {book.testimonials.map((testimonial, index) => (
-                        <div key={index} className="bg-white rounded-xl p-6 shadow-sm border-t-4 border-[#8B1A1A]">
-                          <p className="italic text-[#1A1A2E]/70 mb-4 text-sm sm:text-base leading-relaxed">
+                        <div key={index} className="bg-surface rounded-xl p-6 shadow-sm border-t-4 border-primary">
+                          <p className="italic text-text-secondary mb-4 text-sm sm:text-base leading-relaxed">
                             &ldquo;{testimonial.quote}&rdquo;
                           </p>
                           <div>
-                            <h4 className="font-serif text-[#8B1A1A] font-bold text-sm">
+                            <h4 className="font-serif text-primary font-bold text-sm">
                               {testimonial.author}
                             </h4>
-                            <p className="text-xs text-[#1A1A2E]/50">
+                            <p className="text-xs text-text-secondary">
                               {testimonial.title}
                             </p>
                           </div>
@@ -236,15 +237,15 @@ export default function BookClient({ book }: Props) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
-                    className="bg-white rounded-xl p-6 shadow-sm border border-[#1A1A2E]/5"
+                    className="bg-surface rounded-xl p-6 shadow-sm border border-border"
                   >
-                    <h3 className="text-[#8B1A1A] font-serif text-xl mb-4 font-semibold border-b border-[#1A1A2E]/10 pb-2">
+                    <h3 className="text-primary font-serif text-xl mb-4 font-semibold border-b border-border pb-2">
                       Table of Contents
                     </h3>
                     <ul className="space-y-3">
                       {book.table_of_contents.map((chapter, index) => (
-                        <li key={index} className="flex gap-3 text-[#1A1A2E]/80 text-sm sm:text-base">
-                          <span className="text-[#C9A84C] font-semibold">{index + 1}.</span>
+                        <li key={index} className="flex gap-3 text-text-secondary text-sm sm:text-base">
+                          <span className="text-accent font-semibold">{index + 1}.</span>
                           <span>{chapter}</span>
                         </li>
                       ))}
@@ -257,39 +258,39 @@ export default function BookClient({ book }: Props) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="bg-white rounded-xl p-6 shadow-sm border border-[#1A1A2E]/5 space-y-4 text-sm"
+                  className="bg-surface rounded-xl p-6 shadow-sm border border-border space-y-4 text-sm"
                 >
-                  <h3 className="text-[#8B1A1A] font-serif text-xl font-semibold border-b border-[#1A1A2E]/10 pb-2">
+                  <h3 className="text-primary font-serif text-xl font-semibold border-b border-border pb-2">
                     Specifications
                   </h3>
                   <div className="space-y-4">
-                    <div className="flex justify-between border-b border-[#1A1A2E]/5 pb-1">
-                      <span className="text-[#1A1A2E]/50">Language</span>
-                      <span className="font-medium text-[#1A1A2E]">{book.language}</span>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary/80">Language</span>
+                      <span className="font-medium text-text">{book.language}</span>
                     </div>
-                    <div className="flex justify-between border-b border-[#1A1A2E]/5 pb-1">
-                      <span className="text-[#1A1A2E]/50">Pages</span>
-                      <span className="font-medium text-[#1A1A2E]">{book.pages}</span>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary/80">Pages</span>
+                      <span className="font-medium text-text">{book.pages}</span>
                     </div>
                     {formats && formats.map((format, idx) => (
-                      <div key={idx} className="space-y-1 pt-1 border-b border-[#1A1A2E]/5 pb-2 last:border-b-0 last:pb-0 last:border-t-0">
-                        <span className="font-serif font-semibold text-[#8B1A1A] text-xs uppercase tracking-wider block">
+                      <div key={idx} className="space-y-1 pt-1 border-b border-border/50 pb-2 last:border-b-0 last:pb-0 last:border-t-0">
+                        <span className="font-serif font-semibold text-primary text-xs uppercase tracking-wider block">
                           {format.name} Format
                         </span>
                         <div className="flex justify-between text-xs">
-                          <span className="text-[#1A1A2E]/50">ISBN</span>
-                          <span className="font-mono text-[#1A1A2E]">{format.isbn}</span>
+                          <span className="text-text-secondary/80">ISBN</span>
+                          <span className="font-mono text-text">{format.isbn}</span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-[#1A1A2E]/50">Price</span>
-                          <span className="font-semibold text-[#8B1A1A]">{format.price}</span>
+                          <span className="text-text-secondary/80">Price</span>
+                          <span className="font-semibold text-primary">{format.price}</span>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#1A1A2E]/10">
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-border">
                     {book.categories.map((cat, idx) => (
-                      <span key={idx} className="bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20 rounded px-2 py-0.5 text-xs">
+                      <span key={idx} className="bg-accent/10 text-accent border border-accent/20 rounded px-2 py-0.5 text-xs">
                         {cat}
                       </span>
                     ))}
@@ -303,12 +304,12 @@ export default function BookClient({ book }: Props) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="mt-12 p-6 bg-[#1A1A2E] rounded-xl border border-[#C9A84C]/20 shadow-lg text-white"
+              className="mt-12 p-6 bg-primary rounded-xl border border-accent/20 shadow-lg text-white"
             >
               <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                 <div>
-                  <h3 className="text-[#C9A84C] font-serif text-xl mb-1">Get Your Copy</h3>
-                  <p className="text-white/60 text-sm">
+                  <h3 className="text-accent font-serif text-xl mb-1">Get Your Copy</h3>
+                  <p className="text-white/70 text-sm">
                     Download sample chapters or get the full version.
                   </p>
                 </div>
@@ -317,7 +318,7 @@ export default function BookClient({ book }: Props) {
                     <a
                       href={book.sample_path}
                       download
-                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-[#C9A84C] text-[#C9A84C] hover:bg-[#C9A84C]/10 font-semibold rounded-lg text-sm transition-all"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 border border-accent text-accent hover:bg-accent/10 font-semibold rounded-lg text-sm transition-all"
                     >
                       <Download className="w-4 h-4" />
                       Download Sample
@@ -326,7 +327,7 @@ export default function BookClient({ book }: Props) {
                   {book.is_available && (
                     <a
                       href={book.external_url || '#'}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#1A1A2E] font-semibold rounded-lg text-sm transition-all transform hover:scale-105"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent hover:bg-accent-hover text-primary font-semibold rounded-lg text-sm transition-all transform hover:scale-105"
                     >
                       <BookOpen className="w-4 h-4" />
                       Buy Now

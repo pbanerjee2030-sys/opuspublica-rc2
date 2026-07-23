@@ -76,7 +76,7 @@ export default function Journals({ journals = [] }: Props) {
                 src="/Welcome%20to%20Opus%20Publica.jpg"
                 alt="Opus Publica Journal Covers and Branding"
                 fill
-                sizes="(max-w-1200px) 100vw, 80vw"
+                sizes="(max-width: 1200px) 100vw, 80vw"
                 priority
                 className="object-contain transition-transform duration-750 group-hover:scale-102"
               />
