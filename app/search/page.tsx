@@ -100,7 +100,7 @@ export default async function SearchPage({
     : [];
 
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col font-sans selection:bg-accent selection:text-white">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans selection:bg-accent selection:text-white overflow-x-hidden">
       
       <section className="relative overflow-hidden pt-32 pb-16 border-b border-border bg-bg">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-accent/5 rounded-full filter blur-3xl pointer-events-none"></div>

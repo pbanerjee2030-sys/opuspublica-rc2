@@ -50,7 +50,7 @@ export default async function JournalsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col font-sans">
+    <div className="min-h-screen bg-bg text-text flex flex-col font-sans overflow-x-hidden">
       <div className="h-16"></div>
 
       <main className="flex-grow">

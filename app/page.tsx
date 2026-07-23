@@ -128,7 +128,7 @@ export default async function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-text flex flex-col">
+    <div className="min-h-screen bg-bg text-text flex flex-col overflow-x-hidden">
 
       {/* HERO SECTION */}
       <section id="home" className="pt-32 pb-20 border-b border-border bg-bg">
@@ -146,17 +146,17 @@ export default async function Home() {
             </p>
           </div>
 
-          <div className="max-w-xl mx-auto">
-            <div className="flex border border-border">
-              <div className="flex items-center pl-4 pr-3 bg-surface border-r border-border">
+          <div className="max-w-xl mx-auto w-full">
+            <div className="flex border border-border min-w-0">
+              <div className="flex items-center pl-4 pr-3 bg-surface border-r border-border shrink-0">
                 <Search className="w-4 h-4 text-text-secondary/60" />
               </div>
               <input
                 type="text"
                 placeholder="Search articles, DOIs, authors..."
-                className="flex-1 py-3 px-3 bg-surface text-sm text-text placeholder:text-text-secondary/40 outline-none"
+                className="flex-1 py-3 px-3 bg-surface text-sm text-text placeholder:text-text-secondary/40 outline-none min-w-0"
               />
-              <button className="px-5 py-3 bg-primary text-white text-sm font-semibold tracking-wider uppercase hover:bg-primary-hover transition-colors">
+              <button className="px-3 sm:px-5 py-3 bg-primary text-white text-xs sm:text-sm font-semibold tracking-wider uppercase hover:bg-primary-hover transition-colors shrink-0">
                 Search
               </button>
             </div>

@@ -31,7 +31,7 @@ export default function SearchBar({ placeholder = 'Search articles, DOIs, author
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`relative ${className}`}>
+    <form onSubmit={handleSubmit} className={`relative w-full min-w-0 ${className}`}>
       <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
         <Search className="h-5 w-5 text-zinc-500" />
       </div>
@@ -40,11 +40,11 @@ export default function SearchBar({ placeholder = 'Search articles, DOIs, author
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-12 pr-32 py-4 bg-[#18181F]/90 border border-zinc-800 rounded-full text-sm text-white focus:outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C] transition-all placeholder-zinc-500 font-sans shadow-lg"
+        className="w-full pl-12 pr-24 sm:pr-32 py-4 bg-[#18181F]/90 border border-zinc-800 rounded-full text-sm text-white focus:outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C] transition-all placeholder-zinc-500 font-sans shadow-lg min-w-0"
       />
       <button
         type="submit"
-        className="absolute right-2 top-2 px-6 py-2 bg-[#C9A84C] hover:bg-[#8B1A1A] text-white text-xs font-bold rounded-full transition-colors shadow-md"
+        className="absolute right-1.5 sm:right-2 top-2 px-4 sm:px-6 py-2 bg-[#C9A84C] hover:bg-[#8B1A1A] text-white text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-md"
       >
         Search
       </button>
