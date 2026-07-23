@@ -264,6 +264,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ data });
     }
 
+    // resend_status: admin/editor only — check if RESEND_API_KEY is configured
+    if (entity === 'resend_status') {
+      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
+      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+      const apiKey = process.env.RESEND_API_KEY;
+      const configured = !!apiKey && apiKey.length > 0 && apiKey !== 'your_resend_api_key_here';
+      return NextResponse.json({
+        configured,
+        fromAddress: process.env.RESEND_FROM_EMAIL || 'notifications@opuspublica.com',
+      });
+    }
+
     // audit_log: admin only (includes role-change history)
     if (entity === 'audit_log') {
       const profile = await requireRole(supabaseAdmin, user.id, ['admin']);

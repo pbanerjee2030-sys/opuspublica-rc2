@@ -33,10 +33,27 @@ const sections: SettingSection[] = [
 export default function SettingsPage() {
   const [activeSection, setActiveSection] = useState('general');
   const [doiPrefix, setDoiPrefix] = useState('10.62692');
+  const [resendConfigured, setResendConfigured] = useState<boolean | null>(null);
+  const [resendFromAddress, setResendFromAddress] = useState('notifications@opuspublica.com');
 
   useEffect(() => {
     fetchDoiPrefix();
+    fetchResendStatus();
   }, []);
+
+  const fetchResendStatus = async () => {
+    try {
+      const res = await adminFetch('resend_status');
+      if (res && typeof res.configured === 'boolean') {
+        setResendConfigured(res.configured);
+        setResendFromAddress(res.fromAddress || 'notifications@opuspublica.com');
+      } else {
+        setResendConfigured(false);
+      }
+    } catch {
+      setResendConfigured(false);
+    }
+  };
 
   const fetchDoiPrefix = async () => {
     try {
@@ -192,14 +209,28 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Status</label>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-amber-400 flex items-center gap-2">
-                      <AlertCircle className="w-3.5 h-3.5" />
-                      Requires RESEND_API_KEY in .env.local
-                    </div>
+                    {resendConfigured === null ? (
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-500 flex items-center gap-2">
+                        <span className="w-3.5 h-3.5 border-2 border-zinc-600 border-t-transparent rounded-full animate-spin" />
+                        Checking...
+                      </div>
+                    ) : resendConfigured ? (
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-green-400 flex items-center gap-2">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Connected
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-amber-400 flex items-center gap-2">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Requires RESEND_API_KEY in .env.local
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">API Key</label>
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400">Set in .env.local</div>
+                    <div className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-zinc-400">
+                      {resendConfigured ? 'Configured' : 'Set in .env.local'}
+                    </div>
                   </div>
                 </div>
               </div>
