@@ -196,7 +196,8 @@ export default function DoiMonitorPage() {
             ) : (
               <ExternalLink className="w-4 h-4" />
             )}
-            {depositingAll ? 'Depositing...' : 'Deposit All Pending'}
+            <span className="hidden sm:inline">{depositingAll ? 'Depositing...' : 'Deposit All Pending'}</span>
+            <span className="sm:hidden">{depositingAll ? 'Depositing...' : 'Deposit All'}</span>
           </button>
           <button
             onClick={fetchArticles}
@@ -216,7 +217,7 @@ export default function DoiMonitorPage() {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+              className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-[10px] sm:text-xs font-bold uppercase tracking-wider transition-all ${
                 filter === f.key
                   ? 'bg-zinc-800 text-white shadow-sm'
                   : 'text-zinc-500 hover:text-zinc-300'
@@ -274,24 +275,24 @@ export default function DoiMonitorPage() {
 
                   return (
                     <tr key={article.id} className="hover:bg-zinc-800/20 transition-colors">
-                      <td className="px-5 py-4">
-                        <p className="text-sm text-white font-medium truncate max-w-[300px]">{article.title}</p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">{article.journals?.name}</p>
+                      <td className="px-3 sm:px-5 py-3 sm:py-4 min-w-0">
+                        <p className="text-sm text-white font-medium truncate max-w-[160px] sm:max-w-[300px]">{article.title}</p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5 truncate">{article.journals?.name}</p>
                       </td>
-                      <td className="px-5 py-4 hidden md:table-cell">
+                      <td className="px-3 sm:px-5 py-3 sm:py-4 hidden md:table-cell">
                         {article.doi ? (
                           <span className="text-xs text-[#C9A84C] font-mono">{article.doi}</span>
                         ) : (
                           <span className="text-xs text-zinc-600">Not assigned</span>
                         )}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="px-3 sm:px-5 py-3 sm:py-4">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${config.color}`}>
                           <StatusIcon className="w-3 h-3" />
                           {config.label}
                         </span>
                       </td>
-                      <td className="px-5 py-4 hidden lg:table-cell">
+                      <td className="px-3 sm:px-5 py-3 sm:py-4 hidden lg:table-cell">
                         {status === 'submitted' && article.doi_deposited_at && (
                           <span className="text-xs text-zinc-400">
                             {new Date(article.doi_deposited_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -306,19 +307,19 @@ export default function DoiMonitorPage() {
                           <span className="text-xs text-zinc-600">-</span>
                         )}
                       </td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-3 sm:px-5 py-3 sm:py-4 text-right whitespace-nowrap">
                         {article.doi && (
                           <button
                             onClick={() => handleRetryDeposit(article)}
                             disabled={retryingId === article.id}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-300 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-[10px] sm:text-xs font-bold text-zinc-300 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50"
                           >
                             {retryingId === article.id ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                             ) : (
-                              <RefreshCw className="w-3.5 h-3.5" />
+                              <RefreshCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             )}
-                            Retry
+                            <span className="hidden sm:inline">Retry</span>
                           </button>
                         )}
                       </td>
