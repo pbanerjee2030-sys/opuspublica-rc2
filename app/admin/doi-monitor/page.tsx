@@ -40,6 +40,7 @@ export default function DoiMonitorPage() {
   const [filter, setFilter] = useState<Filter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [retryingId, setRetryingId] = useState<string | null>(null);
+  const [depositingAll, setDepositingAll] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
@@ -100,6 +101,43 @@ export default function DoiMonitorPage() {
     }
   };
 
+  const handleDepositAll = async () => {
+    const pending = articles.filter((a) => a.doi && (!a.doi_deposit_status || a.doi_deposit_status === 'not_submitted' || a.doi_deposit_status === 'failed'));
+    if (pending.length === 0) {
+      showToast('error', 'No pending articles to deposit');
+      return;
+    }
+
+    setDepositingAll(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const article of pending) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error('Not authenticated');
+
+        const res = await fetch('/api/doi/mint', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({ articleId: article.id }),
+        });
+
+        if (res.ok) successCount++;
+        else failCount++;
+      } catch {
+        failCount++;
+      }
+    }
+
+    setDepositingAll(false);
+    showToast('success', `Deposited ${successCount} article(s)${failCount > 0 ? `, ${failCount} failed` : ''}`);
+    fetchArticles();
+  };
+
   const filteredArticles = articles.filter((a) => {
     const status = a.doi_deposit_status || 'not_submitted';
     if (filter !== 'all' && status !== filter) return false;
@@ -147,14 +185,28 @@ export default function DoiMonitorPage() {
           <h1 className="text-2xl font-serif font-bold text-white">DOI Monitor</h1>
           <p className="text-sm text-zinc-400 mt-1">Track and manage Crossref DOI deposits for published articles.</p>
         </div>
-        <button
-          onClick={fetchArticles}
-          disabled={loading}
-          className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-300 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDepositAll}
+            disabled={depositingAll || loading}
+            className="flex items-center gap-2 px-4 py-2 bg-[#C9A84C]/20 hover:bg-[#C9A84C]/30 text-[#C9A84C] text-sm font-semibold rounded-lg border border-[#C9A84C]/30 transition-colors disabled:opacity-50"
+          >
+            {depositingAll ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <ExternalLink className="w-4 h-4" />
+            )}
+            {depositingAll ? 'Depositing...' : 'Deposit All Pending'}
+          </button>
+          <button
+            onClick={fetchArticles}
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-sm text-zinc-300 rounded-lg border border-zinc-700 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Filters & Search */}
