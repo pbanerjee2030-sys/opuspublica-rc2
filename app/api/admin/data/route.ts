@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
       const { data: journals, error: jErr } = await supabaseAdmin
         .from('journals')
-        .select('id, name, slug, issn, aims_and_scope, peer_review_policy, license_type')
+        .select('id, name, slug, issn, aims_and_scope, peer_review_process, license_type')
         .order('name');
       if (jErr) throw jErr;
 
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
         const hasIssn = !!(j.issn && j.issn.trim());
         const hasBoard = ((boardCounts as any) || {})[j.id] > 0;
         const hasAimsScope = !!(j.aims_and_scope && j.aims_and_scope.trim());
-        const hasPeerReview = !!(j.peer_review_policy && j.peer_review_policy.trim());
+        const hasPeerReview = !!(j.peer_review_process && j.peer_review_process.trim());
         const hasLicense = !!(j.license_type && j.license_type.trim());
         const publishedCount = ((pubCounts as any) || {})[j.id] || 0;
         const doajReady = hasIssn && hasBoard && hasAimsScope && hasPeerReview && hasLicense && publishedCount >= 10;
@@ -190,7 +190,7 @@ export async function GET(request: NextRequest) {
           has_issn: hasIssn,
           has_editorial_board: hasBoard,
           has_aims_scope: hasAimsScope,
-          has_peer_review_policy: hasPeerReview,
+          has_peer_review_process: hasPeerReview,
           has_license: hasLicense,
           published_article_count: publishedCount,
           doaj_ready: doajReady,

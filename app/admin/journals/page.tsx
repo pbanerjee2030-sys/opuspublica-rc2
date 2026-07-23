@@ -28,7 +28,8 @@ interface Journal {
   publisher: string | null;
   editorial_board: string | null;
   aims_and_scope: string | null;
-  peer_review_policy: string | null;
+  peer_review_process: string | null;
+  indexing_status: string | null;
   license_type: string | null;
   license_url: string | null;
   frequency: string | null;
@@ -44,7 +45,8 @@ export default function JournalsPage() {
   const [form, setForm] = useState({
     name: '', slug: '', description: '', cover_image: '',
     issn: '', publisher: 'Advocacy Unified Network', editorial_board: '',
-    aims_and_scope: '', peer_review_policy: '', license_type: 'CC BY 4.0',
+    aims_and_scope: '', peer_review_process: '', indexing_status: '',
+    license_type: 'CC BY 4.0',
     license_url: '', frequency: '', subject_areas: '',
   });
   const [saving, setSaving] = useState(false);
@@ -57,6 +59,7 @@ export default function JournalsPage() {
   const [boardForm, setBoardForm] = useState({
     full_name: '',
     affiliation: '',
+    country: '',
     role: 'Member',
     photo_url: '',
     orcid: '',
@@ -105,7 +108,7 @@ export default function JournalsPage() {
       }
       setShowBoardModal(false);
       setEditingMember(null);
-      setBoardForm({ full_name: '', affiliation: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 });
+      setBoardForm({ full_name: '', affiliation: '', country: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 });
       if (selectedJournalForBoard) fetchBoardMembers(selectedJournalForBoard);
     } catch (e: any) {
       showToast('error', e.message || 'Failed to save board member');
@@ -133,7 +136,8 @@ export default function JournalsPage() {
     setForm({
       name: '', slug: '', description: '', cover_image: '',
       issn: '', publisher: 'Advocacy Unified Network', editorial_board: '',
-      aims_and_scope: '', peer_review_policy: '', license_type: 'CC BY 4.0',
+      aims_and_scope: '', peer_review_process: '', indexing_status: '',
+      license_type: 'CC BY 4.0',
       license_url: '', frequency: '', subject_areas: '',
     });
     setShowModal(true);
@@ -150,7 +154,8 @@ export default function JournalsPage() {
       publisher: journal.publisher || 'Advocacy Unified Network',
       editorial_board: journal.editorial_board || '',
       aims_and_scope: journal.aims_and_scope || '',
-      peer_review_policy: journal.peer_review_policy || '',
+      peer_review_process: journal.peer_review_process || '',
+      indexing_status: journal.indexing_status || '',
       license_type: journal.license_type || 'CC BY 4.0',
       license_url: journal.license_url || '',
       frequency: journal.frequency || '',
@@ -176,7 +181,8 @@ export default function JournalsPage() {
         publisher: form.publisher.trim() || null,
         editorial_board: form.editorial_board.trim() || null,
         aims_and_scope: form.aims_and_scope.trim() || null,
-        peer_review_policy: form.peer_review_policy.trim() || null,
+        peer_review_process: form.peer_review_process.trim() || null,
+        indexing_status: form.indexing_status.trim() || null,
         license_type: form.license_type.trim() || null,
         license_url: form.license_url.trim() || null,
         frequency: form.frequency.trim() || null,
@@ -311,7 +317,7 @@ export default function JournalsPage() {
                 Close
               </button>
               <button
-                onClick={() => { setEditingMember(null); setBoardForm({ full_name: '', affiliation: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 }); setShowBoardModal(true); }}
+                onClick={() => { setEditingMember(null); setBoardForm({ full_name: '', affiliation: '', country: '', role: 'Member', photo_url: '', orcid: '', sort_order: 0 }); setShowBoardModal(true); }}
                 className="px-3 py-1.5 bg-[#C9A84C] text-[#111118] text-xs font-bold rounded-lg hover:bg-[#D4AF37] transition-colors flex items-center gap-1"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Member
@@ -330,7 +336,7 @@ export default function JournalsPage() {
                     {member.orcid && <p className="text-xs text-[#C9A84C] font-mono">ORCID: {member.orcid}</p>}
                   </div>
                   <button
-                    onClick={() => { setEditingMember(member); setBoardForm({ full_name: member.full_name, affiliation: member.affiliation || '', role: member.role || 'Member', photo_url: member.photo_url || '', orcid: member.orcid || '', sort_order: member.sort_order || 0 }); setShowBoardModal(true); }}
+                    onClick={() => { setEditingMember(member); setBoardForm({ full_name: member.full_name, affiliation: member.affiliation || '', country: member.country || '', role: member.role || 'Member', photo_url: member.photo_url || '', orcid: member.orcid || '', sort_order: member.sort_order || 0 }); setShowBoardModal(true); }}
                     className="p-1.5 text-zinc-500 hover:text-[#C9A84C] transition-colors"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -480,13 +486,23 @@ export default function JournalsPage() {
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Peer Review Policy</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Peer Review Process</label>
                 <textarea
-                  value={form.peer_review_policy}
-                  onChange={(e) => setForm({ ...form, peer_review_policy: e.target.value })}
+                  value={form.peer_review_process}
+                  onChange={(e) => setForm({ ...form, peer_review_process: e.target.value })}
                   rows={4}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] resize-none"
                   placeholder="Double-blind, single-blind, open review..."
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Indexing Status</label>
+                <input
+                  type="text"
+                  value={form.indexing_status}
+                  onChange={(e) => setForm({ ...form, indexing_status: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                  placeholder="e.g. Google Scholar, Scopus"
                 />
               </div>
               <div>
@@ -556,6 +572,16 @@ export default function JournalsPage() {
                   onChange={(e) => setBoardForm({ ...boardForm, affiliation: e.target.value })}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
                   placeholder="e.g. University of Oxford"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">Country</label>
+                <input
+                  type="text"
+                  value={boardForm.country}
+                  onChange={(e) => setBoardForm({ ...boardForm, country: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C]"
+                  placeholder="e.g. United Kingdom"
                 />
               </div>
               <div>

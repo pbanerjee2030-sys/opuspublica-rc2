@@ -54,17 +54,17 @@ export default function CitationExport({ title, authors, journalTitle, publishDa
   ];
 
   return (
-    <div className="bg-white rounded-lg p-5 shadow-sm border border-black/5">
-      <h3 className="text-[#1A1A2E] font-serif text-lg font-semibold mb-3">
+    <div className="bg-surface rounded-lg p-5 border border-border">
+      <h3 className="text-text font-serif text-lg font-semibold mb-3">
         Cite this article
       </h3>
       <div className="space-y-2">
         {formats.map((fmt) => (
           <div key={fmt.name} className="flex items-center gap-2">
-            <span className="text-xs font-mono text-[#1A1A2E]/60 w-14">{fmt.name}</span>
+            <span className="text-xs font-mono text-text-secondary w-14">{fmt.name}</span>
             <button
               onClick={() => handleCopy(fmt.name, fmt.content)}
-              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-[#8B1A1A]/20 text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white text-[10px] font-bold uppercase tracking-wider rounded transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 border border-accent/30 text-accent hover:bg-accent hover:text-primary text-[10px] font-bold uppercase tracking-wider rounded transition-colors"
             >
               {copiedFormat === fmt.name ? (
                 <>

@@ -1,13 +1,22 @@
 import type { Metadata } from 'next';
-import { Playfair_Display, Inter } from 'next/font/google';
+import { Newsreader, Source_Serif_4, Inter } from 'next/font/google';
 import './globals.css';
 import CookieConsent from '@/components/CookieConsent';
 import Navbar from '@/components/Navbar';
 import { getServerUserAndProfile } from '@/lib/supabaseServer';
 
-const playfair = Playfair_Display({
+const newsreader = Newsreader({
   subsets: ['latin'],
-  variable: '--font-playfair',
+  variable: '--font-newsreader',
+  weight: ['400', '600', '700'],
+  style: ['normal', 'italic'],
+});
+
+const sourceSerif = Source_Serif_4({
+  subsets: ['latin'],
+  variable: '--font-source-serif',
+  weight: ['400', '600'],
+  style: ['normal', 'italic'],
 });
 
 const inter = Inter({
@@ -28,7 +37,7 @@ export default async function RootLayout({
   const { user, profile } = await getServerUserAndProfile();
 
   return (
-    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="en" className={`${newsreader.variable} ${sourceSerif.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">
         <Navbar initialUser={user} initialProfile={profile} />
         {children}

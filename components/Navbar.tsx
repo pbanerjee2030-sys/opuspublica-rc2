@@ -102,7 +102,7 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/#home" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
+            <Link href="/" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Home
             </Link>
             <Link href="/journals" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
@@ -111,10 +111,10 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
             <Link href="/books" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Books
             </Link>
-            <Link href="/#about" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
+            <Link href="/about" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               About
             </Link>
-            <Link href="/#contact" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
+            <Link href="/contact" className="text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-semibold uppercase tracking-wider">
               Contact
             </Link>
             {isEditorOrAdmin && (
@@ -232,7 +232,7 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
         <div className="md:hidden bg-[#1A1A2E] border-b border-[#C9A84C]/25 text-sm">
           <div className="px-4 py-4 space-y-3">
             <Link
-              href="/#home"
+              href="/"
               className="block text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
               onClick={() => setIsOpen(false)}
             >
@@ -253,14 +253,14 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
               Books
             </Link>
             <Link
-              href="/#about"
+              href="/about"
               className="block text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
               onClick={() => setIsOpen(false)}
             >
               About
             </Link>
             <Link
-              href="/#contact"
+              href="/contact"
               className="block text-white/80 hover:text-[#C9A84C] transition-colors text-xs font-bold uppercase tracking-wider py-1.5 border-b border-white/5"
               onClick={() => setIsOpen(false)}
             >

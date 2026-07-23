@@ -283,7 +283,7 @@ export default async function JournalLandingPage({ params }: Props) {
                   )}
                 </div>
 
-                {(dbJournal.aims_and_scope || dbJournal.peer_review_policy || dbJournal.license_type) && (
+                {(dbJournal.aims_and_scope || dbJournal.peer_review_process || dbJournal.license_type) && (
                   <div className="bg-white rounded-lg p-8 shadow-sm border border-black/5 mt-8 space-y-6">
                     <h2 className="text-2xl sm:text-3xl font-serif text-[#8B1A1A] font-semibold border-b border-[#8B1A1A]/10 pb-3 mb-6">
                       Editorial Policies
@@ -301,13 +301,13 @@ export default async function JournalLandingPage({ params }: Props) {
                       </div>
                     )}
 
-                    {dbJournal.peer_review_policy && (
+                    {dbJournal.peer_review_process && (
                       <div className="space-y-2 pt-4 border-t border-[#1A1A2E]/5">
                         <h3 className="text-lg font-serif text-[#8B1A1A] font-semibold">
-                          Peer Review Policy
+                          Peer Review Process
                         </h3>
                         <SafeHtml
-                          html={dbJournal.peer_review_policy}
+                          html={dbJournal.peer_review_process}
                           className="text-sm sm:text-base text-[#1A1A2E]/80 leading-relaxed font-serif"
                         />
                       </div>
@@ -418,8 +418,10 @@ export default async function JournalLandingPage({ params }: Props) {
                             {member.role && (
                               <p className="text-xs text-[#8B1A1A] font-medium">{member.role}</p>
                             )}
-                            {member.affiliation && (
-                              <p className="text-xs text-[#1A1A2E]/60 mt-0.5">{member.affiliation}</p>
+                            {(member.affiliation || member.country) && (
+                              <p className="text-xs text-[#1A1A2E]/60 mt-0.5">
+                                {[member.affiliation, member.country].filter(Boolean).join(', ')}
+                              </p>
                             )}
                             {member.orcid && (
                               <a

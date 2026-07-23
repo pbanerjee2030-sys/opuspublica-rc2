@@ -416,6 +416,16 @@ export default async function Home() {
               </div>
             ))}
           </div>
+
+          <div className="text-center mt-10">
+            <Link
+              href="/about"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-xs font-bold rounded-lg transition-all"
+            >
+              Learn More About Us
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -428,7 +438,7 @@ export default async function Home() {
           </header>
 
           <div className="grid sm:grid-cols-3 gap-6">
-            {addresses.map((addr, index) => (
+            {addresses.slice(0, 3).map((addr, index) => (
               <div 
                 key={index}
                 className="bg-[#13131A] border border-zinc-800 rounded-xl p-6 flex flex-col justify-between hover:border-zinc-700 transition-colors"
@@ -454,6 +464,16 @@ export default async function Home() {
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="text-center mt-10">
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] hover:bg-[#D4AF37] text-[#13131A] text-xs font-bold rounded-lg transition-all"
+            >
+              View All Offices & Contact
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         </div>
       </section>

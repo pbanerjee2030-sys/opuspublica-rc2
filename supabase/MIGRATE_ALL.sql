@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS public.editorial_board_members (
     journal_id uuid REFERENCES public.journals(id) ON DELETE CASCADE NOT NULL,
     full_name text NOT NULL,
     affiliation text,
+    country text,
     role text DEFAULT 'Member',
     photo_url text,
     orcid text,

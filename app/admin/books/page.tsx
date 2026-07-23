@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { adminFetch, adminCreate, adminUpdate, adminDelete } from '@/lib/admin-api';
 import {
@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Loader2,
   ExternalLink,
+  Upload,
 } from 'lucide-react';
 
 interface BookAuthor {
@@ -84,9 +85,41 @@ export default function AdminBooksPage() {
     doi: '',
   });
 
+  const [coverUploading, setCoverUploading] = useState(false);
+
   // Repeatable array rows
   const [authors, setAuthors] = useState<BookAuthor[]>([{ name: '', role: '' }]);
   const [testimonials, setTestimonials] = useState<BookTestimonial[]>([{ quote: '', author: '', title: '' }]);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCoverUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `covers/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('book-covers')
+        .upload(fileName, file, {
+          contentType: file.type,
+          upsert: true,
+        });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      const { data: publicUrl } = supabase.storage
+        .from('book-covers')
+        .getPublicUrl(fileName);
+
+      setForm({ ...form, cover_image: publicUrl.publicUrl });
+    } catch (e: any) {
+      showToast('error', e.message || 'Cover upload failed');
+    } finally {
+      setCoverUploading(false);
+    }
+  };
 
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -496,17 +529,60 @@ export default function AdminBooksPage() {
                       placeholder="grace-timekeepers"
                     />
                   </div>
-                  <div>
+                  <div className="md:col-span-2">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">
-                      Cover Image Path
+                      Cover Image
                     </label>
-                    <input
-                      type="text"
-                      value={form.cover_image}
-                      onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
-                      className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-sm text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] font-mono"
-                      placeholder="/books/grace-cover.png"
-                    />
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-20 h-28 bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden flex items-center justify-center">
+                        {form.cover_image ? (
+                          <img
+                            src={form.cover_image}
+                            alt="Cover preview"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Upload className="w-6 h-6 text-zinc-700" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <label className="relative cursor-pointer">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleCoverUpload}
+                              disabled={coverUploading}
+                              className="sr-only"
+                            />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-300 hover:text-white hover:border-zinc-700 transition-colors disabled:opacity-50">
+                              {coverUploading ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Upload className="w-3.5 h-3.5" />
+                              )}
+                              {coverUploading ? 'Uploading...' : 'Upload'}
+                            </span>
+                          </label>
+                          {form.cover_image && (
+                            <button
+                              type="button"
+                              onClick={() => setForm({ ...form, cover_image: '' })}
+                              className="text-xs text-zinc-500 hover:text-red-400 transition-colors"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={form.cover_image}
+                          onChange={(e) => setForm({ ...form, cover_image: e.target.value })}
+                          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-600 outline-none focus:border-[#C9A84C] font-mono"
+                          placeholder="Or enter URL manually..."
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5">

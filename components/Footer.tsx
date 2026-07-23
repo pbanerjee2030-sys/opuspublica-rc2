@@ -8,8 +8,8 @@ const quickLinks = [
   { href: '/', label: 'Home' },
   { href: '/journals', label: 'Journals' },
   { href: '/books', label: 'Books' },
-  { href: '/#about', label: 'About' },
-  { href: '/#contact', label: 'Contact' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 const legalLinks = [

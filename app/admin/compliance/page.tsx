@@ -18,7 +18,7 @@ interface ComplianceRow {
   has_issn: boolean;
   has_editorial_board: boolean;
   has_aims_scope: boolean;
-  has_peer_review_policy: boolean;
+  has_peer_review_process: boolean;
   has_license: boolean;
   published_article_count: number;
   doaj_ready: boolean;
@@ -28,7 +28,7 @@ const checklistItems = [
   { key: 'has_issn', label: 'ISSN' },
   { key: 'has_editorial_board', label: 'Editorial Board' },
   { key: 'has_aims_scope', label: 'Aims & Scope' },
-  { key: 'has_peer_review_policy', label: 'Peer Review Policy' },
+  { key: 'has_peer_review_process', label: 'Peer Review' },
   { key: 'has_license', label: 'License' },
 ] as const;
 

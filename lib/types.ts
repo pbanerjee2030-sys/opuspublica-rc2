@@ -10,7 +10,8 @@ export interface DatabaseJournal {
   publisher: string | null;
   editorial_board: string | null;
   aims_and_scope: string | null;
-  peer_review_policy: string | null;
+  peer_review_process: string | null;
+  indexing_status: string | null;
   license_type: string | null;
   license_url: string | null;
   frequency: string | null;
@@ -82,6 +83,7 @@ export interface DatabaseEditorialBoardMember {
   journal_id: string;
   full_name: string;
   affiliation: string | null;
+  country: string | null;
   role: string | null;
   photo_url: string | null;
   orcid: string | null;
