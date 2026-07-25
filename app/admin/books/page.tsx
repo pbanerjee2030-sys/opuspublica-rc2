@@ -111,7 +111,7 @@ export default function AdminBooksPage() {
       const fileName = `covers/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('book-covers')
+        .from('covers')
         .upload(fileName, file, {
           contentType: file.type,
           upsert: true,
@@ -120,7 +120,7 @@ export default function AdminBooksPage() {
       if (uploadError) throw new Error(uploadError.message);
 
       const { data: publicUrl } = supabase.storage
-        .from('book-covers')
+        .from('covers')
         .getPublicUrl(fileName);
 
       setForm({ ...form, cover_image: publicUrl.publicUrl });
