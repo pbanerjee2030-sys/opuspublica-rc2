@@ -108,7 +108,7 @@ export default function AdminBooksPage() {
       await ensureSession();
 
       const fileExt = file.name.split('.').pop();
-      const fileName = `covers/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('covers')
