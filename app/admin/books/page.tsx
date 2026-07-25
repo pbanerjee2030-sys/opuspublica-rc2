@@ -93,12 +93,20 @@ export default function AdminBooksPage() {
   const [authors, setAuthors] = useState<BookAuthor[]>([{ name: '', role: '' }]);
   const [testimonials, setTestimonials] = useState<BookTestimonial[]>([{ quote: '', author: '', title: '' }]);
 
+  const ensureSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) return;
+    await supabase.auth.refreshSession();
+  };
+
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setCoverUploading(true);
     try {
+      await ensureSession();
+
       const fileExt = file.name.split('.').pop();
       const fileName = `covers/${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 

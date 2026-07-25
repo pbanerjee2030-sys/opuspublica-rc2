@@ -4,8 +4,12 @@ import { supabase } from '@/lib/supabase';
 
 async function getToken() {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error('Not authenticated');
-  return session.access_token;
+  if (session) return session.access_token;
+
+  const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+  if (refreshed) return refreshed.access_token;
+
+  throw new Error('Not authenticated');
 }
 
 async function handleResponse(res: Response, fallback: string) {
