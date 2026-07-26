@@ -93,37 +93,29 @@ export default function AdminBooksPage() {
   const [authors, setAuthors] = useState<BookAuthor[]>([{ name: '', role: '' }]);
   const [testimonials, setTestimonials] = useState<BookTestimonial[]>([{ quote: '', author: '', title: '' }]);
 
-  const ensureSession = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return;
-    await supabase.auth.refreshSession();
-  };
-
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setCoverUploading(true);
     try {
-      await ensureSession();
+      const { data: { session } } = await supabase.auth.getSession();
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+      const formData = new FormData();
+      formData.append('file', file);
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('covers')
-        .upload(fileName, file, {
-          contentType: file.type,
-          upsert: true,
-        });
+      const res = await fetch('/api/upload/cover', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+        body: formData,
+      });
 
-      if (uploadError) throw new Error(uploadError.message);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Cover upload failed');
 
-      const { data: publicUrl } = supabase.storage
-        .from('covers')
-        .getPublicUrl(fileName);
-
-      setForm({ ...form, cover_image: publicUrl.publicUrl });
+      setForm({ ...form, cover_image: data.url });
     } catch (e: any) {
       showToast('error', e.message || 'Cover upload failed');
     } finally {
