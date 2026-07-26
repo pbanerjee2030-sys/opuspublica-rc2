@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { writeFile, mkdir } from 'fs/promises';
+import path from 'path';
 
 async function authGuard(request: NextRequest) {
   const authHeader = request.headers.get('Authorization');
@@ -41,34 +43,13 @@ export async function POST(request: NextRequest) {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+    const buffer = Buffer.from(await file.arrayBuffer());
 
-    const buffer = await file.arrayBuffer();
+    const booksDir = path.join(process.cwd(), 'public', 'books');
+    await mkdir(booksDir, { recursive: true });
+    await writeFile(path.join(booksDir, fileName), buffer);
 
-    const objectPath = `covers/${fileName}`;
-
-    // Use PUT (upsert) instead of POST — ensures proper public visibility
-    const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/${objectPath}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${serviceKey}`,
-        'Content-Type': file.type,
-        'x-upsert': 'true',
-      },
-      body: buffer,
-    });
-
-    if (!uploadRes.ok) {
-      const errText = await uploadRes.text();
-      throw new Error(errText || 'Storage upload failed');
-    }
-
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('covers')
-      .getPublicUrl(fileName);
-
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: `/books/${fileName}` });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
   }
