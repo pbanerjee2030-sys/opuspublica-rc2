@@ -46,19 +46,33 @@ export async function POST(request: NextRequest) {
 
     const buffer = await file.arrayBuffer();
 
-    const res = await fetch(`${supabaseUrl}/storage/v1/object/covers/${fileName}`, {
+    const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/covers/${fileName}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${serviceKey}`,
         'Content-Type': file.type,
+        'x-upsert': 'true',
       },
       body: buffer,
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
       throw new Error(errText || 'Storage upload failed');
     }
+
+    // Make the object publicly readable
+    await fetch(`${supabaseUrl}/storage/v1/object/update`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        public: true,
+        name: `covers/${fileName}`,
+      }),
+    });
 
     const { data: { publicUrl } } = supabaseAdmin.storage
       .from('covers')
