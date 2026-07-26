@@ -44,12 +44,11 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const booksDir = path.join(process.cwd(), 'public', 'books');
-    await mkdir(booksDir, { recursive: true });
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'books');
+    await mkdir(uploadDir, { recursive: true });
 
     let finalName = fileName;
-    const filePath = path.join(booksDir, finalName);
-    // If file exists, add a number suffix
+    const filePath = path.join(uploadDir, finalName);
     let counter = 1;
     while (true) {
       try { await access(filePath); } catch { break; }
@@ -59,9 +58,9 @@ export async function POST(request: NextRequest) {
       counter++;
     }
 
-    await writeFile(path.join(booksDir, finalName), buffer);
+    await writeFile(path.join(uploadDir, finalName), buffer);
 
-    return NextResponse.json({ url: `/books/${fileName}` });
+    return NextResponse.json({ url: `/uploads/books/${finalName}` });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
   }
