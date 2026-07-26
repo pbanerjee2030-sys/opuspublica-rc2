@@ -10,7 +10,13 @@ export function getSupabaseAdmin(): SupabaseClient<Database> {
   if (!adminClient) {
     adminClient = createClient<Database>(
       supabaseUrl || 'https://placeholder-url.supabase.co',
-      supabaseServiceKey || 'placeholder-key'
+      supabaseServiceKey || 'placeholder-key',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
     );
   }
   return adminClient;
