@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { writeFile, mkdir } from 'fs/promises';
+import { writeFile, mkdir, access } from 'fs/promises';
 import path from 'path';
 
 async function authGuard(request: NextRequest) {
@@ -40,14 +40,26 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File | null;
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+    const fileName = file.name.replace(/\s+/g, '_');
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const booksDir = path.join(process.cwd(), 'public', 'books');
     await mkdir(booksDir, { recursive: true });
-    await writeFile(path.join(booksDir, fileName), buffer);
+
+    let finalName = fileName;
+    const filePath = path.join(booksDir, finalName);
+    // If file exists, add a number suffix
+    let counter = 1;
+    while (true) {
+      try { await access(filePath); } catch { break; }
+      const ext = path.extname(fileName);
+      const base = path.basename(fileName, ext);
+      finalName = `${base}_${counter}${ext}`;
+      counter++;
+    }
+
+    await writeFile(path.join(booksDir, finalName), buffer);
 
     return NextResponse.json({ url: `/books/${fileName}` });
   } catch (e: any) {
