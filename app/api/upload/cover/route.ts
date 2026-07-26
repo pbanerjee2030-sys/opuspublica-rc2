@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'books');
+    const uploadDir = path.join(process.cwd(), 'data', 'covers');
     await mkdir(uploadDir, { recursive: true });
 
     let finalName = fileName;
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     await writeFile(path.join(uploadDir, finalName), buffer);
 
-    return NextResponse.json({ url: `/uploads/books/${finalName}` });
+    return NextResponse.json({ url: `/api/covers/${finalName}` });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
   }
