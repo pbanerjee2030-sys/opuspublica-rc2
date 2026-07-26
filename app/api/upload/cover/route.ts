@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
       throw new Error(errText || 'Storage upload failed');
     }
 
-    const publicUrl = `${supabaseUrl}/storage/v1/object/public/covers/${fileName}`;
+    const { data: { publicUrl } } = supabaseAdmin.storage
+      .from('covers')
+      .getPublicUrl(fileName);
+
     return NextResponse.json({ url: publicUrl });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
