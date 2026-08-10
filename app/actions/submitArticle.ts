@@ -1,8 +1,11 @@
 'use server';
 
-import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { withActionAuth, AuthContext } from '@/lib/rbac';
+import * as mammoth from 'mammoth';
+import * as crypto from 'crypto';
 
 export interface SubmitArticlePayload {
+  submissionId: string; // WP-01-01 Idempotency key
   title: string;
   abstract: string;
   content: string;
@@ -22,18 +25,11 @@ export interface SubmitArticlePayload {
   ethicsApprovalStatement?: string;
 }
 
-async function sendSubmissionConfirmation(
-  recipientEmail: string,
+function generateSubmissionEmailHtml(
   recipientName: string,
   articleTitle: string,
   journalName: string
 ) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  if (!resendApiKey) {
-    console.log(`[Email] submission_received: To=${recipientEmail}, Article=${articleTitle} (no API key, logged only)`);
-    return;
-  }
-
   const baseStyles = `
     <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
       <div style="background: #1A1A2E; padding: 30px; text-align: center;">
@@ -51,8 +47,7 @@ async function sendSubmissionConfirmation(
     </div>
   `;
 
-  const subject = `Manuscript Submission Received - ${articleTitle}`;
-  const html = `${baseStyles}
+  return `${baseStyles}
     <h2 style="color: #1A1A2E; font-size: 18px;">Submission Received</h2>
     <p>Dear ${recipientName || 'Author'},</p>
     <p>Thank you for submitting your manuscript to Opus Publica. We have received your submission and it is now under review.</p>
@@ -64,64 +59,66 @@ async function sendSubmissionConfirmation(
     <p>Our editorial team will review your submission and get back to you within 2-4 weeks.</p>
     <p>Best regards,<br/>The Opus Publica Editorial Team</p>
   ${footerStyles}`;
-
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Opus Publica <notifications@opuspublica.com>',
-        to: [recipientEmail],
-        subject,
-        html,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('[Email] Resend error:', err);
-    } else {
-      console.log(`[Email] submission_received sent to ${recipientEmail}`);
-    }
-  } catch (err) {
-    console.error('[Email] Failed to send submission confirmation:', err);
-  }
 }
 
-export async function submitArticle(payload: SubmitArticlePayload, accessToken: string) {
-  try {
-    if (!accessToken) {
-      return { success: false, error: 'Access Denied: You must be authenticated to submit articles.' };
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
-    if (authError || !user) {
-      return { success: false, error: 'Access Denied: Invalid or expired secure session token. Please log in again.' };
-    }
-
+export const submitArticle = withActionAuth(
+  { roles: [] },
+  async (ctx: AuthContext, payload: SubmitArticlePayload, accessToken?: string) => {
+    const { supabaseAdmin, user } = ctx;
     const userId = user.id;
+
+    if (!payload.submissionId) {
+      return { success: false, error: 'Validation Error: submissionId is required for idempotency.' };
+    }
 
     if (!payload.title || !payload.abstract || !payload.journalId) {
       return { success: false, error: 'Validation Error: Title, Abstract, and Journal Selection are required.' };
     }
 
     if (!payload.pdfFile) {
-      return { success: false, error: 'Validation Error: PDF Manuscript file is required.' };
+      return { success: false, error: 'Validation Error: DOCX Manuscript file is required.' };
     }
 
+    // 1. Generate Deterministic Fingerprint from Raw Submission Intent
+    const fingerprintInput = JSON.stringify({
+      title: payload.title,
+      abstract: payload.abstract,
+      journalId: payload.journalId,
+      coAuthors: payload.coAuthors,
+      pdfFileHash: crypto.createHash('sha256').update(payload.pdfFile.base64).digest('hex'),
+      funderName: payload.funderName || null,
+      funderAwardNumber: payload.funderAwardNumber || null,
+      funderId: payload.funderId || null,
+      keywords: payload.keywords || null,
+      conflictOfInterestStatement: payload.conflictOfInterestStatement || null,
+      dataAvailabilityStatement: payload.dataAvailabilityStatement || null,
+      ethicsApprovalStatement: payload.ethicsApprovalStatement || null,
+    });
+    const fingerprint = crypto.createHash('sha256').update(fingerprintInput).digest('hex');
+
+    // 2. Process Manuscript and convert to HTML
     const fileBuffer = Buffer.from(payload.pdfFile.base64, 'base64');
     const cleanFileName = payload.pdfFile.name.replace(/[^a-zA-Z0-9.]/g, '_');
-    const storagePath = `submissions/${Date.now()}_${userId}_${cleanFileName}`;
+    // A conflicting payload produces a different fingerprint-derived Storage path, so it cannot 
+    // overwrite the original claim-check object through deterministic path derivation unless it 
+    // reproduces the original fingerprint.
+    const storagePath = `submissions/${payload.submissionId}_${fingerprint}_${cleanFileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    let extractedHtml = '';
+    try {
+      const result = await mammoth.convertToHtml({ buffer: fileBuffer });
+      const rawHtml = result.value;
+      const { normalizeManuscript } = await import('@/lib/opce');
+      extractedHtml = await normalizeManuscript(rawHtml, payload.journalId);
+    } catch (err: any) {
+      return { success: false, error: `Failed to extract HTML from DOCX: ${err.message}` };
+    }
+
+    // 3. Upload to Storage (Claim Check pattern) - safe to retry due to upsert: true
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('publications')
       .upload(storagePath, fileBuffer, {
-        contentType: 'application/pdf',
+        contentType: payload.pdfFile.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         upsert: true
       });
 
@@ -129,6 +126,7 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
       return { success: false, error: `Upload Failed: ${uploadError.message}` };
     }
 
+    // 4. Resolve internal vs external co-authors
     const authorIds: string[] = [userId];
     const externalCoAuthors: { name: string; orcid: string; rorId?: string }[] = [];
 
@@ -153,52 +151,7 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
       }
     }
 
-    const { data: newArticle, error: artError } = await supabaseAdmin
-      .from('articles')
-      .insert({
-        title: payload.title,
-        abstract: payload.abstract,
-        content: payload.content,
-        status: 'pending_review',
-        journal_id: payload.journalId,
-        pdf_url: storagePath,
-        version: 1,
-        funder_name: payload.funderName || null,
-        funder_award_number: payload.funderAwardNumber || null,
-        funder_id: payload.funderId || null,
-        keywords: payload.keywords || null,
-        conflict_of_interest_statement: payload.conflictOfInterestStatement || null,
-        data_availability_statement: payload.dataAvailabilityStatement || null,
-        ethics_approval_statement: payload.ethicsApprovalStatement || null
-      } as any)
-      .select()
-      .single();
-
-    if (artError || !newArticle) {
-      return { success: false, error: `Database Error: ${artError?.message || 'Failed to save article.'}` };
-    }
-
-    for (const aId of authorIds) {
-      await supabaseAdmin
-        .from('article_authors')
-        .insert({
-          article_id: (newArticle as any).id,
-          profile_id: aId
-        } as any);
-    }
-
-    for (const co of externalCoAuthors) {
-      await supabaseAdmin
-        .from('article_authors')
-        .insert({
-          article_id: (newArticle as any).id,
-          co_author_name: co.name,
-          co_author_orcid: co.orcid || null,
-          co_author_ror_id: co.rorId || null
-        } as any);
-    }
-
-    // Send submission confirmation email to the author
+    // 5. Resolve submitter details for email notification
     const { data: authorProfile } = await supabaseAdmin
       .from('profiles')
       .select('full_name, email')
@@ -211,18 +164,82 @@ export async function submitArticle(payload: SubmitArticlePayload, accessToken: 
       .eq('id', payload.journalId)
       .single() as { data: any };
 
+    // Construct email payload if submitter has email
+    let emailPayload = null;
     if (authorProfile?.email) {
-      await sendSubmissionConfirmation(
-        authorProfile.email,
-        authorProfile.full_name || 'Author',
-        payload.title,
-        journal?.name || 'Unknown Journal'
-      );
+      emailPayload = {
+        to: authorProfile.email,
+        subject: `Manuscript Submission Received - ${payload.title}`,
+        html: generateSubmissionEmailHtml(
+          authorProfile.full_name || 'Author',
+          payload.title,
+          journal?.name || 'Unknown Journal'
+        )
+      };
     }
 
-    return { success: true, articleId: (newArticle as any).id };
+    // 6. Build Outbox Event Payload
+    const outboxPayload = {
+      articleId: payload.submissionId, // Use submissionId as articleId to guarantee 1:1 mapping
+      actorId: userId,
+      title: payload.title,
+      abstract: payload.abstract,
+      content: extractedHtml,
+      journalId: payload.journalId,
+      storagePath,
+      authorIds,
+      externalCoAuthors,
+      funderName: payload.funderName || null,
+      funderAwardNumber: payload.funderAwardNumber || null,
+      funderId: payload.funderId || null,
+      keywords: payload.keywords || null,
+      conflictOfInterestStatement: payload.conflictOfInterestStatement || null,
+      dataAvailabilityStatement: payload.dataAvailabilityStatement || null,
+      ethicsApprovalStatement: payload.ethicsApprovalStatement || null,
+      email: emailPayload,
+      fingerprint // Attached for later replay verification
+    };
 
-  } catch (err: any) {
-    return { success: false, error: err.message || 'An unexpected server error occurred.' };
+    // 7. Atomically Insert Outbox Event
+    // Using submissionId as outbox.id to enforce idempotency at the database level.
+    const { error: outboxError } = await supabaseAdmin
+      .from('outbox')
+      .insert({
+        id: payload.submissionId,
+        event_type: 'ArticleSubmitted',
+        payload: outboxPayload,
+        status: 'pending'
+      });
+
+    if (outboxError) {
+      if (outboxError.code === '23505') {
+        // Deterministic Conflict Handling: check for identical canonical submission intent
+        const { data: existingEvent } = await supabaseAdmin
+          .from('outbox')
+          .select('payload')
+          .eq('id', payload.submissionId)
+          .single();
+
+        if (existingEvent && existingEvent.payload && existingEvent.payload.fingerprint === fingerprint) {
+          // Idempotent replay: identical canonical submission intent + matching fingerprint -> return success with existing ID
+          return { success: true, articleId: payload.submissionId };
+        } else {
+          // Materially different payload -> Deterministic conflict failure
+          // Attempt to delete the newly created conflicting Storage object.
+          // If immediate compensation fails, the object remains an orphan and is subsequently eligible 
+          // for the existing asynchronous orphan-reconciliation process. This cannot mutate or overwrite 
+          // the original submission's claim-check artifact because the conflicting request uses a 
+          // distinct fingerprint-derived Storage path.
+          await supabaseAdmin.storage.from('publications').remove([storagePath]);
+          return { success: false, error: 'Conflict Error: A submission with this ID already exists with different content.' };
+        }
+      }
+
+      // Other DB errors
+      await supabaseAdmin.storage.from('publications').remove([storagePath]);
+      return { success: false, error: `Database Error: Failed to queue submission (${outboxError.message})` };
+    }
+
+    return { success: true, articleId: payload.submissionId };
   }
-}
+);

@@ -22,14 +22,6 @@ import {
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import type { DatabaseJournal } from '@/lib/types';
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import TiptapLink from '@tiptap/extension-link';
-import { Image as TiptapImage } from '@tiptap/extension-image';
-import { Table as TiptapTable } from '@tiptap/extension-table';
-import { TableRow as TiptapTableRow } from '@tiptap/extension-table-row';
-import { TableCell as TiptapTableCell } from '@tiptap/extension-table-cell';
-import { TableHeader as TiptapTableHeader } from '@tiptap/extension-table-header';
 
 export default function SubmitArticlePage() {
   const [session, setSession] = useState<any>(null);
@@ -66,76 +58,11 @@ export default function SubmitArticlePage() {
   const [conflictOfInterest, setConflictOfInterest] = useState('The author(s) declare no conflicts of interest.');
   const [dataAvailability, setDataAvailability] = useState('');
   const [ethicsApproval, setEthicsApproval] = useState('');
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ heading: { levels: [2, 3, 4] } }),
-      TiptapLink.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: 'text-primary underline hover:text-accent',
-        },
-      }),
-      TiptapImage.configure({
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg my-4',
-        },
-      }),
-      TiptapTable.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'border-collapse table-auto w-full my-4 border border-border',
-        },
-      }),
-      TiptapTableRow,
-      TiptapTableCell.configure({
-        HTMLAttributes: {
-          class: 'border border-border p-2 text-sm',
-        },
-      }),
-      TiptapTableHeader.configure({
-        HTMLAttributes: {
-          class: 'border border-border p-2 font-bold text-sm bg-bg-alt',
-        },
-      }),
-    ],
-    content: '<p>Write your manuscript body here...</p>',
-    immediatelyRender: false,
-    editorProps: {
-      transformPastedHTML(html) {
-        if (typeof window === 'undefined') return html;
-        try {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const links = doc.querySelectorAll('a');
-          links.forEach((link) => {
-            const href = link.getAttribute('href');
-            if (href && href.startsWith('#')) {
-              const textNode = doc.createTextNode(link.textContent || '');
-              link.parentNode?.replaceChild(textNode, link);
-            }
-          });
-          return doc.body.innerHTML;
-        } catch (e) {
-          console.error('Error transforming pasted HTML:', e);
-          return html;
-        }
-      }
-    }
-  });
-
-  // Verify H1 restriction: attempt to set content with an <h1> tag and log the resulting HTML.
-  useEffect(() => {
-    if (editor) {
-      editor.commands.setContent('<h1>Test H1</h1><p>Paragraph</p>');
-      console.log('Resulting HTML after attempting H1 insertion:', editor.getHTML());
-    }
-  }, [editor]);
-  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [submittedId, setSubmittedId] = useState('');
   const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionId] = useState(() => crypto.randomUUID());
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
@@ -234,7 +161,7 @@ export default function SubmitArticlePage() {
     }
 
     try {
-      const res = await fetch(`https://api.ror.org/organizations?query=${encodeURIComponent(val)}`);
+      const res = await fetch(`/api/ror/search?query=${encodeURIComponent(val)}`);
       const data = await res.json();
       const nextUpdated = [...coAuthors];
       nextUpdated[index] = { ...nextUpdated[index], suggestions: data.items || [], showSuggestions: true };
@@ -257,7 +184,7 @@ export default function SubmitArticlePage() {
       return;
     }
     try {
-      const res = await fetch(`https://api.ror.org/organizations?query=${encodeURIComponent(val)}`);
+      const res = await fetch(`/api/ror/search?query=${encodeURIComponent(val)}`);
       const data = await res.json();
       setRorSuggestions(data.items || []);
       setShowRorSuggestions(true);
@@ -286,8 +213,8 @@ export default function SubmitArticlePage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      if (file.type !== 'application/pdf') {
-        alert('File restriction warning: Manuscript upload must strictly be a PDF file.');
+      if (!file.name.endsWith('.docx') && !file.name.endsWith('.doc') && file.type !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' && file.type !== 'application/msword') {
+        alert('File restriction warning: Manuscript upload must strictly be a DOCX or DOC file.');
         e.target.value = '';
         return;
       }
@@ -298,11 +225,8 @@ export default function SubmitArticlePage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const contentHtml = editor ? editor.getHTML() : '';
-    const isEditorEmpty = !contentHtml || contentHtml === '<p></p>' || contentHtml === '<p>Write your manuscript body here...</p>';
-
-    if (!title.trim() || !abstract.trim() || isEditorEmpty || !selectedJournalId || !pdfFile || !keywords.trim() || !conflictOfInterest.trim()) {
-      setSubmissionError('Validation Error: All required form fields must be filled out, including the PDF manuscript, keywords, conflict declaration, and manuscript body content.');
+    if (!title.trim() || !abstract.trim() || !selectedJournalId || !pdfFile || !keywords.trim() || !conflictOfInterest.trim()) {
+      setSubmissionError('Validation Error: All required form fields must be filled out, including the DOCX manuscript, keywords, and conflict declaration.');
       return;
     }
 
@@ -324,9 +248,10 @@ export default function SubmitArticlePage() {
       const base64String = await base64Promise;
 
       const payload = {
+        submissionId,
         title,
         abstract,
-        content: contentHtml,
+        content: '', // Replaced by DOCX processing on the backend
         journalId: selectedJournalId,
         coAuthors: coAuthors.map(a => ({
           name: a.name,
@@ -355,7 +280,7 @@ export default function SubmitArticlePage() {
         setSubmittedId(result.articleId || '');
         setTitle('');
         setAbstract('');
-        editor?.commands.setContent('<p>Write your manuscript body here...</p>');
+        setAbstract('');
         setCoAuthors([]);
         setPdfFile(null);
         setKeywords('');
@@ -597,7 +522,7 @@ export default function SubmitArticlePage() {
                           <BookOpen className="absolute left-3 top-2.5 w-4 h-4 text-text-secondary/70" />
                           <input
                             type="text"
-                            value={affiliation}
+                            value={affiliation || ''}
                             onChange={(e) => handleRorSearchChange(e.target.value)}
                             onFocus={() => setShowRorSuggestions(true)}
                             onBlur={() => setTimeout(() => setShowRorSuggestions(false), 200)}
@@ -611,8 +536,8 @@ export default function SubmitArticlePage() {
                                   key={item.id}
                                   className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                                   onMouseDown={() => {
-                                    setAffiliation(item.name);
-                                    setRorId(item.id);
+                                    setAffiliation(item.name || '');
+                                    setRorId(item.id || '');
                                     setShowRorSuggestions(false);
                                   }}
                                 >
@@ -785,124 +710,6 @@ export default function SubmitArticlePage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                  Manuscript Body *
-                </label>
-                <div className="border border-border rounded-lg overflow-hidden bg-surface focus-within:border-accent transition-colors">
-                  {/* Toolbar */}
-                  {editor && (
-                    <div className="flex flex-wrap items-center gap-1 bg-bg-alt border-b border-border p-2 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleBold().run()}
-                        className={`px-2.5 py-1.5 rounded font-bold hover:bg-accent/10 ${editor.isActive('bold') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        B
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleItalic().run()}
-                        className={`px-2.5 py-1.5 rounded italic hover:bg-accent/10 ${editor.isActive('italic') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        I
-                      </button>
-                      <div className="h-4 w-px bg-border mx-1" />
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 2 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        H2
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 3 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        H3
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleHeading({ level: 4 }).run()}
-                        className={`px-2.5 py-1.5 rounded font-semibold hover:bg-accent/10 ${editor.isActive('heading', { level: 4 }) ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        H4
-                      </button>
-                      <div className="h-4 w-px bg-border mx-1" />
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleBulletList().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('bulletList') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        Bullet List
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('orderedList') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        Numbered List
-                      </button>
-                      <div className="h-4 w-px bg-border mx-1" />
-                      <button
-                        type="button"
-                        onClick={() => editor.chain().focus().toggleBlockquote().run()}
-                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('blockquote') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        Quote
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const previousUrl = editor.getAttributes('link').href;
-                          const url = window.prompt('Enter URL:', previousUrl);
-                          if (url === null) return;
-                          if (url === '') {
-                            editor.chain().focus().extendMarkRange('link').unsetLink().run();
-                            return;
-                          }
-                          editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-                        }}
-                        className={`px-2.5 py-1.5 rounded hover:bg-accent/10 ${editor.isActive('link') ? 'bg-primary text-white' : 'text-text-secondary'}`}
-                      >
-                        Link
-                      </button>
-                      <div className="h-4 w-px bg-border mx-1" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const url = window.prompt('Enter Image URL:');
-                          if (url) {
-                            editor.chain().focus().setImage({ src: url }).run();
-                          }
-                        }}
-                        className="px-2.5 py-1.5 rounded hover:bg-accent/10 text-text-secondary font-semibold"
-                        title="Insert Image"
-                      >
-                        Image
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-                        }}
-                        className="px-2.5 py-1.5 rounded hover:bg-accent/10 text-text-secondary font-semibold"
-                        title="Insert Table"
-                      >
-                        Table
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Editor Content Area */}
-                  <div className="prose prose-sm max-w-none text-text leading-relaxed">
-                    <EditorContent editor={editor} />
-                  </div>
-                </div>
-                <p className="text-[10px] text-text-secondary/60 mt-1">Provide the full text body of the manuscript. Format with headings, lists, quotes, and links using the toolbar above.</p>
-              </div>
-
-              <div>
                 <div className="flex justify-between items-center mb-1.5">
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary">
                     Co-Authors Names (Optional)
@@ -953,7 +760,7 @@ export default function SubmitArticlePage() {
                         <div className="flex-grow relative">
                           <input
                             type="text"
-                            value={author.affiliationName}
+                            value={author.affiliationName || ''}
                             onChange={(e) => handleCoAuthorAffiliationChange(index, e.target.value)}
                             onFocus={() => {
                               const updated = [...coAuthors];
@@ -980,8 +787,8 @@ export default function SubmitArticlePage() {
                                   className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                                   onMouseDown={() => {
                                     const updated = [...coAuthors];
-                                    updated[index].affiliationName = item.name;
-                                    updated[index].rorId = item.id;
+                                    updated[index].affiliationName = item.name || '';
+                                    updated[index].rorId = item.id || '';
                                     updated[index].showSuggestions = false;
                                     setCoAuthors(updated);
                                   }}
@@ -1020,7 +827,7 @@ export default function SubmitArticlePage() {
                     </label>
                     <input
                       type="text"
-                      value={funderName}
+                      value={funderName || ''}
                       onChange={(e) => handleFunderSearchChange(e.target.value)}
                       onFocus={() => setShowFunderSuggestions(true)}
                       onBlur={() => setTimeout(() => setShowFunderSuggestions(false), 200)}
@@ -1034,7 +841,7 @@ export default function SubmitArticlePage() {
                             key={item.uri}
                             className="p-2 hover:bg-accent/5 cursor-pointer border-b border-border last:border-0 text-left"
                             onMouseDown={() => {
-                              setFunderName(item.name);
+                              setFunderName(item.name || '');
                               setFunderId(item.uri);
                               setShowFunderSuggestions(false);
                             }}
@@ -1134,13 +941,13 @@ export default function SubmitArticlePage() {
               <div className="border border-dashed border-border rounded-lg p-6 bg-bg-alt text-center">
                 <Upload className="w-10 h-10 text-primary mx-auto mb-2" />
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-2">
-                  Manuscript Upload (.PDF format only)
+                  Manuscript Upload (.DOCX format only)
                 </label>
                 
                 <input
                   type="file"
                   required
-                  accept=".pdf"
+                  accept=".docx,.doc"
                   onChange={handleFileChange}
                   className="hidden"
                   id="pdf-manuscript-file-input"
