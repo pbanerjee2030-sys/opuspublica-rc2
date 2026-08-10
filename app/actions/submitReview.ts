@@ -1,7 +1,7 @@
 'use server';
 
-import { getSupabaseAdmin } from '@/lib/supabase-admin';
-import { logAuditEvent } from '@/lib/audit';
+import { withActionAuth, AuthContext } from '@/lib/rbac';
+import * as crypto from 'crypto';
 
 export interface SubmitReviewPayload {
   assignmentId: string;
@@ -15,18 +15,10 @@ export interface SubmitReviewPayload {
   } | null;
 }
 
-export async function submitReview(payload: SubmitReviewPayload, accessToken: string) {
-  try {
-    if (!accessToken) {
-      return { success: false, error: 'Access Denied: You must be authenticated.' };
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
-    if (authError || !user) {
-      return { success: false, error: 'Access Denied: Invalid or expired session.' };
-    }
+export const submitReview = withActionAuth(
+  { roles: [] },
+  async (ctx: AuthContext, payload: SubmitReviewPayload, accessToken?: string) => {
+    const { supabaseAdmin, user } = ctx;
 
     const { data: assignment } = await supabaseAdmin
       .from('reviewer_assignments')
@@ -42,49 +34,89 @@ export async function submitReview(payload: SubmitReviewPayload, accessToken: st
       return { success: false, error: 'Access Denied: This assignment is not yours.' };
     }
 
-    const { error } = await (supabaseAdmin as any)
-      .from('reviewer_assignments')
-      .update({
-        recommendation: payload.recommendation,
-        comments: payload.comments,
-        scores: payload.scores,
-        status: 'completed',
-      })
-      .eq('id', payload.assignmentId);
+    // 1. Generate Deterministic Fingerprint
+    // Extract scores in strict alphabetical order for canonicalization
+    const canonicalScores = payload.scores ? {
+      clarity: payload.scores.clarity,
+      originality: payload.scores.originality,
+      rigor: payload.scores.rigor,
+      significance: payload.scores.significance
+    } : null;
 
-    if (error) throw error;
-
-    await logAuditEvent({
+    // Keys MUST be in strict alphabetical order to guarantee JSON.stringify determinism
+    const fingerprintInput = JSON.stringify({
+      action: 'ReviewSubmitted',
       actorId: user.id,
-      action: 'review_submitted',
-      targetType: 'reviewer_assignment',
-      targetId: payload.assignmentId,
-      metadata: { recommendation: payload.recommendation, scores: payload.scores },
+      assignmentId: payload.assignmentId,
+      comments: payload.comments,
+      recommendation: payload.recommendation,
+      scores: canonicalScores
     });
+    
+    const fingerprint = crypto.createHash('sha256').update(fingerprintInput).digest('hex');
+
+    const outboxPayload = {
+      assignmentId: payload.assignmentId,
+      actorId: user.id,
+      recommendation: payload.recommendation,
+      comments: payload.comments,
+      scores: payload.scores,
+      fingerprint
+    };
+
+    // 2. Atomically Insert Outbox Event using assignmentId as the unique outbox event id
+    const { error: outboxError } = await supabaseAdmin
+      .from('outbox')
+      .insert({
+        id: payload.assignmentId,
+        event_type: 'ReviewSubmitted',
+        payload: outboxPayload,
+        status: 'pending'
+      });
+
+    if (outboxError) {
+      if (outboxError.code === '23505') {
+        // Deterministic Conflict Handling
+        const { data: existingEvent } = await supabaseAdmin
+          .from('outbox')
+          .select('payload, status')
+          .eq('id', payload.assignmentId)
+          .single();
+
+        if (existingEvent && existingEvent.payload && existingEvent.payload.fingerprint === fingerprint) {
+          // If the event had permanently failed, operator/user can retry by re-submitting identically
+          if (existingEvent.status === 'failed') {
+            const { error: updateError } = await supabaseAdmin
+              .from('outbox')
+              .update({ status: 'pending', retry_count: 0, next_retry_at: null, last_error: null })
+              .eq('id', payload.assignmentId);
+            
+            if (updateError) {
+              return { success: false, error: 'Database Error: Failed to requeue failed event' };
+            }
+          }
+          // Idempotent replay
+          return { success: true };
+        } else {
+          // Materially different payload or conflict (e.g. they declined previously)
+          return { success: false, error: 'Conflict Error: A review decision has already been recorded for this assignment with different content.' };
+        }
+      }
+      return { success: false, error: `Database Error: Failed to queue review submission (${outboxError.message})` };
+    }
 
     return { success: true };
-
-  } catch (err: any) {
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
-}
+);
 
 export interface DeclineReviewPayload {
   assignmentId: string;
 }
 
-export async function declineReview(payload: DeclineReviewPayload, accessToken: string) {
-  try {
-    if (!accessToken) {
-      return { success: false, error: 'Access Denied: You must be authenticated.' };
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(accessToken);
-    if (authError || !user) {
-      return { success: false, error: 'Access Denied: Invalid or expired session.' };
-    }
+export const declineReview = withActionAuth(
+  { roles: [] },
+  async (ctx: AuthContext, payload: DeclineReviewPayload, accessToken?: string) => {
+    const { supabaseAdmin, user } = ctx;
 
     const { data: assignment } = await supabaseAdmin
       .from('reviewer_assignments')
@@ -100,24 +132,62 @@ export async function declineReview(payload: DeclineReviewPayload, accessToken: 
       return { success: false, error: 'Access Denied: This assignment is not yours.' };
     }
 
-    const { error } = await (supabaseAdmin as any)
-      .from('reviewer_assignments')
-      .update({ status: 'declined' })
-      .eq('id', payload.assignmentId);
-
-    if (error) throw error;
-
-    await logAuditEvent({
+    // 1. Generate Deterministic Fingerprint
+    // Keys MUST be in strict alphabetical order to guarantee JSON.stringify determinism
+    const fingerprintInput = JSON.stringify({
+      action: 'ReviewDeclined',
       actorId: user.id,
-      action: 'review_declined',
-      targetType: 'reviewer_assignment',
-      targetId: payload.assignmentId,
-      metadata: { declined: true },
+      assignmentId: payload.assignmentId
     });
+    const fingerprint = crypto.createHash('sha256').update(fingerprintInput).digest('hex');
+
+    const outboxPayload = {
+      assignmentId: payload.assignmentId,
+      actorId: user.id,
+      fingerprint
+    };
+
+    // 2. Atomically Insert Outbox Event using assignmentId as the unique outbox event id
+    const { error: outboxError } = await supabaseAdmin
+      .from('outbox')
+      .insert({
+        id: payload.assignmentId,
+        event_type: 'ReviewDeclined',
+        payload: outboxPayload,
+        status: 'pending'
+      });
+
+    if (outboxError) {
+      if (outboxError.code === '23505') {
+        // Deterministic Conflict Handling
+        const { data: existingEvent } = await supabaseAdmin
+          .from('outbox')
+          .select('payload, status')
+          .eq('id', payload.assignmentId)
+          .single();
+
+        if (existingEvent && existingEvent.payload && existingEvent.payload.fingerprint === fingerprint) {
+          // If the event had permanently failed, operator/user can retry by re-submitting identically
+          if (existingEvent.status === 'failed') {
+            const { error: updateError } = await supabaseAdmin
+              .from('outbox')
+              .update({ status: 'pending', retry_count: 0, next_retry_at: null, last_error: null })
+              .eq('id', payload.assignmentId);
+            
+            if (updateError) {
+              return { success: false, error: 'Database Error: Failed to requeue failed event' };
+            }
+          }
+          // Idempotent replay
+          return { success: true };
+        } else {
+          // Materially different payload or conflict (e.g. they submitted a review previously)
+          return { success: false, error: 'Conflict Error: A review decision has already been recorded for this assignment with different content.' };
+        }
+      }
+      return { success: false, error: `Database Error: Failed to queue decline submission (${outboxError.message})` };
+    }
 
     return { success: true };
-
-  } catch (err: any) {
-    return { success: false, error: err.message || 'An unexpected error occurred.' };
   }
-}
+);
