@@ -7,6 +7,33 @@ const BATCH_SIZE = 100;
 const MAX_RETRIES = 5;
 
 /**
+ * F-03 CORRECTION — Centralised retry-eligibility guard.
+ *
+ * Returns true  when an event receipt is eligible for processing now.
+ * Returns false when the receipt is in a future-retry hold and the current
+ * polling pass MUST NOT project, consume a retry attempt, or advance the
+ * cursor past this event (head-of-line blocking).
+ *
+ * Eligibility rules (per WP-GOV-01B F-03 specification):
+ *   1. status === 'pending' && nextRetryAt > now  → NOT eligible (backoff hold)
+ *   2. status === 'pending' && nextRetryAt <= now  → eligible (retry due)
+ *   3. status === 'pending' && nextRetryAt IS NULL → eligible (normal first pass)
+ *   4. terminal states ('processed', 'failed')    → eligible (cursor may advance)
+ *
+ * This function must be the SOLE authority on retry eligibility.
+ * Do NOT re-implement this check inline elsewhere.
+ */
+export function isRetryEligible(
+  receipt: { status: string; nextRetryAt: Date | null },
+  now: Date = new Date()
+): boolean {
+  if (receipt.status === 'pending' && receipt.nextRetryAt !== null && receipt.nextRetryAt > now) {
+    return false; // future-retry hold — do not process
+  }
+  return true; // eligible: due retry, null schedule, or terminal state
+}
+
+/**
  * Ensures the ingestion cursor exists and retrieves it.
  */
 async function getCursor(cursorId = 'default'): Promise<any> {
@@ -70,12 +97,11 @@ async function fetchReconciliationEvents(windowStart: Date, windowEnd: Date): Pr
   // Note: For large scale, this should ideally be an anti-join inside the DB, 
   // but outbox and receipt are in different schemas/contexts.
   return withIngestRole(async (tx) => {
-    // 1. Fetch raw events
+    // 1. Fetch raw events using the approved reader boundary
     const events: any[] = await tx.$queryRaw`
       SELECT id, event_type, payload, created_at
-      FROM public.outbox 
-      WHERE created_at >= ${windowStart.toISOString()}::timestamptz 
-        AND created_at <= ${windowEnd.toISOString()}::timestamptz
+      FROM public.governance_outbox_reader(${windowStart.toISOString()}::timestamptz, 1000) 
+      WHERE created_at <= ${windowEnd.toISOString()}::timestamptz
       ORDER BY created_at ASC, id ASC
     `;
 
@@ -90,14 +116,14 @@ async function fetchReconciliationEvents(windowStart: Date, windowEnd: Date): Pr
 
     const receiptMap = new Map(receipts.map(r => [r.eventId, r]));
 
-    // 3. Keep events that are pending (and ready to retry) or have no receipt
+    // 3. Keep events that are pending (and ready to retry) or have no receipt.
+    // F-03: Delegate eligibility to the canonical isRetryEligible guard.
     const now = new Date();
     return events.filter(e => {
       const receipt = receiptMap.get(e.id);
-      if (!receipt) return true; // No receipt, need to process
+      if (!receipt) return true; // No receipt — needs first processing
       if (receipt.status === 'processed' || receipt.status === 'failed') return false; // terminal
-      if (receipt.status === 'pending' && receipt.nextRetryAt && receipt.nextRetryAt > now) return false; // backing off
-      return true; // pending and ready
+      return isRetryEligible(receipt, now); // pending: check backoff hold
     });
   });
 }
@@ -133,11 +159,11 @@ async function processEvent(event: any): Promise<boolean> {
   if (receipt.status === 'processed' || receipt.status === 'failed') {
     return true; // Already handled
   }
-  
-  // Future retry check
-  if (receipt.status === 'pending' && receipt.nextRetryAt && receipt.nextRetryAt > new Date()) {
-    // It's retryable but the retry time hasn't arrived yet.
-    // Return false to block cursor advancement, ensuring it isn't orphaned.
+
+  // F-03: Centralised retry-eligibility check.
+  // If not eligible, return false immediately — do NOT project, do NOT consume
+  // a retry attempt, do NOT advance the cursor past this event.
+  if (!isRetryEligible(receipt)) {
     return false;
   }
 
@@ -219,8 +245,8 @@ export async function runReconciliationScan(): Promise<void> {
     for (const event of eventsToProcess) {
       await processEvent(event);
     }
-  } catch (err) {
-    console.error('[Ingestion Adapter] Reconciliation error:', err);
+  } catch (err: any) {
+    console.error('[Ingestion Adapter] Reconciliation failed:', err);
   }
 }
 

@@ -24,7 +24,7 @@ This index is the canonical certification register for all RC2 work packages. It
 |---|---|---|---|---|
 | WP-GOV-01-PREP | Governance Resolver Boundary & Prisma Toolchain | CERTIFIED / FROZEN | — | `implementation/wp-gov-01-prep-*.md`, `implementation/prisma-toolchain-*.md` |
 | **WP-GOV-01A** | **Governance Schema Foundation** | **CERTIFIED / FROZEN** | [`implementation/wp-gov-01a-certification-record.md`](implementation/wp-gov-01a-certification-record.md) | `implementation/wp-gov-01a-*.md`, `implementation/governance-database-*.md` |
-| WP-GOV-01B | Governance Ingestion Adapter & Outbox Reader | IMPLEMENTED — RUNTIME CERTIFICATION PENDING | — | `implementation/wp-gov-01b-*.md` |
+| WP-GOV-01B | Governance Ingestion Adapter & Outbox Reader | CERTIFIED / FROZEN | [`implementation/wp-gov-01b-certification-record.md`](implementation/wp-gov-01b-certification-record.md) | `implementation/wp-gov-01b-*.md` |
 
 ### Phase 3 — Governance Intelligence
 
@@ -66,7 +66,7 @@ This index is the canonical certification register for all RC2 work packages. It
 |---|---|---|---|---|
 | F-01 | WP-GOV-01A | `supabase_admin` default privileges not set in `governance` schema | LOW | ACCEPTED — security-neutral |
 | F-02 | WP-GOV-01A | Outbox reader exposes `payload` field (in-memory only; never persisted) | INFO | ACCEPTED — by design |
-| F-03 | WP-GOV-01B | Main poll loop ignores `nextRetryAt` — rapid retry exhaustion | LOW | OPEN — WP-GOV-01B scope |
+| F-03 | WP-GOV-01B | Main poll loop ignores `nextRetryAt` — rapid retry exhaustion | LOW | FIXED — CERTIFIED |
 
 ---
 
@@ -83,8 +83,6 @@ CERTIFIED / FROZEN:
   public.governance_evidence_resolver  (approved cross-domain boundary)
   public.governance_outbox_reader  (approved cross-domain boundary)
   governance schema + 26 tables (WP-GOV-01A)
-
-IMPLEMENTED — PENDING CERTIFICATION:
   governance/workers/ingestion-adapter.ts  (WP-GOV-01B)
   governance/workers/__tests__/ingestion-adapter.test.ts  (WP-GOV-01B)
 
