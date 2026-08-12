@@ -36,8 +36,7 @@ GRANT USAGE ON SCHEMA governance TO governance_ingest_role;
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA governance
     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO governance_app_role;
     
-ALTER DEFAULT PRIVILEGES FOR ROLE supabase_admin IN SCHEMA governance
-    GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO governance_app_role;
+
 
 -- 5. Core Tables - Complete DDL implementation for Prisma models
 -- All primary keys are strings using either random UUIDs, CUIDs, or stable identifiers.

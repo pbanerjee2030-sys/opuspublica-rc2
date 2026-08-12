@@ -30,13 +30,27 @@ model Provision {
   version            String   @default("1.0.0") // SemVer
   status             String   @default("active") // active | deprecated | retired
   group              String?  // grouping: e.g. "Identity", "Immutability" for invariants; "Architecture", "Data" for rules
+  isGlobal           Boolean  @default(false)
   traceability       String?  // JSON: { architecture, adr, database, api, code, storage, test, evidence }
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  provisionScopes    ProvisionScope[]
+
   @@index([class])
   @@index([severity])
   @@index([status])
+  @@schema("governance")
+}
+
+model ProvisionScope {
+  provisionId String
+  journalId   String
+  createdAt   DateTime @default(now())
+
+  provision   Provision @relation(fields: [provisionId], references: [id])
+
+  @@id([provisionId, journalId])
   @@schema("governance")
 }
 
