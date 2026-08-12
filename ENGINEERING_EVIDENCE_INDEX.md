@@ -28,10 +28,10 @@ This index is the canonical certification register for all RC2 work packages. It
 
 ### Phase 3 — Governance Intelligence
 
-| Work Package | Description | Status | Certification Record |
-|---|---|---|---|
-| WP-GOV-01C | Evidence Synthesis Engine | NOT AUTHORIZED / NOT STARTED | — |
-| WP-GOV-01D | Certification Evaluation Engine | NOT AUTHORIZED / NOT STARTED | — |
+| Work Package | Description | Status | Certification Record | Evidence |
+|---|---|---|---|---|
+| **WP-GOV-01C** | **Evidence Synthesis Engine** | **CERTIFIED / FROZEN** | [`implementation/wp-gov-01c-certification-record.md`](implementation/wp-gov-01c-certification-record.md) | `implementation/wp-gov-01c-correction-implementation-report.md` |
+| WP-GOV-01D | Certification Evaluation Engine | NOT AUTHORIZED / NOT STARTED | — | — |
 
 ### Phase 4 — Governance Enforcement
 
@@ -55,6 +55,8 @@ This index is the canonical certification register for all RC2 work packages. It
 | `supabase/migrations/20260815000000_wpgov_01_prep_resolver.sql` | WP-GOV-01-PREP | CERTIFIED / IMMUTABLE |
 | `supabase/migrations/20260815000001_wpgov_01b_outbox_read.sql` | WP-GOV-01-PREP / WP-GOV-01B | CERTIFIED / IMMUTABLE |
 | `supabase/migrations/20260815000002_wpgov_01a_governance_schema.sql` | WP-GOV-01A | CERTIFIED / IMMUTABLE |
+| `supabase/migrations/20260815000003_wpgov_01c_synthesis_permissions.sql` | WP-GOV-01C | CERTIFIED / IMMUTABLE |
+| `supabase/migrations/20260815000004_wpgov_01c_provision_scope.sql` | WP-GOV-01C | CERTIFIED / IMMUTABLE |
 
 > All earlier Publication migrations (`20240810*` through `20260814*`) are CERTIFIED / IMMUTABLE.
 
@@ -85,9 +87,17 @@ CERTIFIED / FROZEN:
   governance schema + 26 tables (WP-GOV-01A)
   governance/workers/ingestion-adapter.ts  (WP-GOV-01B)
   governance/workers/__tests__/ingestion-adapter.test.ts  (WP-GOV-01B)
+  supabase/migrations/20260815000003_wpgov_01c_synthesis_permissions.sql  (WP-GOV-01C)
+  supabase/migrations/20260815000004_wpgov_01c_provision_scope.sql  (WP-GOV-01C)
+  governance/lib/synthesis/  (WP-GOV-01C)
+  governance/workers/synthesis-engine.ts  (WP-GOV-01C)
+  governance/workers/__tests__/synthesis-engine.test.ts  (WP-GOV-01C)
+
+PENDING CERTIFICATION:
+  None
 
 NOT STARTED:
-  WP-GOV-01C, WP-GOV-01D, and later phases
+  WP-GOV-01D, and later phases
 ```
 
 ---
@@ -104,4 +114,4 @@ NOT STARTED:
 
 **Document Status**: ACTIVE ENGINEERING GOVERNANCE DOCUMENT  
 **Authority**: RC2 ENGINEERING OPERATING CONTROL  
-**Last Updated**: 2026-08-12 — WP-GOV-01A certified and frozen
+**Last Updated**: 2026-08-12 — WP-GOV-01C certified and frozen

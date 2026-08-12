@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto';
 import { prismaGovernance, withIngestRole } from '../lib/ingestion/db';
 import { projectEvidence, ProjectionError } from '../lib/ingestion/projection';
+import { synthesizeForSubmission } from './synthesis-engine';
 
 const OVERLAP_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const BATCH_SIZE = 100;
@@ -196,6 +197,11 @@ async function processEvent(event: any): Promise<boolean> {
         where: { id: receipt.id },
         data: { status: 'processed', error: null, nextRetryAt: null }
       });
+
+      // WP-GOV-01C: Trigger Synthesis Engine
+      if (evidence.state && evidence.state.submissionId) {
+        await synthesizeForSubmission(evidence.state.submissionId, tx);
+      }
     });
 
     return true; // Success
