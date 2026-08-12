@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { getStorageProvider, FEATURE_STORAGE_ABSTRACTION } from '@/lib/storage';
+import { Database } from '@/lib/types';
 
 // Extracts the relative storage path inside the publications bucket if the database contains a full URL.
 function cleanStoragePath(pathOrUrl: string): string {
@@ -11,6 +14,10 @@ function cleanStoragePath(pathOrUrl: string): string {
     if (publicationsIndex !== -1) {
       return pathOrUrl.substring(publicationsIndex + '/publications/'.length);
     }
+  }
+  
+  if (pathOrUrl.startsWith('publications/')) {
+    return pathOrUrl.substring('publications/'.length);
   }
   
   return pathOrUrl;
@@ -30,67 +37,54 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const articleId = searchParams.get('id');
+    const type = searchParams.get('type');
 
     if (!articleId) {
       return NextResponse.json({ error: 'Missing article id' }, { status: 400 });
     }
 
-    const supabaseAdmin = getSupabaseAdmin();
+    const supabaseAdmin = getSupabaseAdmin() as SupabaseClient<Database>;
 
     const { data: article, error } = await supabaseAdmin
       .from('articles')
-      .select('pdf_url, published_pdf_url, status')
+      .select('pdf_url, canonical_package_url, published_pdf_url, status')
       .eq('id', articleId)
-      .single() as { data: any; error: any };
+      .single();
 
-    if (error || !article?.pdf_url) {
-      return NextResponse.json({ error: 'Article not found' }, { status: 404 });
+    if (error || !article) {
+      return NextResponse.json({ error: 'Article not found.' }, { status: 404 });
     }
 
-    console.log('[PDF Route] Request for Article ID:', articleId);
-    console.log('[PDF Route] Raw pdf_url:', article.pdf_url);
-    console.log('[PDF Route] Published pdf_url:', article.published_pdf_url);
 
     if (article.status === 'published') {
-      // Prefer house-styled published PDF; fall back to author's raw upload for older articles
-      const pdfPath = article.published_pdf_url || article.pdf_url;
-      const storagePath = cleanStoragePath(pdfPath);
-      console.log('[PDF Route] Published - serving path:', storagePath);
+      if (!article.published_pdf_url && !article.canonical_package_url) {
+        return NextResponse.json({ error: 'No publisher PDF generated.' }, { status: 404 });
+      }
+      const targetPdfUrl = article.published_pdf_url || `${article.canonical_package_url}/publisher.pdf`;
+      const storagePath = cleanStoragePath(targetPdfUrl);
 
-      const { data: signedUrl, error: signError } = await supabaseAdmin.storage
-        .from('publications')
-        .createSignedUrl(storagePath, 3600);
+      let signedUrlStr = '';
+      if (FEATURE_STORAGE_ABSTRACTION) {
+        signedUrlStr = await getStorageProvider().getSignedUrl('publications', storagePath, 3600, { download: searchParams.get('download') === 'true' });
+      } else {
+        const { data: signedUrl, error: signError } = await supabaseAdmin.storage
+          .from('publications')
+          .createSignedUrl(storagePath, 3600, { download: searchParams.get('download') === 'true' });
 
-      if (signError || !signedUrl) {
-        // If published_pdf_url failed, try falling back to raw pdf_url
-        if (article.published_pdf_url && article.pdf_url) {
-          const fallbackPath = cleanStoragePath(article.pdf_url);
-          console.log('[PDF Route] Published PDF failed, falling back to raw:', fallbackPath);
-          const { data: fallbackUrl, error: fallbackError } = await supabaseAdmin.storage
-            .from('publications')
-            .createSignedUrl(fallbackPath, 3600);
-          if (!fallbackError && fallbackUrl) {
-            const absoluteUrl = toAbsoluteUrl(fallbackUrl.signedUrl);
-            return NextResponse.redirect(absoluteUrl);
-          }
+        if (signError || !signedUrl) {
+          console.error('[PDF Route] createSignedUrl error for published article:', signError);
+          return NextResponse.json({ 
+            error: 'Failed to generate download link',
+            details: signError?.message || 'Unknown sign error',
+            path: storagePath
+          }, { status: 500 });
         }
-
-        console.error('[PDF Route] createSignedUrl error for published article:', signError);
-        return NextResponse.json({ 
-          error: 'Failed to generate download link',
-          details: signError?.message || 'Unknown sign error',
-          path: storagePath,
-          rawUrl: article.pdf_url
-        }, { status: 500 });
+        signedUrlStr = signedUrl.signedUrl;
       }
       
-      const absoluteUrl = toAbsoluteUrl(signedUrl.signedUrl);
-      console.log('[PDF Route] Published Redirect - Raw:', signedUrl.signedUrl, 'Absolute:', absoluteUrl);
+      const absoluteUrl = toAbsoluteUrl(signedUrlStr);
       return NextResponse.redirect(absoluteUrl);
     }
-
-    // For unpublished articles, always use the author's raw upload
-    const storagePath = cleanStoragePath(article.pdf_url);
 
     const authHeader = request.headers.get('Authorization');
     let token: string | null = null;
@@ -121,7 +115,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single() as { data: any; error: any };
+      .single();
 
     const role = profile?.role;
 
@@ -147,26 +141,50 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const { data: signedUrl, error: signError } = await supabaseAdmin.storage
-      .from('publications')
-      .createSignedUrl(storagePath, 3600);
-
-    if (signError || !signedUrl) {
-      console.error('[PDF Route] createSignedUrl error for unpublished article:', signError);
-      return NextResponse.json({ 
-        error: 'Failed to generate download link',
-        details: signError?.message || 'Unknown sign error',
-        path: storagePath,
-        rawUrl: article.pdf_url
-      }, { status: 500 });
+    let targetUrl = article.pdf_url;
+    const requestedPath = searchParams.get('path');
+    
+    if (requestedPath && (requestedPath.startsWith('packages/') || requestedPath.startsWith('publications/'))) {
+      targetUrl = requestedPath;
+    } else if (type === 'publisher') {
+      if (!article.published_pdf_url && !article.canonical_package_url) {
+        return NextResponse.json({ error: 'Publisher PDF not found.' }, { status: 404 });
+      }
+      targetUrl = article.published_pdf_url || `${article.canonical_package_url}/publisher.pdf`;
+    } else {
+      if (!article.pdf_url) {
+        return NextResponse.json({ error: 'Manuscript not found.' }, { status: 404 });
+      }
     }
 
-    const absoluteUrl = toAbsoluteUrl(signedUrl.signedUrl);
-    console.log('[PDF Route] Unpublished Redirect - Raw:', signedUrl.signedUrl, 'Absolute:', absoluteUrl);
+    const storagePath = cleanStoragePath(targetUrl || '');
+
+    let signedUrlStr = '';
+    if (FEATURE_STORAGE_ABSTRACTION) {
+      signedUrlStr = await getStorageProvider().getSignedUrl('publications', storagePath, 3600, { download: searchParams.get('download') === 'true' });
+    } else {
+      const { data: signedUrl, error: signError } = await supabaseAdmin.storage
+        .from('publications')
+        .createSignedUrl(storagePath, 3600, { download: searchParams.get('download') === 'true' });
+
+      if (signError || !signedUrl) {
+        console.error('[PDF Route] createSignedUrl error for unpublished article:', signError);
+        return NextResponse.json({ 
+          error: 'Failed to generate download link',
+          details: signError?.message || 'Unknown sign error',
+          path: storagePath,
+          rawUrl: article.pdf_url
+        }, { status: 500 });
+      }
+      signedUrlStr = signedUrl.signedUrl;
+    }
+
+    const absoluteUrl = toAbsoluteUrl(signedUrlStr);
     return NextResponse.redirect(absoluteUrl);
 
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const errorMsg = e instanceof Error ? e.message : 'Internal error';
     console.error('[PDF Route] Unexpected handler crash:', e);
-    return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

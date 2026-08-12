@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Building2, MapPin, Globe, Mail, Clock, Send, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 const officeData = [
   {
@@ -257,6 +258,7 @@ export default function ContactClient() {
         </div>
       </section>
 
+      <Footer />
     </div>
   );
 }

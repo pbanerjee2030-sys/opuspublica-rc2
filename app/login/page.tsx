@@ -4,6 +4,7 @@ import React, { useState, Suspense } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Mail, 
   Lock, 
@@ -80,7 +81,14 @@ function LoginForm() {
         </Link>
 
         <div className="text-center mb-6">
-          <BookOpen className="w-10 h-10 text-accent mx-auto mb-2" />
+          <Image
+            src="/opus-publica-logo.png"
+            alt="Opus Publica Emblem"
+            width={1024}
+            height={682}
+            className="mx-auto mb-3 object-contain rounded-xl shadow-md"
+            style={{ width: 'auto', height: '54px' }}
+          />
           <h2 className="text-3xl font-serif font-bold text-primary tracking-tight">Welcome Back</h2>
           <p className="text-xs text-text-secondary mt-2">
             Access secure manuscript submissions and editorial triage panels.

@@ -1,5 +1,23 @@
--- Rename peer_review_policy to peer_review_process
-ALTER TABLE public.journals RENAME COLUMN peer_review_policy TO peer_review_process;
+DO $$
+BEGIN
+  IF EXISTS(
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'journals' AND table_schema = 'public' AND column_name = 'peer_review_policy'
+  ) AND NOT EXISTS(
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'journals' AND table_schema = 'public' AND column_name = 'peer_review_process'
+  ) THEN
+    ALTER TABLE public.journals RENAME COLUMN peer_review_policy TO peer_review_process;
+  ELSIF EXISTS(
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'journals' AND table_schema = 'public' AND column_name = 'peer_review_policy'
+  ) AND EXISTS(
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_name = 'journals' AND table_schema = 'public' AND column_name = 'peer_review_process'
+  ) THEN
+    ALTER TABLE public.journals DROP COLUMN peer_review_policy;
+  END IF;
+END $$;
 
 -- Add indexing_status column
 ALTER TABLE public.journals ADD COLUMN IF NOT EXISTS indexing_status text;

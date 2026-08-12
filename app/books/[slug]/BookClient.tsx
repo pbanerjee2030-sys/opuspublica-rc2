@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
+import CoverImage from '@/components/CoverImage';
 import { ArrowLeft, BookOpen, Download, User, Calendar, Globe } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Footer from '@/components/Footer';
@@ -103,20 +103,14 @@ export default function BookClient({ book }: Props) {
                   transition={{ duration: 0.5 }}
                   className="relative w-36 h-48 sm:w-44 sm:h-60 rounded-lg overflow-hidden shadow-2xl shadow-black/40 border border-border group bg-bg-alt"
                 >
-                  {coverSrc ? (
-                    <Image
-                      src={coverSrc}
-                      alt={`${book.title} Cover`}
-                      fill
-                      sizes="(max-width: 640px) 144px, 176px"
-                      priority
-                      className="object-contain group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                      <BookOpen className="text-white w-16 h-16" />
-                    </div>
-                  )}
+                  <CoverImage
+                    src={coverSrc}
+                    alt={`${book.title} Cover`}
+                    fill
+                    sizes="(max-width: 640px) 144px, 176px"
+                    priority
+                    className="object-contain group-hover:scale-105 transition-transform duration-500"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </motion.div>
               </div>

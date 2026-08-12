@@ -248,7 +248,7 @@ export default function SubmitArticlePage() {
       const base64String = await base64Promise;
 
       const payload = {
-        submissionId,
+        idempotencyKey: submissionId, // Using the generated UUID as the idempotency key
         title,
         abstract,
         content: '', // Replaced by DOCX processing on the backend

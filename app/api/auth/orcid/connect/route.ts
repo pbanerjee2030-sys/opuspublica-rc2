@@ -12,46 +12,17 @@ function signState(state: string, secret: string): string {
   return `${state}.${hmac.digest('hex')}`;
 }
 
-async function getServerUserAndProfileAdminBypass() {
-  try {
-    const supabaseServer = await getSupabaseServerClient();
-    const { data: { user }, error: userError } = await supabaseServer.auth.getUser();
 
-    if (userError || !user) {
-      return { user: null, profile: null };
-    }
 
-    // Bypass the RLS infinite recursion issue in database policies for the profiles table
-    // by using the admin client which bypasses RLS checks on the server-side.
-    const adminSupabase = getSupabaseAdmin();
-    const { data: profile, error: profError } = await (adminSupabase
-      .from('profiles') as any)
-      .select('*, journals(*)')
-      .eq('id', user.id)
-      .single();
+import { withAuth } from '@/lib/rbac';
 
-    if (profError || !profile) {
-      return { user, profile: null };
-    }
-
-    return { user, profile };
-  } catch (err) {
-    console.error('Server user lookup admin bypass failed:', err);
-    return { user: null, profile: null };
-  }
-}
-
-export async function GET(request: NextRequest) {
+export const GET = withAuth({ roles: [] }, async (request, ctx) => {
   const host = request.headers.get('host') || 'opuspublica.org';
   const proto = request.headers.get('x-forwarded-proto') || 'https';
   const origin = `${proto}://${host}`;
 
   try {
-    const { user, profile } = await getServerUserAndProfileAdminBypass() as { user: any; profile: any };
-    
-    if (!user || !profile) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { user } = ctx;
 
     const clientId = process.env.ORCID_CLIENT_ID;
     const clientSecret = process.env.ORCID_CLIENT_SECRET;
@@ -93,4 +64,4 @@ export async function GET(request: NextRequest) {
     console.error('Error in ORCID connect route:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});

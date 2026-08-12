@@ -1,0 +1,130 @@
+{
+  "version": "1.0.0",
+  "id": "44444444-4444-4444-4444-444444444444",
+  "metadata": {
+    "title": "Global Digital Health Standards: A Multi-Center Collaborative Study",
+    "subtitle": null,
+    "abstract": "A comprehensive study on digital health interoperability protocols across five international public health agencies.",
+    "keywords": ["Digital Health", "Interoperability", "Public Health", "Global Standards"],
+    "language": "en",
+    "authors": [
+      {
+        "name": "Dr. Sarah Jenkins",
+        "givenName": "Sarah",
+        "surname": "Jenkins",
+        "orcid": "0000-0001-1111-1111",
+        "affiliations": [{ "name": "Oxford Health Institute", "rorId": "https://ror.org/033333333", "country": "United Kingdom" }],
+        "correspondingAuthor": true,
+        "email": "s.jenkins@oxford.ac.uk"
+      },
+      {
+        "name": "Prof. Akira Tanaka",
+        "givenName": "Akira",
+        "surname": "Tanaka",
+        "orcid": "0000-0002-2222-2222",
+        "affiliations": [{ "name": "University of Tokyo", "rorId": "https://ror.org/044444444", "country": "Japan" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Dr. Carlos Silva",
+        "givenName": "Carlos",
+        "surname": "Silva",
+        "orcid": "0000-0003-3333-3333",
+        "affiliations": [{ "name": "University of São Paulo", "rorId": "https://ror.org/055555555", "country": "Brazil" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Dr. Fatima Al-Hassan",
+        "givenName": "Fatima",
+        "surname": "Al-Hassan",
+        "orcid": "0000-0004-4444-4444",
+        "affiliations": [{ "name": "American University of Beirut", "rorId": "https://ror.org/066666666", "country": "Lebanon" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Prof. Hans Weber",
+        "givenName": "Hans",
+        "surname": "Weber",
+        "orcid": "0000-0005-5555-5555",
+        "affiliations": [{ "name": "Charité – Universitätsmedizin Berlin", "rorId": "https://ror.org/077777777", "country": "Germany" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Dr. Mei-Ling Chen",
+        "givenName": "Mei-Ling",
+        "surname": "Chen",
+        "orcid": "0000-0006-6666-6666",
+        "affiliations": [{ "name": "National University of Singapore", "rorId": "https://ror.org/088888888", "country": "Singapore" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Dr. Kwesi Mensah",
+        "givenName": "Kwesi",
+        "surname": "Mensah",
+        "orcid": "0000-0007-7777-7777",
+        "affiliations": [{ "name": "University of Ghana", "rorId": "https://ror.org/099999999", "country": "Ghana" }],
+        "correspondingAuthor": false,
+        "email": null
+      },
+      {
+        "name": "Prof. David Miller",
+        "givenName": "David",
+        "surname": "Miller",
+        "orcid": "0000-0008-8888-8888",
+        "affiliations": [{ "name": "Harvard Medical School", "rorId": "https://ror.org/100000000", "country": "United States" }],
+        "correspondingAuthor": false,
+        "email": null
+      }
+    ],
+    "journal": {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Journal of Global Policy Research",
+      "slug": "global-policy",
+      "issn": "2673-8901",
+      "publisher": "Advocacy Unified Network",
+      "licenseType": "CC BY 4.0"
+    },
+    "doi": "10.62692/gpr.v1i1.00000003",
+    "volume": "1",
+    "issue": "1",
+    "pages": { "start": 29, "end": 45 },
+    "dates": {
+      "received": "2026-01-20T00:00:00.000Z",
+      "accepted": "2026-02-28T00:00:00.000Z",
+      "published": "2026-03-20T00:00:00.000Z",
+      "revised": null
+    },
+    "funding": [
+      {
+        "funderName": "World Health Organization",
+        "funderId": "https://doi.org/10.13039/100004423",
+        "awardNumber": "WHO-DIGI-2026"
+      }
+    ],
+    "declarations": {
+      "conflictOfInterest": "The authors declare no competing financial interests.",
+      "dataAvailability": "Data available upon reasonable request.",
+      "ethicsApproval": "Approved by Institutional Review Board."
+    },
+    "copyright": {
+      "holder": "Sarah Jenkins et al.",
+      "year": 2026,
+      "licenseType": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  },
+  "body": [
+    {
+      "type": "paragraph",
+      "children": [{ "type": "text", "value": "This multi-center collaborative study evaluates cross-jurisdictional health data sharing protocols." }]
+    }
+  ],
+  "references": [],
+  "footnotes": [],
+  "assets": {}
+}

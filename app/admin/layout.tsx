@@ -28,6 +28,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 
+import Image from 'next/image';
+
 const navItems = [
   { href: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
   { href: '/admin/articles', label: 'Articles', icon: FileText },
@@ -128,11 +130,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800/80">
-          {!collapsed && (
-            <Link href="/admin/dashboard" className="flex items-center gap-2">
-              <span className="text-[#C9A84C] font-bold text-lg font-serif">OPUS</span>
-              <span className="text-white font-bold text-lg font-serif">ADMIN</span>
+          {!collapsed ? (
+            <Link href="/admin/dashboard" className="flex items-center gap-2.5">
+              <Image
+                src="/opus-publica-logo.png"
+                alt="Opus Publica Emblem"
+                width={1024}
+                height={682}
+                className="object-contain rounded-md"
+                style={{ width: 'auto', height: '28px' }}
+              />
+              <span className="text-[#C9A84C] font-bold text-base font-serif">OPUS</span>
+              <span className="text-white font-bold text-base font-serif">ADMIN</span>
             </Link>
+          ) : (
+            <Image
+              src="/opus-publica-logo.png"
+              alt="Opus Publica Emblem"
+              width={1024}
+              height={682}
+              className="object-contain rounded-md mx-auto"
+              style={{ width: 'auto', height: '28px' }}
+            />
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -232,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'lg:ml-[68px]' : 'lg:ml-64'}`}>
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${collapsed ? 'lg:pl-[68px]' : 'lg:pl-64'}`}>
         {/* Top Bar */}
         <header className="h-16 flex items-center justify-between px-4 sm:px-6 border-b border-zinc-800/80 bg-[#0D0D11]/80 backdrop-blur-md sticky top-0 z-30">
           <div className="flex items-center gap-3">

@@ -143,7 +143,7 @@ export default function DashboardOverview() {
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium truncate">{article.title}</p>
                     <p className="text-[11px] text-zinc-500 mt-0.5">
-                      {article.journals?.name || 'Unknown Journal'} &middot; {article.article_authors?.[0]?.profiles?.full_name || article.article_authors?.[0]?.co_author_name || 'Unknown'}
+                      {article.journals?.name || 'Unknown Journal'} &middot; {article.article_authors?.map((a: any) => a.profiles?.full_name || a.co_author_name).filter(Boolean).join(', ') || 'Unknown'}
                     </p>
                   </div>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider flex-shrink-0 ${

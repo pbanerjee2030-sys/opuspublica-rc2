@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import { chromium } from 'playwright';
 import { renderArticleHtml } from './pdf-template';
 import { getSupabaseAdmin } from './supabase-admin';
@@ -23,41 +24,31 @@ interface ArticleForPdf {
  * 3. Uploads the PDF buffer to Supabase Storage (publications/published/{articleId}.pdf)
  * 4. Returns the storage path
  */
-export async function generatePublishedPdf(article: ArticleForPdf): Promise<string> {
+export async function generatePublishedPdf(article: ArticleForPdf, customStoragePath?: string): Promise<string> {
+
   const html = renderArticleHtml(article);
 
   // Launch headless Chromium
   const browser = await chromium.launch({ headless: true });
-  const page = await browser.newPage();
+  let pdfBuffer;
+  try {
+    const page = await browser.newPage();
 
-  // Set content and wait for fonts to load
-  await page.setContent(html, { waitUntil: 'networkidle' });
+    // Set content and wait for fonts to load
+    await page.setContent(html, { waitUntil: 'networkidle' });
 
-  // Generate PDF with A4 format
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    printBackground: true,
-    margin: {
-      top: '25mm',
-      right: '20mm',
-      bottom: '30mm',
-      left: '20mm',
-    },
-    displayHeaderFooter: true,
-    headerTemplate: '<span></span>',
-    footerTemplate: `
-      <div style="width: 100%; font-size: 8px; font-family: 'Inter', Arial, sans-serif; padding: 0 20mm; display: flex; justify-content: space-between; color: #6b6b7b;">
-        <span>${article.journal_name || 'Opus Publica'}</span>
-        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-        <span>${article.doi || ''}</span>
-      </div>
-    `,
-  });
-
-  await browser.close();
+    // Generate PDF with A4 format
+    pdfBuffer = await page.pdf({
+      preferCSSPageSize: true,
+      printBackground: true,
+      displayHeaderFooter: false,
+    });
+  } finally {
+    await browser.close();
+  }
 
   // Upload to Supabase Storage
-  const storagePath = `published/${article.id}.pdf`;
+  const storagePath = customStoragePath || `published/${article.id}.pdf`;
   const supabaseAdmin = getSupabaseAdmin();
 
   const { error: uploadError } = await supabaseAdmin.storage
@@ -72,6 +63,6 @@ export async function generatePublishedPdf(article: ArticleForPdf): Promise<stri
     throw new Error(`Failed to upload published PDF: ${uploadError.message}`);
   }
 
-  console.log(`[PDF Gen] Published PDF generated and uploaded: ${storagePath}`);
+
   return storagePath;
 }

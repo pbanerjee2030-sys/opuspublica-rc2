@@ -34,7 +34,7 @@ export default function ProfileEditModal({ profile, onSave }: ProfileEditModalPr
       return;
     }
     try {
-      const res = await fetch(`https://api.ror.org/organizations?query=${encodeURIComponent(val)}`);
+      const res = await fetch(`/api/ror/search?query=${encodeURIComponent(val)}`);
       const data = await res.json();
       setRorSuggestions(data.items || []);
       setShowRorSuggestions(true);

@@ -1,0 +1,104 @@
+{
+  "page": {
+    "size": { "width": 210, "height": 297 },
+    "margins": { "top": 25, "right": 20, "bottom": 30, "left": 20 },
+    "bleed": 0
+  },
+  "typography": {
+    "bodyFont": { "family": "Inter, sans-serif", "weight": 400, "style": "normal", "sizeInPt": 10.5 },
+    "headingFonts": {
+      "1": { "family": "Playfair Display, Georgia, serif", "weight": 700, "style": "normal", "sizeInPt": 22 },
+      "2": { "family": "Playfair Display, Georgia, serif", "weight": 600, "style": "normal", "sizeInPt": 16 },
+      "3": { "family": "Playfair Display, Georgia, serif", "weight": 600, "style": "normal", "sizeInPt": 13 },
+      "4": { "family": "Playfair Display, Georgia, serif", "weight": 600, "style": "normal", "sizeInPt": 11 },
+      "5": { "family": "Playfair Display, Georgia, serif", "weight": 600, "style": "normal", "sizeInPt": 10.5 },
+      "6": { "family": "Playfair Display, Georgia, serif", "weight": 600, "style": "normal", "sizeInPt": 10 }
+    },
+    "captionFont": { "family": "Inter, sans-serif", "weight": 400, "style": "italic", "sizeInPt": 9 },
+    "metadataFont": { "family": "Inter, sans-serif", "weight": 500, "style": "normal", "sizeInPt": 8.5 },
+    "footnoteFont": { "family": "Inter, sans-serif", "weight": 400, "style": "normal", "sizeInPt": 8 },
+    "bodyLineHeight": 1.7,
+    "paragraphSpacing": 4,
+    "headingSpacing": {
+      "1": { "above": 12, "below": 6 },
+      "2": { "above": 10, "below": 4 },
+      "3": { "above": 8, "below": 4 },
+      "4": { "above": 6, "below": 2 },
+      "5": { "above": 4, "below": 2 },
+      "6": { "above": 4, "below": 2 }
+    },
+    "textAlignment": "justify",
+    "hyphenation": true,
+    "textDirection": "ltr",
+    "locale": "en-US",
+    "cjkFontFamily": null
+  },
+  "layout": {
+    "columns": 1,
+    "columnGap": 8,
+    "widowMinLines": 3,
+    "orphanMinLines": 3,
+    "headingKeepWithNext": true
+  },
+  "header": {
+    "left": "Opus Publica",
+    "center": null,
+    "right": null,
+    "font": { "family": "Inter, sans-serif", "weight": 400, "style": "normal", "sizeInPt": 8 },
+    "firstPageDifferent": true
+  },
+  "footer": {
+    "left": null,
+    "center": "Page {{pageNumber}} of {{totalPages}}",
+    "right": "{{doi}}",
+    "font": { "family": "Inter, sans-serif", "weight": 400, "style": "normal", "sizeInPt": 8 }
+  },
+  "coverPage": {
+    "enabled": true,
+    "mastheadTitle": "Opus Publica",
+    "mastheadSubtitle": "Global Public Policy Research & Publishing",
+    "showJournalName": true,
+    "accentColor": "#C9A84C",
+    "backgroundColor": "#1A1A2E",
+    "dividerStyle": "line"
+  },
+  "metadata": {
+    "doiPosition": "all",
+    "orcidDisplay": "iconAndText",
+    "showReceivedDate": true,
+    "showAcceptedDate": true,
+    "showPublishedDate": true,
+    "showISSN": true,
+    "showVolumeIssue": true,
+    "showLicenseBadge": true
+  },
+  "tables": {
+    "headerBackground": "#f5f5f8",
+    "headerFont": { "family": "Inter, sans-serif", "weight": 600, "style": "normal", "sizeInPt": 9.5 },
+    "borderStyle": "all",
+    "captionPosition": "above",
+    "captionPrefix": "Table"
+  },
+  "figures": {
+    "captionPosition": "below",
+    "captionPrefix": "Figure",
+    "maxWidth": 100,
+    "captionFont": { "family": "Inter, sans-serif", "weight": 400, "style": "italic", "sizeInPt": 9 }
+  },
+  "references": {
+    "style": "apa7",
+    "sectionTitle": "References",
+    "numbering": "author-date"
+  },
+  "copyright": {
+    "position": "footer",
+    "showLicenseBadge": true,
+    "badgeStyle": "filled"
+  },
+  "watermark": {
+    "text": "UNOFFICIAL DRAFT — PREVIEW ONLY",
+    "opacity": 0.15,
+    "rotation": -45,
+    "font": { "family": "Inter, sans-serif", "weight": 700, "style": "normal", "sizeInPt": 36 }
+  }
+}

@@ -1,3 +1,4 @@
+
 import DOMPurify from 'isomorphic-dompurify';
 import * as cheerio from 'cheerio';
 import type { ManuscriptAdapter, AdapterContext } from './adapter';
@@ -21,6 +22,174 @@ import {
   createLinkInline,
 } from '../model/document-builder';
 
+export type BlockCategory =
+  | 'Publisher Cover' | 'Publisher Metadata' | 'Author Metadata'
+  | 'Title' | 'Author List' | 'Affiliations' | 'ORCID' | 'Corresponding Author'
+  | 'Abstract' | 'Keywords' | 'Table of Contents'
+  | 'Microsoft Word Field' | 'EndNote Field' | 'Hidden Metadata'
+  | 'Running Header' | 'Running Footer'
+  | 'Body Content' | 'References' | 'Appendix' | 'Supplementary Material'
+  | 'Unknown';
+
+export class DeterministicBlockClassifier {
+  private static extractText(node: any): string {
+    if (!node) return '';
+    if (node.type === 'text') return node.value || '';
+    
+    let text = '';
+    
+    if (Array.isArray(node.children)) {
+      text += node.children.map(DeterministicBlockClassifier.extractText).join('');
+    }
+    if (Array.isArray(node.items)) {
+      text += node.items.map(DeterministicBlockClassifier.extractText).join(' ');
+    }
+    if (Array.isArray(node.rows)) {
+      text += node.rows.map(DeterministicBlockClassifier.extractText).join(' ');
+    }
+    if (Array.isArray(node.cells)) {
+      text += node.cells.map(DeterministicBlockClassifier.extractText).join(' ');
+    }
+    if (Array.isArray(node.caption)) {
+      text += node.caption.map(DeterministicBlockClassifier.extractText).join('');
+    }
+    
+    return text;
+  }
+
+  private static hasTocLink(node: any): boolean {
+    if (!node) return false;
+    
+    if (node.type === 'link' && node.url && (node.url.toLowerCase().startsWith('#_toc') || node.url.toLowerCase().startsWith('#_hlk'))) {
+        return true;
+    }
+    
+    if (Array.isArray(node.children)) {
+      if (node.children.some(DeterministicBlockClassifier.hasTocLink)) return true;
+    }
+    if (Array.isArray(node.items)) {
+      if (node.items.some(DeterministicBlockClassifier.hasTocLink)) return true;
+    }
+    if (Array.isArray(node.rows)) {
+      if (node.rows.some(DeterministicBlockClassifier.hasTocLink)) return true;
+    }
+    if (Array.isArray(node.cells)) {
+      if (node.cells.some(DeterministicBlockClassifier.hasTocLink)) return true;
+    }
+    if (Array.isArray(node.caption)) {
+      if (node.caption.some(DeterministicBlockClassifier.hasTocLink)) return true;
+    }
+    
+    return false;
+  }
+
+  public static classify(block: Block, pubCtx: any): BlockCategory {
+    // LAYER 0 - Definitive Structural Evidence (AST inspection)
+    if (DeterministicBlockClassifier.hasTocLink(block)) {
+        return 'Table of Contents';
+    }
+
+    let text = DeterministicBlockClassifier.extractText(block);
+    
+    text = text.trim();
+    const lowerText = text.toLowerCase();
+
+    // LAYER 1 - Structural Evidence (from AST)
+    if (block.type === 'heading' && text === 'Table of Contents') {
+        return 'Table of Contents';
+    }
+    if (lowerText.match(/^abstract\s*\d*$/) || lowerText.match(/^table of contents\s*\d*$/) || lowerText === 'table of contents') {
+        return 'Table of Contents';
+    }
+    if (text.includes('Update Field')) {
+      return 'Microsoft Word Field';
+    }
+    if (text.includes('ADDIN EN.REFLIST')) return 'EndNote Field';
+
+    if (!text) {
+        if (block.type === 'figure' || block.type === 'table') return 'Body Content';
+        return 'Unknown';
+    }
+
+    // LAYER 2 - PublicationContext Evidence
+    const title = pubCtx?.article?.title?.trim()?.toLowerCase();
+    if (title && (lowerText === title || (title.length > 15 && lowerText.includes(title)))) return 'Title';
+    
+    let isAuthorList = false;
+    let isAffiliation = false;
+    if (pubCtx?.authors && Array.isArray(pubCtx.authors)) {
+        for (const author of pubCtx.authors) {
+            const authorName = author.name?.trim()?.toLowerCase();
+            if (authorName && authorName.length > 3 && lowerText.includes(authorName)) {
+                isAuthorList = true;
+            }
+            if (author.affiliations) {
+               for (const aff of author.affiliations) {
+                   const affName = aff.name?.trim()?.toLowerCase();
+                   if (affName && affName.length > 5 && lowerText.includes(affName)) {
+                       isAffiliation = true;
+                   }
+               }
+            }
+        }
+    }
+    if (isAuthorList && !isAffiliation) return 'Author List';
+    if (isAffiliation && !isAuthorList) return 'Affiliations';
+    if (isAuthorList && isAffiliation) return 'Author Metadata';
+    
+    if (lowerText.includes('orcid.org/')) return 'ORCID';
+    
+    const journalName = pubCtx?.journal?.name?.trim()?.toLowerCase();
+    const publisher = pubCtx?.journal?.publisher?.trim()?.toLowerCase();
+    if ((journalName && journalName.length > 3 && lowerText.includes(journalName)) || 
+        (publisher && publisher.length > 3 && lowerText.includes(publisher)) || 
+        lowerText.includes('issn') || 
+        lowerText.includes('doi:')) {
+        return 'Publisher Metadata';
+    }
+    if (
+        lowerText.includes('working paper') || 
+        lowerText.includes('advocacy unified network') ||
+        lowerText.includes('voice & rights') ||
+        lowerText.includes('research series') ||
+        lowerText.includes('policy brief series') ||
+        lowerText.includes('editorial series') ||
+        lowerText.includes('journal series') ||
+        lowerText.includes('aun series')
+    ) {
+        return 'Publisher Metadata';
+    }
+    if (lowerText.includes('corresponding author')) return 'Corresponding Author';
+
+    // LAYER 3 - Semantic Evidence
+    if (lowerText.startsWith('abstract')) return 'Abstract';
+    if (lowerText.startsWith('keywords')) return 'Keywords';
+    if (lowerText === 'references' || lowerText === 'bibliography' || lowerText === 'works cited') return 'References';
+    if (lowerText.startsWith('appendix')) return 'Appendix';
+    if (lowerText.startsWith('supplementary')) return 'Supplementary Material';
+    
+    if (lowerText.startsWith('acknowledgements') || lowerText.startsWith('acknowledgments')) return 'Body Content';
+    if (lowerText.startsWith('funding')) return 'Body Content';
+    if (lowerText.startsWith('conflict of interest')) return 'Body Content';
+    if (lowerText.startsWith('data availability')) return 'Body Content';
+    if (lowerText.startsWith('ethics')) return 'Body Content';
+    if (lowerText.match(/^(executive summary|commentary|editorial|letter|case note|book review|policy brief)/)) return 'Body Content';
+
+    // LAYER 4 - Heuristic fallback
+    return 'Body Content';
+  }
+
+  public static isRetentionCategory(category: BlockCategory): boolean {
+    return [
+      'Body Content',
+      'References',
+      'Appendix',
+      'Supplementary Material'
+    ].includes(category);
+  }
+}
+
+
 export class HTMLAdapter implements ManuscriptAdapter {
   public readonly name = 'html-adapter';
 
@@ -30,6 +199,7 @@ export class HTMLAdapter implements ManuscriptAdapter {
   }
 
   public async parse(input: Buffer | string, context: AdapterContext): Promise<OpusDocument> {
+
     let rawHtml = typeof input === 'string' ? input : input.toString('utf-8');
 
     // Correct HTML entity handling (decode double-escaped entities exactly once)
@@ -119,22 +289,6 @@ export class HTMLAdapter implements ManuscriptAdapter {
     }
 
     const $ = cheerio.load(html, null, false);
-
-    // 1. Remove Word TOC by structural classes/links
-    $('[class*="MsoToc"]').remove();
-    $('a[href^="#_Toc"]').closest('p, div, h1, h2, h3').remove();
-    $('.TOC, .toc, nav[role="doc-toc"]').remove();
-
-    // 2. Remove Word field codes and instructional artefacts
-    $('span[style*="mso-element:field-begin"]').remove();
-    $('span[style*="mso-element:field-separator"]').remove();
-    $('span[style*="mso-element:field-end"]').remove();
-    $('p:contains("ADDIN EN.REFLIST")').remove();
-    $('p:contains("Right-click the table of contents")').remove();
-    $('p:contains("Update Field")').remove();
-    $('.WordSection1').removeClass('WordSection1');
-
-    // 3. (DOM deduplication logic removed in favor of AST deduplication below)
 
     const blocks: Block[] = [];
 
@@ -299,58 +453,19 @@ export class HTMLAdapter implements ManuscriptAdapter {
       if (inlineFallback.length > 0) {
         return [createParagraphBlock(inlineFallback)];
       }
-
       return [];
     };
 
-    rootNodes.forEach(node => {
+    let rootNodesArray = Array.from(rootNodes);
+    
+    rootNodesArray.forEach((node: any) => {
       blocks.push(...parseNodeToBlocks(node));
     });
 
     if (blocks.length === 0) {
       blocks.push(createParagraphBlock([createTextInline('No content available.')]));
     }
-
-    const extractText = (inlines: any[]): string => {
-       if (!inlines) return '';
-       return inlines.map(inl => {
-          if (inl.type === 'text') return inl.value;
-          if (inl.children) return extractText(inl.children);
-          return '';
-       }).join('');
-    };
-
-    let introIndex = -1;
-    for (let i = 0; i < blocks.length; i++) {
-       const b = blocks[i];
-       if (b.type === 'heading') {
-          const txt = extractText((b as any).children).trim();
-          const lowerTxt = txt.toLowerCase();
-          if (/^(?:1\.?|i\.?|01\.?)\s+/i.test(txt) || 
-              lowerTxt.startsWith('introduction') || 
-              lowerTxt.startsWith('background')) {
-             introIndex = i;
-             break;
-          }
-       }
-    }
-    
-    if (introIndex > 0) {
-       blocks.splice(0, introIndex);
-    }
-
-    const cleanBlocks = blocks.filter(b => {
-       if (b.type === 'heading' || b.type === 'paragraph') {
-          const txt = extractText((b as any).children).toLowerCase();
-          if (txt.includes('right-click the table of contents')) return false;
-          if (txt.includes('update field')) return false;
-          if (txt.includes('addin en.reflist')) return false;
-          if (txt.trim() === 'table of contents') return false;
-       }
-       return true;
-    });
-
-    return cleanBlocks;
+    return blocks;
   }
 
   private parseInlines($: cheerio.CheerioAPI, parent: any): Inline[] {

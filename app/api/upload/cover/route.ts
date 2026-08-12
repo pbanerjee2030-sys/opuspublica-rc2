@@ -1,40 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/rbac';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { getStorageProvider, FEATURE_STORAGE_ABSTRACTION } from '@/lib/storage';
 import { writeFile, mkdir, access } from 'fs/promises';
 import path from 'path';
 
-async function authGuard(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
-  const token = authHeader.replace('Bearer ', '');
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return null;
-  return user;
-}
 
-async function requireRole(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
-  userId: string,
-  allowedRoles: string[]
-) {
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single() as { data: any; error: any };
-  if (!profile || !allowedRoles.includes(profile.role)) return null;
-  return profile;
-}
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth({ roles: ["admin","editor"] }, async (request, ctx) => {
   try {
-    const supabaseAdmin = getSupabaseAdmin();
-    const user = await authGuard(request);
-    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { supabaseAdmin, user } = ctx;
 
-    const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-    if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -44,7 +22,8 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    const uploadDir = path.join(process.cwd(), 'data', 'covers');
+    const storageRoot = process.env.STORAGE_ROOT || path.join(process.cwd(), 'data');
+    const uploadDir = path.join(storageRoot, 'covers');
     await mkdir(uploadDir, { recursive: true });
 
     let finalName = fileName;
@@ -59,9 +38,13 @@ export async function POST(request: NextRequest) {
     }
 
     await writeFile(path.join(uploadDir, finalName), buffer);
+    if (FEATURE_STORAGE_ABSTRACTION) {
+      await getStorageProvider().upload('covers', finalName, buffer);
+    }
 
     return NextResponse.json({ url: `/api/covers/${finalName}` });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Upload failed' }, { status: 500 });
+  } catch (e: unknown) {
+    const errorMsg = e instanceof Error ? e.message : 'Upload failed';
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
-}
+});

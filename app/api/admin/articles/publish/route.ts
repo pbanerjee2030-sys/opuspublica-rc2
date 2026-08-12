@@ -2,31 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { generatePublishedPdf } from '@/lib/generate-pdf';
 import { logAuditEvent } from '@/lib/audit';
-
-async function authGuard(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) return null;
-  const token = authHeader.replace('Bearer ', '');
-  const supabaseAdmin = getSupabaseAdmin();
-  const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-  if (error || !user) return null;
-  return { supabaseAdmin, user };
-}
-
-async function requireAdminOrEditor(
-  supabaseAdmin: ReturnType<typeof getSupabaseAdmin>,
-  userId: string
-) {
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('role')
-    .eq('id', userId)
-    .single() as { data: any; error: any };
-  if (!profile || (profile.role !== 'admin' && profile.role !== 'editor')) {
-    return null;
-  }
-  return profile;
-}
+import { withAuth } from '@/lib/rbac';
 
 /**
  * POST /api/admin/articles/publish
@@ -36,18 +12,9 @@ async function requireAdminOrEditor(
  * - 'publish' (default): Sets status to 'published', generates house PDF, sets published_pdf_url
  * - 'regenerate': Re-generates the house PDF for an already-published article
  */
-export async function POST(request: NextRequest) {
+export const POST = withAuth({ roles: ['admin', 'editor'] }, async (request, ctx) => {
   try {
-    const auth = await authGuard(request);
-    if (!auth) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const { supabaseAdmin, user } = auth;
-
-    const profile = await requireAdminOrEditor(supabaseAdmin, user.id);
-    if (!profile) {
-      return NextResponse.json({ error: 'Forbidden — admin or editor role required' }, { status: 403 });
-    }
+    const { supabaseAdmin, user } = ctx;
 
     const body = await request.json();
     const { articleId, action = 'publish' } = body;
@@ -186,4 +153,4 @@ export async function POST(request: NextRequest) {
     console.error('[Publish Route] Error:', e);
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});

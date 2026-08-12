@@ -1,30 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
+import { withAuth } from '@/lib/rbac';
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth({ roles: ['admin'] }, async (request, ctx) => {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const token = authHeader.replace('Bearer ', '');
-    const supabaseAdmin = getSupabaseAdmin();
-
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check requester is admin
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single() as { data: any; error: any };
-
-    if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({ error: 'Only existing admins can promote users' }, { status: 403 });
-    }
+    const { supabaseAdmin, user } = ctx;
 
     const body = await request.json();
     const { role, targetUserId } = body;
@@ -55,4 +35,4 @@ export async function POST(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});

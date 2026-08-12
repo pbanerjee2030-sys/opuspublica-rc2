@@ -11,7 +11,8 @@ export async function GET(
 
     const sanitized = filename.replace(/\.\./g, '').replace(/[\/\\]/g, '');
 
-    const filePath = path.join(process.cwd(), 'data', 'covers', sanitized);
+    const storageRoot = process.env.STORAGE_ROOT || path.join(process.cwd(), 'data');
+    const filePath = path.join(storageRoot, 'covers', sanitized);
 
     try { await access(filePath); } catch {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });

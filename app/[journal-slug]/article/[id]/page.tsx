@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props) {
     .select(`
       title,
       abstract,
-      pdf_url,
+      canonical_package_url,
       published_at,
       keywords,
       journals ( name ),
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props) {
   const articleTitle = dbArticle.title;
   const journalTitle = dbArticle.journals?.name || 'Academic Journal';
   const publishDate = dbArticle.published_at;
-  const pdfUrl = dbArticle.pdf_url || '';
+  const pdfUrl = dbArticle.canonical_package_url ? `${dbArticle.canonical_package_url}/publisher.pdf` : '';
   const authorsList = dbArticle.article_authors?.map((aa: any) => aa.profiles?.full_name || aa.co_author_name).filter(Boolean) || [];
 
   const d = new Date(publishDate);
@@ -98,7 +98,7 @@ export default async function ArticleDetailPage({ params }: Props) {
       title,
       content,
       abstract,
-      pdf_url,
+      canonical_package_url,
       doi,
       published_at,
       status,
@@ -143,7 +143,7 @@ export default async function ArticleDetailPage({ params }: Props) {
     title: dbArticle.title,
     content: dbArticle.content || '<p>Full content is not yet available for this article.</p>',
     abstract: dbArticle.abstract || 'No abstract available.',
-    pdfUrl: dbArticle.pdf_url || '#',
+    pdfUrl: dbArticle.canonical_package_url ? `${dbArticle.canonical_package_url}/publisher.pdf` : null,
     publishedAt: dbArticle.published_at,
     doi: dbArticle.doi,
     keywords: dbArticle.keywords || [],
@@ -291,13 +291,20 @@ export default async function ArticleDetailPage({ params }: Props) {
                       Read, annotate, and print the official publication format of this research.
                     </p>
 
-                    <a
-                      href={`/api/pdf?id=${article.id}`}
-                      className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white font-bold text-base rounded shadow hover:bg-primary-hover transition-all hover:-translate-y-0.5 duration-200"
-                    >
-                      <Download className="w-5 h-5" />
-                      Download PDF
-                    </a>
+                    {article.pdfUrl ? (
+                      <a
+                        href={`/api/pdf?id=${article.id}`}
+                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-primary text-white font-bold text-base rounded shadow hover:bg-primary-hover transition-all hover:-translate-y-0.5 duration-200"
+                      >
+                        <Download className="w-5 h-5" />
+                        Download PDF
+                      </a>
+                    ) : (
+                      <div className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gray-300 text-gray-700 font-bold text-base rounded shadow cursor-not-allowed">
+                        <Download className="w-5 h-5" />
+                        No publisher PDF generated.
+                      </div>
+                    )}
                   </div>
 
                   <CitationBox

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/rbac';
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { logAuditEvent } from '@/lib/audit';
 
@@ -28,19 +29,21 @@ async function requireRole(
   return profile;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth({ roles: ['admin', 'editor'], authorizeObject: (req, ctx) => {
+  const url = new URL(req.url);
+  const entity = url.searchParams.get('entity');
+  if (entity === 'users' && ctx.profile.role !== 'admin') return false;
+  return true;
+} }, async (request, ctx) => {
   try {
-    const auth = await authGuard(request);
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const { supabaseAdmin, user } = auth;
+    const { supabaseAdmin, user } = ctx;
 
     const { searchParams } = new URL(request.url);
     const entity = searchParams.get('entity');
 
     // stats: admin/editor only
     if (entity === 'stats') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const [articlesRes, journalsRes, usersRes] = await Promise.all([
         supabaseAdmin.from('articles').select('id, title, status, doi, published_at, created_at, journals(name, slug), article_authors(co_author_name, profiles(full_name))'),
@@ -52,8 +55,7 @@ export async function GET(request: NextRequest) {
 
     // articles: admin/editor only (sees drafts, rejections, emails)
     if (entity === 'articles') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data, error } = await supabaseAdmin
         .from('articles')
@@ -70,8 +72,7 @@ export async function GET(request: NextRequest) {
 
     // journals: admin/editor only
     if (entity === 'journals') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data, error } = await supabaseAdmin.from('journals').select('*').order('name');
       if (error) throw error;
@@ -80,8 +81,7 @@ export async function GET(request: NextRequest) {
 
     // books: admin/editor only
     if (entity === 'books') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data, error } = await (supabaseAdmin as any).from('books').select('*').order('title');
       if (error) throw error;
@@ -90,8 +90,7 @@ export async function GET(request: NextRequest) {
 
     // users: admin only
     if (entity === 'users') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data, error } = await supabaseAdmin
         .from('profiles')
@@ -103,8 +102,7 @@ export async function GET(request: NextRequest) {
 
     // reviewers: admin/editor only
     if (entity === 'reviewers') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const [assignmentsRes, articlesRes, reviewersRes] = await Promise.all([
         supabaseAdmin.from('reviewer_assignments').select(`
@@ -125,8 +123,7 @@ export async function GET(request: NextRequest) {
 
     // editorial_board_members: admin/editor only (filtered by journal_id)
     if (entity === 'editorial_board_members') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const journalId = searchParams.get('journal_id');
       let query = supabaseAdmin.from('editorial_board_members').select('*').order('sort_order');
@@ -140,8 +137,7 @@ export async function GET(request: NextRequest) {
 
     // compliance: admin/editor — DOAJ readiness per journal
     if (entity === 'compliance') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data: journals, error: jErr } = await supabaseAdmin
         .from('journals')
@@ -202,8 +198,7 @@ export async function GET(request: NextRequest) {
 
     // reviewer_workload: admin/editor — assignment stats per reviewer
     if (entity === 'reviewer_workload') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data: assignments, error: aErr } = await supabaseAdmin
         .from('reviewer_assignments')
@@ -253,8 +248,7 @@ export async function GET(request: NextRequest) {
 
     // contact_queries: admin/editor only
     if (entity === 'contact_queries') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const { data, error } = await (supabaseAdmin as any)
         .from('contact_queries')
@@ -266,8 +260,7 @@ export async function GET(request: NextRequest) {
 
     // resend_status: admin/editor only — check if RESEND_API_KEY is configured
     if (entity === 'resend_status') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const apiKey = process.env.RESEND_API_KEY;
       const configured = !!apiKey && apiKey.length > 0 && apiKey !== 'your_resend_api_key_here';
@@ -279,8 +272,7 @@ export async function GET(request: NextRequest) {
 
     // audit_log: admin only (includes role-change history)
     if (entity === 'audit_log') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
 
       const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200);
 
@@ -306,13 +298,16 @@ export async function GET(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth({ roles: ['admin', 'editor'], authorizeObject: (req, ctx) => {
+  const url = new URL(req.url);
+  const entity = url.searchParams.get('entity');
+  if ((entity === 'users' || entity === 'journals') && ctx.profile.role !== 'admin') return false;
+  return true;
+} }, async (request, ctx) => {
   try {
-    const auth = await authGuard(request);
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const { supabaseAdmin, user } = auth;
+    const { supabaseAdmin, user } = ctx;
 
     const { searchParams } = new URL(request.url);
     const entity = searchParams.get('entity');
@@ -372,13 +367,16 @@ export async function POST(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withAuth({ roles: ['admin', 'editor'], authorizeObject: (req, ctx) => {
+  const url = new URL(req.url);
+  const entity = url.searchParams.get('entity');
+  if ((entity === 'users' || entity === 'journals') && ctx.profile.role !== 'admin') return false;
+  return true;
+} }, async (request, ctx) => {
   try {
-    const auth = await authGuard(request);
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const { supabaseAdmin, user } = auth;
+    const { supabaseAdmin, user } = ctx;
 
     const { searchParams } = new URL(request.url);
     const entity = searchParams.get('entity');
@@ -497,8 +495,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (entity === 'contact_queries') {
-      const profile = await requireRole(supabaseAdmin, user.id, ['admin', 'editor']);
-      if (!profile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
       const { error } = await (supabaseAdmin as any).from('contact_queries').update(updates).eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });
@@ -508,13 +505,16 @@ export async function PATCH(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(request: NextRequest) {
+export const DELETE = withAuth({ roles: ['admin', 'editor'], authorizeObject: (req, ctx) => {
+  const url = new URL(req.url);
+  const entity = url.searchParams.get('entity');
+  if (entity === 'users' && ctx.profile.role !== 'admin') return false;
+  return true;
+} }, async (request, ctx) => {
   try {
-    const auth = await authGuard(request);
-    if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    const { supabaseAdmin, user } = auth;
+    const { supabaseAdmin, user } = ctx;
 
     const { searchParams } = new URL(request.url);
     const entity = searchParams.get('entity');
@@ -582,4 +582,4 @@ export async function DELETE(request: NextRequest) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message || 'Internal error' }, { status: 500 });
   }
-}
+});

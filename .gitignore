@@ -50,3 +50,47 @@ next-env.d.ts
 opus-publica-audit-temp/
 
 certificates
+# Local environments
+.env.local
+.env.development
+.env.test
+.env.production
+temp.env
+
+# Supabase local runtime state
+supabase/.temp/
+
+# Generated/build output
+.next/
+node_modules/
+coverage/
+
+# Archives / binaries
+*.tar
+*.exe
+*.zip
+
+# Local scratch
+scratch/
+fix_*.js
+fix_*.cjs
+migrate_*.cjs
+test_*.mjs`n!test_submission_boundary.mjs
+test_*.js
+scratch_search.py
+
+# Generated logs/output
+output.html
+output2.html
+result.txt
+result_phase1.txt
+test_res.txt
+build-output.txt
+build-output2.txt
+
+# Generated root PDFs
+*.md.pdf
+supabase/.branches/
+lib/opce/**/*.js
+lib/types_backup.ts
+/schema.sql

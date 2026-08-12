@@ -3,7 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { adminFetch, adminUpdate } from '@/lib/admin-api';
+import { submitDecision } from '@/app/actions/submitDecision';
 import { useSearchParams } from 'next/navigation';
+import { CompositionWorkspace } from '@/components/opce/CompositionWorkspace';
+import { AdminMetadataEditorModal } from '@/components/admin/AdminMetadataEditorModal';
+import { canEditArticleMetadata } from '@/lib/permissions';
 import {
   FileText,
   Clock,
@@ -17,6 +21,8 @@ import {
   X,
   Loader2,
   RefreshCw,
+  Layers,
+  Edit3,
 } from 'lucide-react';
 
 interface Article {
@@ -26,6 +32,7 @@ interface Article {
   status: string;
   doi: string | null;
   pdf_url: string | null;
+  canonical_package_url: string | null;
   published_pdf_url: string | null;
   published_at: string | null;
   created_at: string;
@@ -36,7 +43,7 @@ interface Article {
   use_author_pdf_as_final?: boolean;
 }
 
-type Tab = 'pending' | 'published' | 'rejected';
+type Tab = 'pending' | 'accepted' | 'published' | 'rejected';
 
 export default function ArticlesPage() {
   const searchParams = useSearchParams();
@@ -48,13 +55,23 @@ export default function ArticlesPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [publishingId, setPublishingId] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [opceArticle, setOpceArticle] = useState<Article | null>(null);
+  const [adminEditArticle, setAdminEditArticle] = useState<Article | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('editor');
 
   useEffect(() => {
     fetchArticles();
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        const { data: p } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (p?.role) setCurrentUserRole(p.role);
+      }
+    });
   }, []);
 
   const fetchArticles = async () => {
@@ -87,6 +104,35 @@ export default function ArticlesPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
+      // Accept article + generate house-styled PDF via the new proof route action
+      const proofRes = await fetch('/api/admin/articles/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ articleId: article.id, action: 'proof' }),
+      });
+
+      const proofData = await proofRes.json();
+      if (!proofRes.ok) throw new Error(proofData.error || 'Failed to accept and generate proof');
+
+      const pdfNote = proofData.warning ? ' (PDF generation pending)' : ' with proof PDF generated';
+      showToast('success', `Article accepted for proofing${pdfNote}`);
+      fetchArticles();
+    } catch (e: any) {
+      showToast('error', e.message || 'Failed to approve article');
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const handlePublish = async (article: Article) => {
+    setPublishingId(article.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
       // If no DOI, generate one
       let doi = article.doi;
       if (!doi) {
@@ -110,7 +156,7 @@ export default function ArticlesPage() {
 
       const mintData = await mintRes.json();
 
-      // Publish article + generate house-styled PDF via the new publish route
+      // Publish article via the publish route action
       const publishRes = await fetch('/api/admin/articles/publish', {
         method: 'POST',
         headers: {
@@ -147,9 +193,9 @@ export default function ArticlesPage() {
       showToast('success', `Article published${mintData.status === 'submitted' ? ' and DOI minted' : ''}${pdfNote}`);
       fetchArticles();
     } catch (e: any) {
-      showToast('error', e.message || 'Failed to approve article');
+      showToast('error', e.message || 'Failed to publish article');
     } finally {
-      setApprovingId(null);
+      setPublishingId(null);
     }
   };
 
@@ -183,39 +229,26 @@ export default function ArticlesPage() {
   const handleReject = async () => {
     if (!rejectingId || !rejectReason.trim()) return;
     try {
-      const article = articles.find(a => a.id === rejectingId);
-      await adminUpdate('articles', rejectingId, {
-        status: 'rejected',
-        rejection_reason: rejectReason.trim(),
+      const res = await submitDecision({
+        submissionId: rejectingId,
+        decision: 'Reject',
+        commentsToAuthor: rejectReason.trim(),
       });
 
-      // Send notification
-      const author = article?.article_authors?.[0]?.profiles;
-      if (author) {
-        const { data: { session } } = await supabase.auth.getSession();
-        fetch('/api/notifications', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-          },
-          body: JSON.stringify({
-            type: 'article_rejected',
-            articleId: rejectingId,
-            recipientEmail: author.email || 'author@opuspublica.org',
-            recipientName: author.full_name || 'Author',
-            articleTitle: article?.title || 'Article',
-            journalName: article?.journals?.name || 'Journal',
-            rejectionReason: rejectReason.trim(),
-          }),
-        }).catch(() => {});
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to queue rejection decision');
       }
 
-      showToast('success', 'Article rejected');
+      // Optimistically update local state
+      setArticles(prev => prev.map(a => a.id === rejectingId ? { ...a, status: 'rejected', rejection_reason: rejectReason.trim() } : a));
+      if (selectedArticle?.id === rejectingId) {
+        setSelectedArticle(prev => prev ? { ...prev, status: 'rejected', rejection_reason: rejectReason.trim() } : null);
+      }
+
+      showToast('success', 'Article rejection queued successfully');
       setShowRejectModal(false);
       setRejectReason('');
       setRejectingId(null);
-      fetchArticles();
     } catch (e: any) {
       showToast('error', e.message || 'Failed to reject article');
     }
@@ -223,6 +256,7 @@ export default function ArticlesPage() {
 
   const statusMap: Record<Tab, string> = {
     pending: 'pending_review',
+    accepted: 'accepted',
     published: 'published',
     rejected: 'rejected',
   };
@@ -242,12 +276,14 @@ export default function ArticlesPage() {
 
   const tabCounts = {
     pending: articles.filter(a => a.status === 'pending_review').length,
+    accepted: articles.filter(a => a.status === 'accepted').length,
     published: articles.filter(a => a.status === 'published').length,
     rejected: articles.filter(a => a.status === 'rejected').length,
   };
 
   const tabs: { key: Tab; label: string; icon: any; count: number }[] = [
     { key: 'pending', label: 'Pending Review', icon: Clock, count: tabCounts.pending },
+    { key: 'accepted', label: 'Proof Review', icon: Layers, count: tabCounts.accepted },
     { key: 'published', label: 'Published', icon: CheckCircle2, count: tabCounts.published },
     { key: 'rejected', label: 'Rejected', icon: XCircle, count: tabCounts.rejected },
   ];
@@ -346,10 +382,10 @@ export default function ArticlesPage() {
                     <td className="px-5 py-4 hidden md:table-cell">
                       <span className="text-xs text-zinc-400">{article.journals?.name}</span>
                     </td>
-                    <td className="px-5 py-4 hidden lg:table-cell">
-                      <span className="text-xs text-zinc-400">{article.article_authors?.[0]?.profiles?.full_name || article.article_authors?.[0]?.co_author_name || 'Unknown'}</span>
+                    <td className="px-5 py-4 hidden lg:table-cell whitespace-nowrap max-w-[300px] truncate" title={article.article_authors?.map((a: any) => a.profiles?.full_name || a.co_author_name).filter(Boolean).join(', ') || 'Unknown'}>
+                      <span className="text-xs text-zinc-400">{article.article_authors?.map((a: any) => a.profiles?.full_name || a.co_author_name).filter(Boolean).join(', ') || 'Unknown'}</span>
                     </td>
-                    <td className="px-5 py-4 hidden lg:table-cell">
+                    <td className="px-5 py-4 hidden lg:table-cell whitespace-nowrap">
                       <span className="text-xs text-zinc-500">
                         {new Date(article.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
@@ -372,7 +408,23 @@ export default function ArticlesPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {article.pdf_url && (
+                        <button
+                          onClick={() => setOpceArticle(article)}
+                          className="p-1.5 rounded-lg text-amber-500 hover:text-amber-400 hover:bg-zinc-800 transition-colors"
+                          title="OPCE Composition Workspace"
+                        >
+                          <Layers className="w-4 h-4" />
+                        </button>
+                        {canEditArticleMetadata(currentUserRole) && (
+                          <button
+                            onClick={() => setAdminEditArticle(article)}
+                            className="p-1.5 rounded-lg text-[#C9A84C] hover:text-[#b0913b] hover:bg-zinc-800 transition-colors"
+                            title="Administrator Metadata & Timeline Editor"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {(article.status === 'published' ? (article.canonical_package_url ? `${article.canonical_package_url}/publisher.pdf` : null) : article.pdf_url) && (
                           <a
                             href={`/api/pdf?id=${article.id}`}
                             target="_blank"
@@ -403,6 +455,19 @@ export default function ArticlesPage() {
                               Reject
                             </button>
                           </>
+                        )}
+                        {article.status === 'accepted' && (
+                          <button
+                            onClick={() => handlePublish(article)}
+                            disabled={publishingId === article.id}
+                            className="px-3 py-1.5 bg-green-900/40 hover:bg-green-900/60 text-green-400 text-xs font-bold rounded-lg border border-green-900/30 transition-colors disabled:opacity-50"
+                          >
+                            {publishingId === article.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              'Publish & Mint DOI'
+                            )}
+                          </button>
                         )}
                         {article.status === 'published' && (
                           <button
@@ -466,7 +531,7 @@ export default function ArticlesPage() {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Author</label>
-                  <p className="text-sm text-zinc-300 mt-1">{selectedArticle.article_authors?.[0]?.profiles?.full_name || selectedArticle.article_authors?.[0]?.co_author_name || 'Unknown'}</p>
+                  <p className="text-sm text-zinc-300 mt-1">{selectedArticle.article_authors?.map((a: any) => a.profiles?.full_name || a.co_author_name).filter(Boolean).join(', ') || 'Unknown'}</p>
                 </div>
               </div>
               <div>
@@ -511,7 +576,7 @@ export default function ArticlesPage() {
                     onClick={() => { setShowDetailModal(false); handleApprove(selectedArticle); }}
                     className="px-4 py-2 bg-green-900/40 hover:bg-green-900/60 text-green-400 text-xs font-bold rounded-lg border border-green-900/30"
                   >
-                    Approve & Publish
+                    Accept & Generate Proof
                   </button>
                   <button
                     onClick={() => { setShowDetailModal(false); setRejectingId(selectedArticle.id); setShowRejectModal(true); }}
@@ -520,6 +585,14 @@ export default function ArticlesPage() {
                     Reject
                   </button>
                 </>
+              )}
+              {selectedArticle.status === 'accepted' && (
+                <button
+                  onClick={() => { setShowDetailModal(false); handlePublish(selectedArticle); }}
+                  className="px-4 py-2 bg-green-900/40 hover:bg-green-900/60 text-green-400 text-xs font-bold rounded-lg border border-green-900/30"
+                >
+                  Publish & Mint DOI
+                </button>
               )}
             </div>
           </div>
@@ -557,6 +630,35 @@ export default function ArticlesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* OPCE Workspace Modal */}
+      {opceArticle && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 overflow-y-auto">
+          <div className="relative bg-[#FCFAF4] border border-[#E0D7C2] rounded-2xl w-full max-w-6xl shadow-2xl p-6 my-8">
+            <div className="flex items-center justify-between border-b border-[#E0D7C2] pb-4 mb-4">
+              <h3 className="text-lg font-bold text-[#0F2C4A]">OPCE Composition Engine Workspace</h3>
+              <button onClick={() => setOpceArticle(null)} className="p-1 rounded text-[#5A5245] hover:bg-[#F4EFE2]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <CompositionWorkspace
+              articleId={opceArticle.id}
+              articleTitle={opceArticle.title}
+              journalSlug={opceArticle.journals?.slug || 'journal'}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Administrator Metadata Editor Modal */}
+      {adminEditArticle && (
+        <AdminMetadataEditorModal
+          article={adminEditArticle as any}
+          userRole={currentUserRole}
+          onClose={() => setAdminEditArticle(null)}
+          onSuccess={fetchArticles}
+        />
       )}
     </div>
   );

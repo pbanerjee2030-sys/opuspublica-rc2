@@ -6,11 +6,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import type { DatabaseProfile, DatabaseJournal } from '@/lib/types';
+import type { DatabaseProfile, DatabaseJournal, ProfileWithRelations } from '@/lib/types';
 
 interface NavbarProps {
   initialUser: { id: string; email?: string; user_metadata?: Record<string, any> } | null;
-  initialProfile: (DatabaseProfile & { journals?: DatabaseJournal }) | null;
+  initialProfile: ProfileWithRelations | null;
 }
 
 export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
@@ -89,15 +89,16 @@ export default function Navbar({ initialUser, initialProfile }: NavbarProps) {
     <nav className="fixed w-full z-50 bg-[#1A1A2E]/90 backdrop-blur-md border-b border-[#C9A84C]/25">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <Image
-              src="/OpusPublica%20icon.png"
-              alt="Opus Publica Icon"
-              width={30}
-              height={30}
-              className="object-contain"
+              src="/opus-publica-logo.png"
+              alt="Opus Publica Logo"
+              width={1024}
+              height={682}
+              className="object-contain rounded-md shadow-sm"
+              style={{ width: 'auto', height: '46px' }}
             />
-            <span className="text-[#C9A84C] font-bold text-xl font-serif tracking-wider group-hover:text-white transition-colors">OPUS</span>
+            <span className="text-[#C9A84C] font-bold text-xl font-serif tracking-wider group-hover:text-white transition-colors ml-1">OPUS</span>
             <span className="text-white font-bold text-xl font-serif tracking-wider group-hover:text-[#C9A84C] transition-colors">PUBLICA</span>
           </Link>
 

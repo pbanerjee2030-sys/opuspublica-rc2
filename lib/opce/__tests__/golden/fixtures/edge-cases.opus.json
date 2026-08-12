@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "id": "66666666-6666-6666-6666-666666666666",
+  "metadata": {
+    "title": "Edge Case Manuscript & Special Symbol Verification: α/β/γ Models in <Policy & Regulation>",
+    "subtitle": null,
+    "abstract": "Minimal abstract testing special characters: & < > \" ' and Unicode mathematical symbols ∑, ∫, ∏.",
+    "keywords": ["Edge Cases", "Unicode", "Special Characters"],
+    "language": "en",
+    "authors": [
+      {
+        "name": "Anonymous Author",
+        "givenName": "Anonymous",
+        "surname": "Author",
+        "orcid": null,
+        "affiliations": [],
+        "correspondingAuthor": true,
+        "email": null
+      }
+    ],
+    "journal": {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Journal of Global Policy Research",
+      "slug": "global-policy",
+      "issn": null,
+      "publisher": "Advocacy Unified Network",
+      "licenseType": "CC BY 4.0"
+    },
+    "doi": null,
+    "volume": null,
+    "issue": null,
+    "pages": null,
+    "dates": {
+      "received": null,
+      "accepted": null,
+      "published": null,
+      "revised": null
+    },
+    "funding": [],
+    "declarations": {
+      "conflictOfInterest": null,
+      "dataAvailability": null,
+      "ethicsApproval": null
+    },
+    "copyright": {
+      "holder": "Opus Publica",
+      "year": 2026,
+      "licenseType": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  },
+  "body": [
+    {
+      "type": "paragraph",
+      "children": [{ "type": "text", "value": "Single paragraph body testing minimal edge cases." }]
+    },
+    {
+      "type": "thematicbreak"
+    }
+  ],
+  "references": [],
+  "footnotes": [],
+  "assets": {}
+}

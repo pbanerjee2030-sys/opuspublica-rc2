@@ -1,0 +1,420 @@
+// Opus Publica — Governance Platform Database Schema
+// Implements the RC1 + RC2 governance corpus: invariants, rules, contracts,
+// fields, events, SLOs, thresholds, state machine, certification criteria,
+// releases, amendments, runbooks, operational roles.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("GOVERNANCE_DATABASE_URL")
+  schemas  = ["governance"]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONSTITUTIONAL PROVISIONS (the MRC — Machine-Readable Constitution)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Provision {
+  id                 String   @id // stable ID: INV-I-01, ARCH-001, SUB-01, etc.
+  class              String   // invariant | rule | contract | field | event | slo | threshold | state | transition | criterion
+  statement          String   // single-sentence statement (8-240 chars)
+  sourceChapter      String   // e.g. "Vol II Ch 26 §26.1"
+  severity           String   @default("SEV-2") // SEV-1 | SEV-2 | SEV-3
+  owner              String   // team name
+  predicate          String?  // first-order logic notation (for invariants/rules/transitions)
+  verificationMethod String?  // how it is verified
+  version            String   @default("1.0.0") // SemVer
+  status             String   @default("active") // active | deprecated | retired
+  group              String?  // grouping: e.g. "Identity", "Immutability" for invariants; "Architecture", "Data" for rules
+  traceability       String?  // JSON: { architecture, adr, database, api, code, storage, test, evidence }
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([class])
+  @@index([severity])
+  @@index([status])
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLOs / SLIs / SLAs
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Slo {
+  id              String   @id // SLO-01 .. SLO-10
+  name            String
+  description     String
+  sliFormula      String
+  target          Float    // 0..1 (e.g. 0.999 = 99.9%)
+  window          String   // 28d | 7d | 24h | 1h | continuous
+  currentValue    Float    @default(0.999)
+  healthState     String   @default("healthy") // healthy | at_risk | critical | exhausted
+  budgetTotal     Float    @default(1.0)
+  budgetConsumed  Float    @default(0.0)
+  budgetRemaining Float    @default(1.0)
+  burnRate        Float    @default(0.0)
+  owner           String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@schema("governance")
+}
+
+model Sla {
+  id             String    @id // CC-SLA-01..03
+  name           String
+  counterparty   String
+  target         String
+  window         String
+  gating         Boolean   @default(false)
+  lastBreachedAt DateTime?
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CERTIFICATION (CCE — Continuous Certification Engine)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model CertificationCriterion {
+  id                 String   @id // CC-INV-I-01-a, CC-RULE-ARCH-001, etc.
+  provisionId        String
+  passCriterion      String
+  failCriterion      String
+  verificationMethod String
+  gating             String   @default("GATE") // GATE | INFO
+  status             String   @default("active")
+  lastResult         String   @default("PASS") // PASS | FAIL | NOT_APPLICABLE
+  lastEvaluatedAt    DateTime @default(now())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([provisionId])
+  @@index([gating])
+  @@schema("governance")
+}
+
+model CertificationResult {
+  id                    String   @id @default(uuid()) @db.Uuid
+  submissionId          String   @db.Uuid
+  constitutionVersion   String
+  provisionVersions     Json
+  policyVersion         String
+  evaluatorVersion      String
+  evidenceSnapshot      Json
+  traceabilityGraphHash String
+  evaluatedAt           DateTime @default(now())
+  result                String   // PASS | FAIL | MANUAL_REVIEW
+  findings              Json
+  certificationHash     String
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RELEASES & GATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Release {
+  id              String    @id // REL-2026-08-09-001
+  version         String
+  gitSha          String
+  gateState       String    @default("pending") // pending | blocked | passed
+  deploymentState String    @default("not_authorized") // not_authorized | authorized | deployed | rolled_back
+  criteriaTotal   Int       @default(612)
+  criteriaPassed  Int       @default(611)
+  criteriaFailed  Int       @default(0)
+  criteriaNa      Int       @default(1)
+  createdAt       DateTime  @default(now())
+  deployedAt      DateTime?
+  signoffs        Signoff[]
+
+  @@schema("governance")
+}
+
+model Signoff {
+  id            String   @id @default(cuid())
+  releaseId     String
+  release       Release  @relation(fields: [releaseId], references: [id])
+  decision      String   // APPROVED | REJECTED
+  justification String
+  signedBy      String
+  signedAt      DateTime @default(now())
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TRACEABILITY GRAPH (ATG)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model TraceabilityNode {
+  id       String  @id // REQ-INV-I-01, ARCH-publication-svc, ADR-003, etc.
+  kind     String  // requirement | architecture | adr | database | api | code | storage | workflow | ui | test | evidence | certification | release
+  label    String
+  metadata String? // JSON blob for additional fields
+
+  @@schema("governance")
+}
+
+model TraceabilityEdge {
+  id     String @id @default(cuid())
+  fromId String
+  toId   String
+  kind   String // realizes | justified-by | backed-by | exposed-by | implemented-by | stored-in | exercised-by | surfaced-by | verified-by | produces | certified-by | released-in
+
+  @@schema("governance")
+}
+
+model IntegrityRuleResult {
+  id          String   @id // IR-01 .. IR-08
+  name        String
+  description String
+  passed      Boolean  @default(true)
+  violations  Int      @default(0)
+  lastChecked DateTime @default(now())
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SELF-AUDIT (SAP)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditFinding {
+  id          String    @id @default(cuid())
+  severity    String    // SEV-1 | SEV-2 | SEV-3 | SEV-4
+  type        String    // INTEGRITY_VIOLATION | DRIFT | STALE_EVIDENCE | ANOMALY
+  status      String    @default("open") // open | remediating | resolved
+  description String
+  detectedAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+  ticket      String?
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AMENDMENTS (Evolution Governance — 10-state lifecycle)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Amendment {
+  id                   String    @id @default(cuid())
+  title                String
+  provisionId          String?
+  amendmentType        String    // feat | fix | refactor (Conventional Commits)
+  status               String    @default("proposed") // proposed | under_review | in_discussion | voting | approved | implementing | certified | active | deprecated | removed
+  sponsor              String
+  rationale            String
+  isInvariant          Boolean   @default(false)
+  isEmergency          Boolean   @default(false)
+  votesFor             Int       @default(0)
+  votesAgainst         Int       @default(0)
+  totalVoters          Int       @default(10)
+  quorumRequired       Float     @default(0.667)
+  passThreshold        Float     @default(0.5) // 0.8 for invariants
+  discussionPeriodDays Int       @default(14)
+  proposedAt           DateTime  @default(now())
+  approvedAt           DateTime?
+  certifiedAt          DateTime?
+  activatedAt          DateTime?
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// OPERATIONAL GOVERNANCE
+// ─────────────────────────────────────────────────────────────────────────────
+
+model OperationalRole {
+  id         String  @id // csa, rca, duty_engineer, etc.
+  name       String
+  authority  String
+  boundaries String
+  onCall     String
+  icon       String? // lucide icon name
+
+  @@schema("governance")
+}
+
+model Runbook {
+  id           String   @id // RB-6.3, RB-8.3, etc.
+  title        String
+  severity     String   // SEV-1 | SEV-2 | SEV-3
+  trigger      String
+  steps        String   // JSON array of steps
+  escalation   String
+  lastReviewed DateTime @default(now())
+
+  @@schema("governance")
+}
+
+model GovernanceDoc {
+  id          String   @id // OP-DIR-RC1-001, OP-CONST-RC1-001, etc.
+  title       String
+  version     String
+  docType     String   // directive | constitution | playbook | checklist | matrix | schema | roadmap | api_spec | operator_manual
+  volume      String   // RC1 | RC2
+  pages       Int
+  issuedOn    DateTime
+  authority   String
+  description String
+  fileName    String
+
+  @@schema("governance")
+}
+
+model RoadmapPhase {
+  id           String @id // phase-0, phase-1, phase-2, phase-3
+  name         String
+  duration     String // 4 weeks
+  goal         String
+  exitCriteria String // JSON array
+  status       String @default("planned") // planned | in_progress | completed
+  order        Int
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXTERNAL / GENERAL
+// ─────────────────────────────────────────────────────────────────────────────
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String
+  message   String
+  createdAt DateTime @default(now())
+
+  @@schema("governance")
+}
+
+model Office {
+  id      String @id @default(cuid())
+  name    String
+  role    String // HQ | Registered Office | SAARC Office
+  address String
+  city    String
+  country String
+  hours   String
+  email   String
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RC2 ARCHITECTURE COMPONENTS & REGO
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Component {
+  id                  String @id // 5.1, 5.2, ... 5.16
+  name                String
+  purpose             String
+  pillar              String // MRC | ATG | CCE | Dashboard | SAP | shared
+  responsibilities    String
+  inputs              String
+  outputs             String
+  dependencies        String
+  interfaces          String
+  deployment          String
+  failureModes        String
+  runtimeVerification String
+  order               Int
+
+  @@schema("governance")
+}
+
+model RegoPattern {
+  id             String @id // 5.1, 5.2, ... 5.8
+  name           String // Uniqueness, Immutability, Resolvability, etc.
+  assertion      String
+  regoTemplate   String // verbatim Rego code
+  whenToUse      String
+  workedExamples String // comma-separated provision IDs
+
+  @@schema("governance")
+}
+
+model DataFlow {
+  id          String @id // 6.1, 6.2, ... 6.5
+  name        String
+  description String
+  steps       String // JSON array of step descriptions
+  cadence     String // per-PR | event-driven | 3-cadence | nightly+continuous | on-incident
+  order       Int
+
+  @@schema("governance")
+}
+
+model Adr {
+  id           String   @id // ADR-001 .. ADR-011
+  title        String
+  decision     String
+  status       String   @default("accepted") // proposed | accepted | superseded
+  alternatives String
+  tradeOffs    String
+  date         DateTime
+  order        Int
+
+  @@schema("governance")
+}
+
+model Threshold {
+  id          String  @id // LAT-001, THR-002, etc.
+  budgetClass String  // latency | throughput | size | time | retry | concurrency | queue | storage | reliability | resource
+  operation   String
+  p50         String?
+  p95         String?
+  p99         String?
+  hardLimit   String
+  softWarning String?
+  gating      String  @default("GATE") // GATE | INFO
+  owner       String
+  order       Int
+
+  @@schema("governance")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EVENT RECEIPT & INGESTION (WP-GOV-01B Foundation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model IngestionCursor {
+  id              String    @id @default("default")
+  lastEventId     String?   @db.Uuid
+  lastProcessedAt DateTime?
+  updatedAt       DateTime  @updatedAt
+
+  @@schema("governance")
+}
+
+model EventReceipt {
+  id                     String    @id @db.Uuid // Matches outbox.id
+  eventId                String    @unique @db.Uuid // Usually same as outbox.id
+  eventType              String
+  receivedAt             DateTime  @default(now())
+  status                 String    @default("pending") // pending | processed | failed
+  error                  String?
+  retryCount             Int       @default(0)
+  nextRetryAt            DateTime?
+  reconciliationMetadata Json?
+
+  @@schema("governance")
+}
+
+model EvidenceProjection {
+  id          String   @id @db.Uuid // e.g. submission_id
+  entityType  String   // 'Submission', 'Review', etc.
+  state       Json     // The synthesized layer 2 evidence
+  version     Int      @default(1)
+  lastEventId String   @db.Uuid
+  updatedAt   DateTime @updatedAt
+
+  @@schema("governance")
+}

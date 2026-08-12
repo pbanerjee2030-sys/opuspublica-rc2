@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import CoverImage from '@/components/CoverImage';
 import { ArrowLeft, BookOpen, Calendar, CheckCircle, Users, Fingerprint } from 'lucide-react';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -87,7 +87,7 @@ export default async function JournalLandingPage({ params }: Props) {
       id,
       title,
       abstract,
-      pdf_url,
+      canonical_package_url,
       published_at,
       article_authors (
         co_author_name,
@@ -107,7 +107,7 @@ export default async function JournalLandingPage({ params }: Props) {
       id: art.id,
       title: art.title,
       abstract: art.abstract || 'No abstract available.',
-      pdfUrl: art.pdf_url,
+      pdfUrl: art.canonical_package_url ? `${art.canonical_package_url}/publisher.pdf` : null,
       publishedAt: art.published_at,
       authors: art.article_authors?.map((aa: any) => aa.profiles ? aa.profiles : (aa.co_author_name ? { id: null, full_name: aa.co_author_name } : null)).filter(Boolean) || [],
     }));
@@ -149,18 +149,21 @@ export default async function JournalLandingPage({ params }: Props) {
 
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-primary/[0.02] to-bg py-16 sm:py-20 border-b border-accent/10">
           {/* Background cover image */}
-          {JOURNAL_COVER_MAP[journalSlug] && (
-            <div className="absolute inset-0 opacity-10">
-              <Image
-                src={JOURNAL_COVER_MAP[journalSlug]}
-                alt=""
-                fill
-                sizes="100vw"
-                className="object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-bg via-bg/80 to-bg" />
-            </div>
-          )}
+          {(() => {
+            const bgCover = dbJournal.cover_image || JOURNAL_COVER_MAP[journalSlug];
+            return bgCover ? (
+              <div className="absolute inset-0 opacity-10">
+                <CoverImage
+                  src={bgCover}
+                  alt=""
+                  fill
+                  sizes="100vw"
+                  className="object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-bg via-bg/80 to-bg" />
+              </div>
+            ) : null;
+          })()}
           <div className="absolute inset-0 opacity-5 pointer-events-none">
             <div className="absolute top-10 right-20 w-96 h-96 rounded-full border-2 border-accent"></div>
             <div className="absolute bottom-10 left-20 w-64 h-64 rounded-full border-2 border-accent"></div>
@@ -168,17 +171,20 @@ export default async function JournalLandingPage({ params }: Props) {
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
             <div className="flex flex-col sm:flex-row gap-8 items-start">
-              {JOURNAL_COVER_MAP[journalSlug] && (
-                <div className="relative w-32 h-44 sm:w-40 sm:h-56 rounded-lg overflow-hidden shadow-2xl border border-border flex-shrink-0">
-                  <Image
-                    src={JOURNAL_COVER_MAP[journalSlug]}
-                    alt={`${dbJournal.name} Cover`}
-                    fill
-                    sizes="(max-width: 640px) 128px, 160px"
-                    className="object-cover"
-                  />
-                </div>
-              )}
+              {(() => {
+                const cover = dbJournal.cover_image || JOURNAL_COVER_MAP[journalSlug];
+                return cover ? (
+                  <div className="relative w-32 h-44 sm:w-40 sm:h-56 rounded-lg overflow-hidden shadow-2xl border border-border flex-shrink-0">
+                    <CoverImage
+                      src={cover}
+                      alt={`${dbJournal.name} Cover`}
+                      fill
+                      sizes="(max-width: 640px) 128px, 160px"
+                      className="object-cover"
+                    />
+                  </div>
+                ) : null;
+              })()}
               <div>
                 <span className="inline-block text-accent uppercase tracking-wider text-xs sm:text-sm font-semibold mb-2">
                   Academic Peer-Reviewed Journal
@@ -344,7 +350,7 @@ export default async function JournalLandingPage({ params }: Props) {
                 {dbJournal.cover_image && (
                   <div className="bg-surface rounded-lg p-3 shadow-sm border border-border flex justify-center overflow-hidden">
                     <div className="relative w-full aspect-[4/5] max-w-[280px] rounded-md overflow-hidden border border-border">
-                      <Image
+                      <CoverImage
                         src={dbJournal.cover_image}
                         alt={`${dbJournal.name} Cover`}
                         fill
@@ -398,7 +404,7 @@ export default async function JournalLandingPage({ params }: Props) {
                         <div key={member.id} className="flex items-start gap-3">
                           {member.photo_url ? (
                             <div className="relative w-12 h-12 rounded-full overflow-hidden flex-shrink-0 border border-border">
-                              <Image
+                              <CoverImage
                                 src={member.photo_url}
                                 alt={member.full_name}
                                 fill

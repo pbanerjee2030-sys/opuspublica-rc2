@@ -1,6 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import Link from 'next/link';
-import Image from 'next/image';
+import CoverImage from '@/components/CoverImage';
 import { 
   BookOpen, 
   ArrowRight, 
@@ -29,8 +29,9 @@ const JOURNAL_COVER_MAP: Record<string, string> = {
   'voice-rights': '/Voice and rights.jpg',
 };
 
-function getJournalCover(slug: string): string | null {
-  return JOURNAL_COVER_MAP[slug] || null;
+function getJournalCover(journal: DatabaseJournal): string | null {
+  if (journal.cover_image) return journal.cover_image;
+  return JOURNAL_COVER_MAP[journal.slug] || null;
 }
 
 interface ArticleData {
@@ -120,7 +121,7 @@ export default async function Home() {
         published_at: art.published_at,
         journal_name: art.journals?.name || 'Academic Journal',
         journal_slug: art.journals?.slug || '',
-        author_name: art.article_authors?.[0]?.profiles?.full_name || 'Academic Contributor'
+        author_name: art.article_authors?.map((a: any) => a.profiles?.full_name || a.co_author_name).filter(Boolean).join(', ') || 'Academic Contributor'
       }));
     }
   } catch (e) {
@@ -273,7 +274,7 @@ export default async function Home() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {dbJournals.map((journal) => {
-              const cover = getJournalCover(journal.slug);
+              const cover = getJournalCover(journal);
               return (
                 <Link
                   key={journal.id}
@@ -281,19 +282,13 @@ export default async function Home() {
                   className="bg-surface border border-border hover:border-accent/30 rounded-xl overflow-hidden flex flex-col group shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-300"
                 >
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-alt">
-                    {cover ? (
-                      <Image
-                        src={cover}
-                        alt={`${journal.name} Cover`}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-accent/5">
-                        <BookOpen className="w-8 h-8 text-accent/30" />
-                      </div>
-                    )}
+                    <CoverImage
+                      src={cover}
+                      alt={`${journal.name} Cover`}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
                   </div>
 
@@ -343,20 +338,14 @@ export default async function Home() {
                   className="group relative bg-surface border border-border rounded-xl overflow-hidden hover:border-accent/30 transition-all duration-300 shadow-sm hover:shadow-md flex flex-col"
                 >
                   <div className="relative w-full aspect-[4/3] overflow-hidden bg-bg-alt">
-                    {book.cover_image ? (
-                      <Image
-                        src={book.cover_image}
-                        alt={`${book.title} Cover`}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
-                        priority
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-accent/5">
-                        <BookOpen className="w-8 h-8 text-accent/30" />
-                      </div>
-                    )}
+                    <CoverImage
+                      src={book.cover_image}
+                      alt={`${book.title} Cover`}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-contain group-hover:scale-105 transition-transform duration-500 ease-out"
+                      priority
+                    />
                     <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60" />
                     <div className="absolute top-3 right-3 z-20">
                       <span className="text-[10px] uppercase tracking-widest font-bold bg-accent/90 text-primary px-2 py-0.5 rounded-full">

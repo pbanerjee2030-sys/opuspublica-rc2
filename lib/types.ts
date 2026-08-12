@@ -211,7 +211,7 @@ export interface Database {
         Row: DatabaseOutbox;
         Insert: {
           id?: string;
-          event_type: 'pdf_generated' | 'html_generated' | 'jats_generated' | 'AuditRecorded' | 'NotificationQueued' | 'ArticleSubmitted' | 'ReviewSubmitted' | 'ReviewDeclined';
+          event_type: 'pdf_generated' | 'html_generated' | 'jats_generated' | 'AuditRecorded' | 'NotificationQueued' | 'ArticleSubmitted' | 'ReviewSubmitted' | 'ReviewDeclined' | 'DecisionSubmitted';
           payload: any;
           status: 'pending' | 'failed' | 'completed';
           processed_at?: string | null;
@@ -235,6 +235,16 @@ export interface Database {
         Args: { p_outbox_id: string };
         Returns: boolean;
       };
+      submit_article_transition: {
+        Args: {
+          p_submission_id: string;
+          p_article_id: string;
+          p_payload: any;
+          p_idempotency_key: string;
+          p_intent_hash: string;
+        };
+        Returns: { success: boolean; submission_id: string; article_id: string; error?: string };
+      };
       process_article_submission: {
         Args: { p_outbox_id: string };
         Returns: boolean;
@@ -242,6 +252,20 @@ export interface Database {
       process_review_submission: {
         Args: { p_outbox_id: string };
         Returns: boolean;
+      };
+      record_decision: {
+        Args: { 
+          p_submission_id: string;
+          p_editor_id: string;
+          p_decision_type: string;
+          p_comments_to_author: string | null;
+          p_comments_internal: string | null;
+          p_review_round: number;
+          p_revise_deadline: string | null;
+          p_supporting_review_ids: string[] | null;
+          p_idempotency_key: string;
+        };
+        Returns: string;
       };
     };
     Enums: {

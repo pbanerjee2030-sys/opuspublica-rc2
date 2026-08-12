@@ -1,0 +1,67 @@
+{
+  "version": "1.0.0",
+  "id": "55555555-5555-5555-5555-555555555555",
+  "metadata": {
+    "title": "Comprehensive Literature Survey on Treaties and International Sanctions",
+    "subtitle": "Fifty Years of Empirical Scholarship",
+    "abstract": "A systematic survey analyzing 50 key academic publications on treaty design, compliance mechanisms, and international sanction effectiveness.",
+    "keywords": ["International Law", "Sanctions", "Treaties", "Literature Survey"],
+    "language": "en",
+    "authors": [
+      {
+        "name": "Dr. Robert Vance",
+        "givenName": "Robert",
+        "surname": "Vance",
+        "orcid": "0000-0009-9999-9999",
+        "affiliations": [{ "name": "Georgetown University Law Center", "rorId": null, "country": "United States" }],
+        "correspondingAuthor": true,
+        "email": "rvance@law.georgetown.edu"
+      }
+    ],
+    "journal": {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Journal of Global Policy Research",
+      "slug": "global-policy",
+      "issn": "2673-8901",
+      "publisher": "Advocacy Unified Network",
+      "licenseType": "CC BY 4.0"
+    },
+    "doi": "10.62692/gpr.v1i1.00000004",
+    "volume": "1",
+    "issue": "1",
+    "pages": { "start": 46, "end": 75 },
+    "dates": {
+      "received": "2026-01-05T00:00:00.000Z",
+      "accepted": "2026-02-10T00:00:00.000Z",
+      "published": "2026-03-25T00:00:00.000Z",
+      "revised": null
+    },
+    "funding": [],
+    "declarations": {
+      "conflictOfInterest": "No conflict of interest declared.",
+      "dataAvailability": "All citations available in public databases.",
+      "ethicsApproval": "Not applicable."
+    },
+    "copyright": {
+      "holder": "Robert Vance",
+      "year": 2026,
+      "licenseType": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  },
+  "body": [
+    {
+      "type": "paragraph",
+      "children": [{ "type": "text", "value": "This survey evaluates fifty foundational papers in treaty research." }]
+    }
+  ],
+  "references": [
+    { "id": "ref-1", "type": "article", "authors": [{ "given": "A.", "surname": "Author" }], "title": "Treaty Compliance Study 1", "containerTitle": "Journal 1", "year": 1975, "volume": "1", "issue": "1", "pages": "1-10", "doi": "10.1000/1", "url": "https://doi.org/10.1000/1", "raw": "Author, A. (1975). Treaty Compliance Study 1. Journal 1." },
+    { "id": "ref-2", "type": "article", "authors": [{ "given": "B.", "surname": "Author" }], "title": "Treaty Compliance Study 2", "containerTitle": "Journal 2", "year": 1976, "volume": "2", "issue": "1", "pages": "11-20", "doi": "10.1000/2", "url": "https://doi.org/10.1000/2", "raw": "Author, B. (1976). Treaty Compliance Study 2. Journal 2." },
+    { "id": "ref-3", "type": "article", "authors": [{ "given": "C.", "surname": "Author" }], "title": "Treaty Compliance Study 3", "containerTitle": "Journal 3", "year": 1977, "volume": "3", "issue": "1", "pages": "21-30", "doi": "10.1000/3", "url": "https://doi.org/10.1000/3", "raw": "Author, C. (1977). Treaty Compliance Study 3. Journal 3." },
+    { "id": "ref-4", "type": "article", "authors": [{ "given": "D.", "surname": "Author" }], "title": "Treaty Compliance Study 4", "containerTitle": "Journal 4", "year": 1978, "volume": "4", "issue": "1", "pages": "31-40", "doi": "10.1000/4", "url": "https://doi.org/10.1000/4", "raw": "Author, D. (1978). Treaty Compliance Study 4. Journal 4." },
+    { "id": "ref-5", "type": "article", "authors": [{ "given": "E.", "surname": "Author" }], "title": "Treaty Compliance Study 5", "containerTitle": "Journal 5", "year": 1979, "volume": "5", "issue": "1", "pages": "41-50", "doi": "10.1000/5", "url": "https://doi.org/10.1000/5", "raw": "Author, E. (1979). Treaty Compliance Study 5. Journal 5." }
+  ],
+  "footnotes": [],
+  "assets": {}
+}

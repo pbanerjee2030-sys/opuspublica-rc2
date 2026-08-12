@@ -54,10 +54,13 @@ NEXT_PUBLIC_SITE_URL=https://www.opuspublica.com
 
 ## Step 4: Storage Bucket
 
+The `publications` bucket configuration (private access, allowed MIME types for PDF and DOCX, 15MB size limit) is handled automatically by the Supabase migrations. 
+
+To verify (optional):
 1. Go to Supabase Dashboard → Storage
 2. Find the `publications` bucket
-3. Set it to **Private** (not public)
-4. This ensures unpublished manuscripts are only accessible via signed URLs
+3. Verify it is set to **Private** (not public). This ensures unpublished manuscripts are only accessible via signed URLs.
+4. Verify the "Allowed MIME types" include `application/pdf`, `application/msword`, and `application/vnd.openxmlformats-officedocument.wordprocessingml.document`.
 
 ---
 

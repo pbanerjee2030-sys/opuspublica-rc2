@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Mail } from 'lucide-react';
 import CookieSettingsButton from './CookieSettingsButton';
+import Image from 'next/image';
 
 const quickLinks = [
   { href: '/', label: 'Home' },
@@ -30,7 +31,15 @@ export default function Footer() {
           {/* Column 1 - Logo */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-[#C9A84C] font-bold text-2xl font-serif">OPUS</span>
+              <Image
+                src="/opus-publica-logo.png"
+                alt="Opus Publica Logo"
+                width={1024}
+                height={682}
+                className="object-contain rounded-md shadow-sm"
+                style={{ width: 'auto', height: '32px' }}
+              />
+              <span className="text-[#C9A84C] font-bold text-2xl font-serif ml-1">OPUS</span>
               <span className="text-white font-bold text-2xl font-serif">PUBLICA</span>
             </div>
             <p className="text-white/60 text-sm leading-relaxed">

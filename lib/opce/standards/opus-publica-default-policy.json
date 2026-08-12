@@ -1,0 +1,10 @@
+{
+  "requiredMetadata": ["title", "abstract", "authors", "journal", "doi"],
+  "requiredDeclarations": ["conflictOfInterest", "dataAvailability"],
+  "mandatoryLicense": "CC BY 4.0",
+  "requireOrcidForCorrespondingAuthor": true,
+  "requireOrcidForAllAuthors": false,
+  "minimumAbstractLength": 100,
+  "maximumKeywordCount": 10,
+  "crossrefDepositRequired": true
+}

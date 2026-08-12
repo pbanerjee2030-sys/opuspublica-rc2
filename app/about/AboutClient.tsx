@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Globe, BookOpen, Lock, Users } from 'lucide-react';
 import Image from 'next/image';
+import Footer from '@/components/Footer';
 
 const highlights = [
   { icon: Globe, label: 'Global Reach', desc: 'Operations across 4 continents' },
@@ -38,13 +39,13 @@ export default function AboutClient() {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
               <div className="space-y-6">
-                <div className="relative w-full max-w-[280px] h-20 bg-surface p-2 rounded-lg shadow-sm border border-border overflow-hidden flex items-center justify-center">
+                <div className="relative w-full max-w-[280px] h-20 bg-surface rounded-lg shadow-sm border border-border overflow-hidden flex items-center justify-center">
                   <Image
-                    src="/Opus%20Publica%20flat%20logo.jpg"
-                    alt="Opus Publica Flat Logo"
+                    src="/opus-publica-logo.png"
+                    alt="Opus Publica Logo"
                     fill
                     sizes="280px"
-                    className="object-contain p-2"
+                    className="object-contain scale-[1.2]"
                   />
                 </div>
                 <p className="text-text leading-relaxed text-justify">
@@ -79,6 +80,7 @@ export default function AboutClient() {
           </motion.div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

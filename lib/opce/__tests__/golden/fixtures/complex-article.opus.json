@@ -1,0 +1,155 @@
+{
+  "version": "1.0.0",
+  "id": "33333333-3333-3333-3333-333333333333",
+  "metadata": {
+    "title": "Quantitative Modeling of Climate Policy Economic Externalities",
+    "subtitle": "A Cross-Border Equilibrium Analysis",
+    "abstract": "We present a multi-sector economic equilibrium model assessing the macroeconomic impact of carbon border adjustment mechanisms across sovereign trade corridors.",
+    "keywords": ["Economics", "Climate Policy", "Equilibrium Modeling", "Carbon Markets"],
+    "language": "en",
+    "authors": [
+      {
+        "name": "Prof. James Okonkwo",
+        "givenName": "James",
+        "surname": "Okonkwo",
+        "orcid": "0000-0003-4567-8901",
+        "affiliations": [
+          {
+            "name": "University of Lagos",
+            "rorId": "https://ror.org/022222222",
+            "country": "Nigeria"
+          }
+        ],
+        "correspondingAuthor": true,
+        "email": "j.okonkwo@unilag.edu.ng"
+      }
+    ],
+    "journal": {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "name": "Journal of Global Policy Research",
+      "slug": "global-policy",
+      "issn": "2673-8901",
+      "publisher": "Advocacy Unified Network",
+      "licenseType": "CC BY 4.0"
+    },
+    "doi": "10.62692/gpr.v1i1.00000002",
+    "volume": "1",
+    "issue": "1",
+    "pages": { "start": 13, "end": 28 },
+    "dates": {
+      "received": "2026-02-01T00:00:00.000Z",
+      "accepted": "2026-03-01T00:00:00.000Z",
+      "published": "2026-03-15T00:00:00.000Z",
+      "revised": null
+    },
+    "funding": [
+      {
+        "funderName": "African Development Bank",
+        "funderId": "https://doi.org/10.13039/100004421",
+        "awardNumber": "AfDB-2025-CLIM-44"
+      }
+    ],
+    "declarations": {
+      "conflictOfInterest": "The author declares no conflicts of interest.",
+      "dataAvailability": "All datasets and simulation code are publicly archived in Zenodo.",
+      "ethicsApproval": "Not applicable."
+    },
+    "copyright": {
+      "holder": "James Okonkwo",
+      "year": 2026,
+      "licenseType": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    }
+  },
+  "body": [
+    {
+      "type": "heading",
+      "level": 1,
+      "id": "sec-model",
+      "children": [{ "type": "text", "value": "Model Architecture" }]
+    },
+    {
+      "type": "paragraph",
+      "children": [
+        { "type": "text", "value": "The fundamental equilibrium condition for carbon prices is given by Equation " },
+        { "type": "citationref", "ids": ["ref-nordhaus"] }
+      ]
+    },
+    {
+      "type": "equation",
+      "id": "eq-1",
+      "format": "latex",
+      "source": "P_c = \\alpha \\cdot \\frac{\\partial U}{\\partial E} + \\beta \\cdot \\sum_{i=1}^n T_i",
+      "label": "Eq. 1",
+      "display": "block"
+    },
+    {
+      "type": "table",
+      "id": "tbl-1",
+      "label": "Table 1",
+      "caption": [{ "type": "text", "value": "Sectoral Carbon Intensity Coefficients" }],
+      "header": [
+        {
+          "cells": [
+            { "colspan": 1, "rowspan": 1, "children": [{ "type": "paragraph", "children": [{ "type": "text", "value": "Sector" }] }] },
+            { "colspan": 1, "rowspan": 1, "children": [{ "type": "paragraph", "children": [{ "type": "text", "value": "Intensity Index" }] }] }
+          ]
+        }
+      ],
+      "rows": [
+        {
+          "cells": [
+            { "colspan": 1, "rowspan": 1, "children": [{ "type": "paragraph", "children": [{ "type": "text", "value": "Energy Production" }] }] },
+            { "colspan": 1, "rowspan": 1, "children": [{ "type": "paragraph", "children": [{ "type": "text", "value": "0.845" }] }] }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "figure",
+      "id": "fig-1",
+      "src": "fig-1-asset-key",
+      "alt": "Simulation results showing carbon equilibrium curves across sectors",
+      "caption": [{ "type": "text", "value": "Projected Sectoral Carbon Adjustment Trajectories (2026-2035)" }],
+      "label": "Figure 1",
+      "width": 800
+    }
+  ],
+  "references": [
+    {
+      "id": "ref-nordhaus",
+      "type": "article",
+      "authors": [{ "given": "William", "surname": "Nordhaus" }],
+      "title": "Revisiting the Social Cost of Carbon",
+      "containerTitle": "Proceedings of the National Academy of Sciences",
+      "year": 2017,
+      "volume": "114",
+      "issue": "7",
+      "pages": "1518-1523",
+      "doi": "10.1073/pnas.1609244114",
+      "url": "https://doi.org/10.1073/pnas.1609244114",
+      "raw": "Nordhaus, W. (2017). Revisiting the Social Cost of Carbon. PNAS, 114(7), 1518-1523."
+    }
+  ],
+  "footnotes": [
+    {
+      "id": "fn-1",
+      "children": [
+        {
+          "type": "paragraph",
+          "children": [{ "type": "text", "value": "Sensitivity metrics computed using Monte Carlo simulation over 10,000 iterations." }]
+        }
+      ]
+    }
+  ],
+  "assets": {
+    "fig-1-asset-key": {
+      "key": "fig-1-asset-key",
+      "mimeType": "image/png",
+      "originalFilename": "simulation_curves.png",
+      "storagePath": "publications/assets/simulation_curves.png",
+      "width": 800,
+      "height": 600
+    }
+  }
+}

@@ -25,8 +25,19 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://opuspublica.com'),
   title: 'Opus Publica | Global Public Policy Research & Publishing',
-  description: 'Leading global platform for public policy research, academic journals, and book publishing.',
+  description: 'Knowledge. Published. Impact. Enduring. Leading global platform for public policy research, academic journals, and book publishing.',
+  icons: {
+    icon: "/opus-publica-new-favicon.ico",
+    shortcut: "/opus-publica-new-favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: 'Opus Publica | Global Public Policy Research & Publishing',
+    description: 'Knowledge. Published. Impact. Enduring. Leading global platform for public policy research, academic journals, and book publishing.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Opus Publica Logo' }],
+  },
 };
 
 export default async function RootLayout({
