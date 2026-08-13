@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { execSync } from 'child_process';
 import * as dotenv from 'dotenv';
+import * as fs from 'fs';
+import * as path from 'path';
 
 let localEnv = {};
 try {
@@ -8,6 +10,18 @@ try {
   localEnv = dotenv.parse(envOutput);
 } catch (e) {
   console.log('Warning: could not fetch local supabase env via CLI:', e.message);
+}
+
+// Also load .env.local / .env / .env.example for GOVERNANCE_DATABASE_URL etc.
+for (const f of ['.env.local', '.env', '.env.example']) {
+  const fp = path.resolve(process.cwd(), f);
+  if (fs.existsSync(fp)) {
+    const parsed = dotenv.parse(fs.readFileSync(fp, 'utf8'));
+    for (const [k, v] of Object.entries(parsed)) {
+      if (!process.env[k]) process.env[k] = v;
+    }
+    break;
+  }
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || localEnv.API_URL || 'http://localhost:54321';
@@ -24,6 +38,71 @@ if (!anonKey) {
 }
 
 const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DATABASE HELPER — environment-independent psql execution
+// ─────────────────────────────────────────────────────────────────────────────
+// Instead of `docker exec supabase_db_opuspublica psql ...` (hardcoded container
+// name), we construct a psql connection string from the DB URL env var.
+// This works regardless of the Docker container name.
+//
+// Priority: NEXT_PUBLIC_SUPABASE_DB_URL → localEnv.DB_URL →
+//           GOVERNANCE_DATABASE_URL (same Postgres, different schema) →
+//           fallback to local default.
+//
+// The fallback uses `psql -h 127.0.0.1 -p 54322 -U postgres -d postgres` which
+// is the standard local Supabase Postgres connection. This works without Docker
+// exec if psql is available on PATH and the DB port is forwarded (which
+// `supabase start` does).
+
+function getDbConninfo() {
+  // Try to extract from Supabase status env
+  if (localEnv.DB_URL) return localEnv.DB_URL;
+
+  // Try NEXT_PUBLIC_SUPABASE_DB_URL
+  if (process.env.NEXT_PUBLIC_SUPABASE_DB_URL) return process.env.NEXT_PUBLIC_SUPABASE_DB_URL;
+
+  // GOVERNANCE_DATABASE_URL points to the same Postgres instance (just different schema)
+  // We can use it to extract host/port/user/password
+  if (process.env.GOVERNANCE_DATABASE_URL) {
+    return process.env.GOVERNANCE_DATABASE_URL;
+  }
+
+  // Fallback: standard local Supabase connection
+  return 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
+}
+
+function psqlExec(sql, opts = {}) {
+  const conninfo = getDbConninfo();
+  const args = ['-t', '-A', conninfo, '-c', sql];
+  const result = execSync(`psql ${args.map(a => `'${a.replace(/'/g, "'\\''")}'`).join(' ')}`, {
+    encoding: 'utf8',
+    stdio: opts.stdio || 'pipe',
+    ...opts,
+  });
+  return result.trim();
+}
+
+function psqlQuery(sql) {
+  try {
+    const output = psqlExec(sql, { stdio: 'pipe' });
+    return output ? output.split('|').map(s => s.trim()) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function psqlExecIgnoreError(sql) {
+  try {
+    psqlExec(sql, { stdio: 'ignore' });
+  } catch (e) {
+    // ignore
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST SETUP / CLEANUP
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function setupTestUser(email, role) {
   const password = `TestPass_${crypto.randomUUID()}`;
@@ -53,6 +132,10 @@ async function cleanupUser(userId) {
     await supabaseAdmin.auth.admin.deleteUser(userId);
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEST SUITE
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function runTests() {
   let passed = 0;
@@ -90,7 +173,7 @@ async function runTests() {
     } else {
       journalId = crypto.randomUUID();
       try {
-        execSync(`docker exec supabase_db_opuspublica psql -U postgres -d postgres -c "INSERT INTO public.journals (id, name, slug) VALUES ('${journalId}', 'Test Journal', 'test-journal-${Date.now()}')"`, { stdio: 'ignore' });
+        psqlExecIgnoreError(`INSERT INTO public.journals (id, name, slug) VALUES ('${journalId}', 'Test Journal', 'test-journal-${Date.now()}')`);
       } catch (err) {
         throw new Error(`Failed to create test journal via psql: ${err.message}`);
       }
@@ -118,7 +201,7 @@ async function runTests() {
       p_intent_hash: crypto.randomUUID(),
       p_payload: payload
     });
-    
+
     if (unauthError) {
       assert(true, `Anonymous submission DENIED (${unauthError.message})`);
     } else {
@@ -186,12 +269,12 @@ async function runTests() {
     });
 
     assert(error3 !== null, 'Conflict detection PASS');
-    
+
     // Test 6: Governance privilege regression
+    // Uses psql with SET ROLE instead of docker exec
     try {
       const q = `SET ROLE governance_ingest_role; SELECT public.submit_article_transition('00000000-0000-0000-0000-000000000000'::uuid,'00000000-0000-0000-0000-000000000000'::uuid,'test','test','{}'::jsonb);`;
-      const output = execSync(`docker exec supabase_db_opuspublica psql -U postgres -d postgres -c "${q}"`, { stdio: 'pipe', encoding: 'utf8' });
-      // If it doesn't throw, it might still have failed inside the JSON output
+      const output = psqlExec(q, { stdio: 'pipe' });
       if (output.includes('permission denied')) {
         assert(true, 'Governance submission DENIED (Regression Test PASS)');
       } else {
@@ -207,27 +290,18 @@ async function runTests() {
       }
     }
 
-    // Verify the DB records (Using read-only PSQL connection)
-    const psql = (query) => {
-      try {
-        const output = execSync(`docker exec supabase_db_opuspublica psql -U postgres -d postgres -t -c "${query}"`, { encoding: 'utf8' }).trim();
-        return output ? output.split('|').map(s => s.trim()) : null;
-      } catch (e) {
-        return null;
-      }
-    };
-
-    const submissionRow = psql(`SELECT submission_state, submission_submitted_by_user_id FROM public.submissions WHERE submission_id = '${submissionId}'`);
+    // Verify the DB records (Using psql connection, NOT docker exec)
+    const submissionRow = psqlQuery(`SELECT submission_state, submission_submitted_by_user_id FROM public.submissions WHERE submission_id = '${submissionId}'`);
     assert(submissionRow !== null, 'Submission record exists');
     if (submissionRow) {
       assert(submissionRow[0] === 'Submitted', 'Submission state is Submitted');
       assert(submissionRow[1] === editorUser.id, 'Submission owner is correct');
     }
-    
-    const articleRow = psql(`SELECT id FROM public.articles WHERE id = '${articleId}'`);
+
+    const articleRow = psqlQuery(`SELECT id FROM public.articles WHERE id = '${articleId}'`);
     assert(articleRow !== null, 'Article record exists independently');
 
-    const eventRow = psql(`SELECT id FROM public.outbox WHERE payload->>'submission_id' = '${submissionId}'`);
+    const eventRow = psqlQuery(`SELECT id FROM public.outbox WHERE payload->>'submission_id' = '${submissionId}'`);
     assert(eventRow !== null, 'ArticleSubmitted PASS');
     if (eventRow) {
       assert(eventRow[0] !== submissionId && eventRow[0] !== articleId, 'Independent event_id PASS');
@@ -240,9 +314,7 @@ async function runTests() {
     await cleanupUser(editorUser?.id);
     await cleanupUser(authorUser?.id);
     // Cleanup temporary journal
-    try {
-      execSync(`docker exec supabase_db_opuspublica psql -U postgres -d postgres -c "DELETE FROM public.journals WHERE id = '00000000-0000-0000-0000-000000000000' OR name = 'Test Journal';"`, { stdio: 'ignore' });
-    } catch (e) {}
+    psqlExecIgnoreError(`DELETE FROM public.journals WHERE id = '00000000-0000-0000-0000-000000000000' OR name = 'Test Journal';`);
     console.log(`\nTests completed: ${passed} passed, ${failed} failed`);
   }
 }
