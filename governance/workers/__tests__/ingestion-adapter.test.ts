@@ -3,18 +3,19 @@ import { canonicalizeJson, hashEvidence } from '../../lib/ingestion/hash';
 import { isRetryEligible, runReconciliationScan, startIngestionAdapter } from '../ingestion-adapter';
 import { prismaGovernance, withIngestRole } from '../../lib/ingestion/db';
 import { randomUUID } from 'crypto';
+import { vi } from 'vitest';
 
 // Setup admin client for integration tests
 const adminDb = prismaGovernance;
 
 // Mock transaction object
 const mockTx = {
-  $queryRaw: jest.fn()
+  $queryRaw: vi.fn()
 };
 
 describe('WP-GOV-01B Correction - Pure Logic & Minimization Tests', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('Payload Minimization: Explicitly strips prohibited content', async () => {
@@ -292,7 +293,7 @@ describe('WP-GOV-01B F-03 - isRetryEligible: Pure Logic Tests', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe('WP-GOV-01B Correction - Database Integration Tests', () => {
-  let timerSpy: jest.SpyInstance;
+  let timerSpy: ReturnType<typeof vi.spyOn>;
 
   beforeAll(async () => {
     // Grant postgres permission to assume the ingest role for tests
@@ -311,7 +312,7 @@ describe('WP-GOV-01B Correction - Database Integration Tests', () => {
   });
 
   beforeEach(() => {
-    timerSpy = jest.spyOn(global, 'setTimeout').mockImplementation((cb, ms) => {
+    timerSpy = vi.spyOn(global, 'setTimeout').mockImplementation((cb, ms) => {
       if (ms === 5000) {
         process.emit('SIGINT');
         cb();
