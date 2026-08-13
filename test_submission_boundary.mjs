@@ -24,9 +24,18 @@ for (const f of ['.env.local', '.env', '.env.example']) {
   }
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || localEnv.API_URL || 'http://localhost:54321';
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || localEnv.SERVICE_ROLE_KEY;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || localEnv.ANON_KEY;
+let envSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+if (envSupabaseUrl === 'https://your-project.supabase.co') envSupabaseUrl = undefined;
+
+let envServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+if (envServiceRoleKey === 'your-service-role-key-here') envServiceRoleKey = undefined;
+
+let envAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (envAnonKey === 'your-anon-key-here') envAnonKey = undefined;
+
+const supabaseUrl = localEnv.API_URL || envSupabaseUrl || 'http://localhost:54321';
+const serviceRoleKey = localEnv.SERVICE_ROLE_KEY || envServiceRoleKey;
+const anonKey = localEnv.ANON_KEY || envAnonKey;
 
 if (!serviceRoleKey) {
   console.error("Service role key is required for test setup");
