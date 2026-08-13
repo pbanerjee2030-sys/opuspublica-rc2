@@ -1,0 +1,57 @@
+# Supabase CLI configuration for Opus Publica RC2.
+# Used by: supabase start, supabase db reset, supabase migration list
+# Migration authority: supabase/migrations/ (sole authoritative chain per RC2_BASELINE.md §2)
+
+project_id = "opuspublica-rc2-local"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "governance", "graphql_public"]
+extra_search_path = ["public", "governance"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[studio]
+enabled = true
+port = 54323
+
+[local_smtp]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/api/auth/orcid/callback"]
+jwt_expiry = 3600
+refresh_token_rotation_enabled = true
+refresh_token_reuse_interval = 10
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.external.orcid]
+enabled = false
+client_id = ""
+secret = ""
+redirect_uri = "http://localhost:3000/api/auth/orcid/callback"

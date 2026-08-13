@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:opce": "node --test --import tsx 'lib/opce/__tests__/**/*.test.ts'",
+    "test:all": "vitest run && node --test --import tsx lib/opce/__tests__/**/*.test.ts"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",
@@ -47,6 +51,14 @@
     "eslint-config-next": "16.2.9",
     "prisma": "6.19.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.23.12",
+    "typescript": "^5",
+    "vitest": "^1.6.1"
+  },
+  "allowScripts": {
+    "@prisma/client@6.19.3": true,
+    "@prisma/engines@6.19.3": true,
+    "prisma@6.19.3": true,
+    "unrs-resolver@1.12.2": true
   }
 }

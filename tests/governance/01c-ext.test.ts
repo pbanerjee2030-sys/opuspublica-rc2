@@ -179,8 +179,8 @@ describe('WP-GOV-01C-EXT Certified Evaluation Input Extension', () => {
       }
     });
 
-    let hash1: string;
-    let graphHash1: string;
+    let hash1!: string;
+    let graphHash1!: string;
     await prisma.$transaction(async (tx) => {
       await synthesizeForSubmission(subId, tx);
       hash1 = await computeEvidenceSnapshotHash(subId, tx);
@@ -193,8 +193,8 @@ describe('WP-GOV-01C-EXT Certified Evaluation Input Extension', () => {
       data: { state: { submissionId: subId, journalId: '456' } }
     });
 
-    let hash2: string;
-    let graphHash2: string;
+    let hash2!: string;
+    let graphHash2!: string;
     await prisma.$transaction(async (tx) => {
       await synthesizeForSubmission(subId, tx);
       hash2 = await computeEvidenceSnapshotHash(subId, tx);
@@ -224,8 +224,8 @@ describe('WP-GOV-01C-EXT Certified Evaluation Input Extension', () => {
       }
     });
 
-    let hash3: string;
-    let graphHash3: string;
+    let hash3!: string;
+    let graphHash3!: string;
     await prisma.$transaction(async (tx) => {
       await synthesizeForSubmission(subId, tx);
       hash3 = await computeEvidenceSnapshotHash(subId, tx);
@@ -252,5 +252,114 @@ describe('WP-GOV-01C-EXT Certified Evaluation Input Extension', () => {
     expect(evidenceHash).toBeDefined();
     expect(graphHash).toBeDefined();
     // Tests 11, 14 are functionally verified by the deterministic constraints above
+  });
+
+  // ============================================================================
+  // INSTALLMENT 1 — Cross-ID Determinism Tests (directive §12.3 Tests A-F)
+  // ============================================================================
+  // Authority: rc2-evidence-snapshot-hash-semantics-decision.md +
+  //            wp-gov-01c-ext-hash-correction-independent-review.md
+  //
+  // These tests verify the authorized hash correction: infrastructure IDs are
+  // EXCLUDED from evidenceSnapshotHash. Only semantic evidence state is digested.
+  // ----------------------------------------------------------------------------
+
+  it('Test A: Same semantic evidence + different infrastructure IDs → same evidenceSnapshotHash', async () => {
+    // Per rc2-evidence-snapshot-hash-semantics-decision.md:
+    //   submissionId is a SEMANTIC attribute (part of the evidence content digest).
+    //   EvidenceProjection.id, lastEventId are INFRASTRUCTURE identifiers (excluded).
+    //
+    // Test A must use the SAME submissionId (semantic) but DIFFERENT infrastructure IDs
+    // (EvidenceProjection.id, lastEventId) to prove infrastructure IDs don't affect the hash.
+    //
+    // We create two SEPARATE EvidenceProjection rows with identical p.state but different
+    // infrastructure IDs, then verify their individual hashes are identical.
+    const subId = randomUUID();
+    const sharedState = { submissionId: subId, journalId: 'J1', field: 'val' };
+
+    // Row 1 — random infrastructure IDs
+    await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: sharedState, version: 1, lastEventId: randomUUID() }
+    });
+    const hash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+
+    // Clean and re-create with DIFFERENT infrastructure IDs but SAME semantic state
+    await prisma.evidenceProjection.deleteMany({});
+    await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: sharedState, version: 1, lastEventId: randomUUID() }
+    });
+    const hash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+
+    // The hash MUST be identical — only infrastructure IDs differed.
+    expect(hash1).toEqual(hash2);
+    expect(hash1.length).toBe(64);
+  });
+
+  it('Test B: Changed semantic evidence → different evidenceSnapshotHash', async () => {
+    const subIdA = randomUUID();
+    await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subIdA, journalId: 'A', f: '1' }, version: 1, lastEventId: randomUUID() }
+    });
+    const subIdB = randomUUID();
+    await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subIdB, journalId: 'B', f: '2' }, version: 1, lastEventId: randomUUID() }
+    });
+    const hashA = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subIdA, tx));
+    const hashB = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subIdB, tx));
+    expect(hashA).not.toEqual(hashB);
+  });
+
+  it('Test C: Different insertion order → same evidenceSnapshotHash', async () => {
+    const subId = randomUUID();
+    const ev1 = { id: randomUUID(), entityType: 'Submission', state: { submissionId: subId, journalId: 'J', items: ['a', 'b'] }, version: 1, lastEventId: randomUUID() };
+    const ev2 = { id: randomUUID(), entityType: 'Review', state: { submissionId: subId, journalId: 'J', items: ['c'] }, version: 1, lastEventId: randomUUID() };
+    await prisma.evidenceProjection.create({ data: ev1 });
+    await prisma.evidenceProjection.create({ data: ev2 });
+    const hash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    await prisma.evidenceProjection.deleteMany({});
+    await prisma.evidenceProjection.create({ data: ev2 });
+    await prisma.evidenceProjection.create({ data: ev1 });
+    const hash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    expect(hash1).toEqual(hash2);
+  });
+
+  it('Test D: Topology-only change → evidenceSnapshotHash unchanged, traceabilityGraphHash may change', async () => {
+    const subId = randomUUID();
+    await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subId, journalId: 'J' }, version: 1, lastEventId: randomUUID() }
+    });
+    const evHash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    const graphHash1 = await prisma.$transaction(async (tx) => computeTraceabilityGraphHash(subId, tx));
+    await prisma.provision.create({
+      data: { id: randomUUID(), class: 'SUB', statement: 'test', sourceChapter: 'test', severity: 'SEV-3', owner: 'test', predicate: 'test', verificationMethod: 'test', version: '1.0', status: 'active', group: 'test', isGlobal: true, traceability: '{}' }
+    });
+    await prisma.$transaction(async (tx) => { await synthesizeForSubmission(subId, tx); });
+    const evHash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    const graphHash2 = await prisma.$transaction(async (tx) => computeTraceabilityGraphHash(subId, tx));
+    expect(evHash1).toEqual(evHash2);
+  });
+
+  it('Test E: Infrastructure timestamps change → evidenceSnapshotHash unchanged', async () => {
+    const subId = randomUUID();
+    const ev = await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subId, journalId: 'J', data: 'fixed' }, version: 1, lastEventId: randomUUID() }
+    });
+    const hash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    await new Promise(r => setTimeout(r, 1100));
+    await prisma.evidenceProjection.update({ where: { id: ev.id }, data: { updatedAt: new Date() } });
+    const hash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    expect(hash1).toEqual(hash2);
+  });
+
+  it('Test F: Infrastructure IDs change → evidenceSnapshotHash unchanged', async () => {
+    const subId = randomUUID();
+    const ev = await prisma.evidenceProjection.create({
+      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subId, journalId: 'J', count: 42 }, version: 1, lastEventId: randomUUID() }
+    });
+    const hash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    const newId = randomUUID();
+    await prisma.evidenceProjection.update({ where: { id: ev.id }, data: { id: newId } as any });
+    const hash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+    expect(hash1).toEqual(hash2);
   });
 });

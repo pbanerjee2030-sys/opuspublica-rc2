@@ -32,10 +32,26 @@ NEXT_PUBLIC_SITE_URL=https://www.opuspublica.com
 
 ## Step 2: Database Migration
 
-1. Go to Supabase Dashboard → SQL Editor
-2. Run `supabase/MIGRATE_ALL.sql`
-3. Verify no errors
-4. Run `supabase/schema.sql` (optional — for reference only)
+**Authoritative migration chain:** `supabase/migrations/` is the SOLE source of truth
+for the database schema (per `RC2_BASELINE.md` §2).
+
+**DO NOT execute** `supabase/MIGRATE_ALL.sql`, `supabase/MIGRATE_ALL2.sql`, or
+`supabase/schema.sql`. These are historical/forensic SQL files, NOT migration sources.
+
+### Option A — Local development (Supabase CLI)
+
+1. Install the Supabase CLI: `npm install -g supabase` (or `npx supabase`).
+2. Start the local Supabase stack: `supabase start` (uses `supabase/config.toml`).
+3. Reset + apply all migrations: `supabase db reset`.
+4. Generate the Prisma client for the governance schema:
+   `npx prisma generate --schema=governance/prisma/schema.prisma`.
+
+### Option B — Remote Supabase project (staging/production)
+
+1. Link the project: `supabase link --project-ref <your-project-ref>`.
+2. Push the migration chain: `supabase db push` (applies new migrations only; does NOT reset).
+3. Verify: `supabase migration list` (should show all migrations as Applied).
+4. Generate the Prisma client: `npx prisma generate --schema=governance/prisma/schema.prisma`.
 
 ---
 
@@ -104,7 +120,7 @@ To verify (optional):
 | PDFs won't upload | Check `publications` bucket is private |
 | Emails not sending | Add `RESEND_API_KEY` to `.env.local` |
 | DOI minting fails | Verify Crossref credentials |
-| RLS errors | Re-run `MIGRATE_ALL.sql` |
+| RLS errors | Run `supabase db reset` locally; check migration chain |
 
 ---
 
