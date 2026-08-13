@@ -65,20 +65,37 @@ export async function synthesizeForSubmission(
           { provisionScopes: { some: { journalId: journalId } } }
         ]
       },
+      include: {
+        provisionScopes: {
+          where: { journalId: journalId }
+        }
+      },
       orderBy: { id: 'asc' }
     });
 
     for (const prov of provisions) {
+      let parameters = null;
+      if (prov.provisionScopes && prov.provisionScopes.length > 0) {
+        // Safe parse JSON if it is returned as a string, Prisma usually returns as object
+        parameters = prov.provisionScopes[0].parameters;
+      }
+
+      const provMetadata = { 
+        version: prov.version, 
+        severity: prov.severity,
+        parameters: parameters 
+      };
+
       await tx.traceabilityNode.upsert({
         where: { id: prov.id },
         create: {
           id: prov.id,
           kind: 'requirement',
           label: 'PROVISION',
-          metadata: JSON.stringify({ version: prov.version, severity: prov.severity })
+          metadata: JSON.stringify(provMetadata)
         },
         update: {
-          metadata: JSON.stringify({ version: prov.version, severity: prov.severity })
+          metadata: JSON.stringify(provMetadata)
         }
       });
 
