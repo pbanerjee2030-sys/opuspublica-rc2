@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { execSync } from 'child_process';
+import { spawnSync, execSync } from 'child_process';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -84,12 +84,43 @@ function getDbConninfo() {
 function psqlExec(sql, opts = {}) {
   const conninfo = getDbConninfo();
   const args = ['-t', '-A', conninfo, '-c', sql];
-  const result = execSync(`psql ${args.map(a => `'${a.replace(/'/g, "'\\''")}'`).join(' ')}`, {
+
+  let psqlCmd = 'psql';
+  let execArgs = args;
+
+  // Try native psql
+  const check = spawnSync('psql', ['--version']);
+  if (check.error || check.status !== 0) {
+    // fallback to docker if psql is not available
+    const dockerCheck = spawnSync('docker', ['ps', '--filter', 'name=supabase_db_', '--format', '{{.Names}}'], { encoding: 'utf8' });
+    if (dockerCheck.error || dockerCheck.status !== 0 || !dockerCheck.stdout.trim()) {
+       throw new Error("psql is not in PATH and no supabase_db docker container was found.");
+    }
+    const containerName = dockerCheck.stdout.trim().split('\n')[0].trim();
+    psqlCmd = 'docker';
+    
+    let dockerConninfo = conninfo;
+    if (dockerConninfo.includes('127.0.0.1:') || dockerConninfo.includes('localhost:')) {
+      dockerConninfo = dockerConninfo.replace(/127\.0\.0\.1:\d+/, '127.0.0.1:5432').replace(/localhost:\d+/, 'localhost:5432');
+    }
+    
+    execArgs = ['exec', '-i', containerName, 'psql', '-t', '-A', dockerConninfo, '-c', sql];
+  }
+
+  const result = spawnSync(psqlCmd, execArgs, {
     encoding: 'utf8',
-    stdio: opts.stdio || 'pipe',
-    ...opts,
+    ...opts
   });
-  return result.trim();
+
+  if (result.error) throw result.error;
+  if (result.status !== 0 && opts.stdio !== 'ignore') {
+     const err = new Error(`Command failed with status ${result.status}`);
+     err.stdout = result.stdout;
+     err.stderr = result.stderr;
+     throw err;
+  }
+  
+  return (result.stdout || '').trim();
 }
 
 function psqlQuery(sql) {
