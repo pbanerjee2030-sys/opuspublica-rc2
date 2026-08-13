@@ -1,5 +1,37 @@
 import { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
+import { canonicalJson, canonicalString } from './crypto';
+
+/**
+ * Computes a deterministic SHA-256 hash of the pure evidence snapshot.
+ * 
+ * Rules:
+ * - Only includes EvidenceProjection payloads mapped to the submission
+ * - Excludes topology, provisioning rules, and processing timestamps
+ * - Uses exact canonical serialization
+ */
+export async function computeEvidenceSnapshotHash(
+  submissionId: string,
+  tx: Prisma.TransactionClient
+): Promise<string> {
+  const projections = await tx.evidenceProjection.findMany();
+  
+  const relatedProjections = projections.filter(
+    (p) => (p.state as any)?.submissionId === submissionId
+  );
+
+  // Sort deterministically by source event ID
+  relatedProjections.sort((a, b) => a.id.localeCompare(b.id));
+
+  // Build the canonical input: sorted evidence_event_ids + evidence_payloads
+  // Exclude non-deterministic fields like updated_at
+  const serializedChunks = relatedProjections.map(p => {
+    return canonicalString(p.id) + canonicalJson(p.state);
+  });
+
+  const canonicalInput = serializedChunks.join('');
+  return createHash('sha256').update(canonicalInput, 'utf8').digest('hex');
+}
 
 /**
  * Computes a deterministic SHA-256 hash of a submission's traceability subgraph.
