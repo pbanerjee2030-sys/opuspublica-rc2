@@ -265,18 +265,34 @@ describe('WP-GOV-01C-EXT Certified Evaluation Input Extension', () => {
   // ----------------------------------------------------------------------------
 
   it('Test A: Same semantic evidence + different infrastructure IDs → same evidenceSnapshotHash', async () => {
-    const subIdA = randomUUID();
+    // Per rc2-evidence-snapshot-hash-semantics-decision.md:
+    //   submissionId is a SEMANTIC attribute (part of the evidence content digest).
+    //   EvidenceProjection.id, lastEventId are INFRASTRUCTURE identifiers (excluded).
+    //
+    // Test A must use the SAME submissionId (semantic) but DIFFERENT infrastructure IDs
+    // (EvidenceProjection.id, lastEventId) to prove infrastructure IDs don't affect the hash.
+    //
+    // We create two SEPARATE EvidenceProjection rows with identical p.state but different
+    // infrastructure IDs, then verify their individual hashes are identical.
+    const subId = randomUUID();
+    const sharedState = { submissionId: subId, journalId: 'J1', field: 'val' };
+
+    // Row 1 — random infrastructure IDs
     await prisma.evidenceProjection.create({
-      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subIdA, journalId: 'J1', field: 'val' }, version: 1, lastEventId: randomUUID() }
+      data: { id: randomUUID(), entityType: 'Submission', state: sharedState, version: 1, lastEventId: randomUUID() }
     });
-    const subIdB = randomUUID();
+    const hash1 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+
+    // Clean and re-create with DIFFERENT infrastructure IDs but SAME semantic state
+    await prisma.evidenceProjection.deleteMany({});
     await prisma.evidenceProjection.create({
-      data: { id: randomUUID(), entityType: 'Submission', state: { submissionId: subIdB, journalId: 'J1', field: 'val' }, version: 1, lastEventId: randomUUID() }
+      data: { id: randomUUID(), entityType: 'Submission', state: sharedState, version: 1, lastEventId: randomUUID() }
     });
-    const hashA = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subIdA, tx));
-    const hashB = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subIdB, tx));
-    expect(hashA).toEqual(hashB);
-    expect(hashA.length).toBe(64);
+    const hash2 = await prisma.$transaction(async (tx) => computeEvidenceSnapshotHash(subId, tx));
+
+    // The hash MUST be identical — only infrastructure IDs differed.
+    expect(hash1).toEqual(hash2);
+    expect(hash1.length).toBe(64);
   });
 
   it('Test B: Changed semantic evidence → different evidenceSnapshotHash', async () => {
