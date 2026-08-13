@@ -46,6 +46,7 @@ model Provision {
 model ProvisionScope {
   provisionId String
   journalId   String
+  parameters  Json?
   createdAt   DateTime @default(now())
 
   provision   Provision @relation(fields: [provisionId], references: [id])
@@ -122,9 +123,10 @@ model CertificationResult {
   evidenceSnapshot      Json
   traceabilityGraphHash String
   evaluatedAt           DateTime @default(now())
-  result                String   // PASS | FAIL | MANUAL_REVIEW
+  result                String   // CERTIFIED | NOT CERTIFIED | NOT EVALUABLE | INSUFFICIENT EVIDENCE | SUPERSEDED
   findings              Json
   certificationHash     String
+  supersededById        String?  @db.Uuid
 
   @@schema("governance")
 }
