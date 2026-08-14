@@ -434,3 +434,47 @@ model EvidenceProjection {
 
   @@schema("governance")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WP-GOV-01E CORRECTION: Gate Audit + Durable Nonce
+// ─────────────────────────────────────────────────────────────────────────────
+
+model GateAudit {
+  id                     String    @id @db.Uuid @default(uuid()) @map("audit_id")
+  authorizationId        String    @db.Uuid @map("authorization_id")
+  submissionId           String    @db.Uuid @map("submission_id")
+  articleId              String    @db.Uuid @map("article_id")
+  requestedAction        String    @map("requested_action")
+  result                 String    // ALLOW | DENY | BLOCKED
+  reason                 String
+  certificationId        String?   @map("certification_id")
+  evidenceSnapshotHash   String?   @map("evidence_snapshot_hash")
+  traceabilityGraphHash  String?   @map("traceability_graph_hash")
+  constitutionVersion    String    @map("constitution_version")
+  nonce                  String
+  issuedAt               DateTime  @map("issued_at")
+  expiresAt              DateTime  @map("expires_at")
+  authorizationVersion   String    @map("authorization_version")
+  requesterIdentity      String?   @map("requester_identity")
+  consumed               Boolean   @default(false)
+  consumedAt             DateTime? @map("consumed_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+
+  @@index([authorizationId])
+  @@index([submissionId])
+  @@index([nonce])
+  @@schema("governance")
+  @@map("gate_audit")
+}
+
+model NonceStore {
+  nonce                String   @id
+  authorizationId      String   @db.Uuid @map("authorization_id")
+  submissionId         String   @db.Uuid @map("submission_id")
+  articleId            String   @db.Uuid @map("article_id")
+  requestedAction      String   @map("requested_action")
+  consumedAt           DateTime @default(now()) @map("consumed_at")
+
+  @@schema("governance")
+  @@map("nonce_store")
+}
