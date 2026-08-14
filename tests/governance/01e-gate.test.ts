@@ -209,11 +209,40 @@ describe('WP-GOV-01E — Release Gate API (Corrected)', () => {
     expect(result).toBe(false);
   });
 
-  it('20. Expired authorization cannot be consumed', async () => {
+  it('20. Expired authorization cannot be consumed (authoritative DB expiry)', async () => {
+    // 1. Create a valid CERTIFIED authorization through the real gate flow
     const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
-    response.expiresAt = new Date(Date.now() - 60000).toISOString();
+
+    // 2. Verify the gate_audit record was persisted
+    const audit = await prisma.gateAudit.findFirst({ where: { authorizationId: response.authorizationId } });
+    expect(audit).not.toBeNull();
+
+    // 3. Update the AUTHORITATIVE persisted gate_audit row to be expired
+    //    (NOT the in-memory response — the DB is the security authority)
+    await prisma.gateAudit.update({
+      where: { id: audit!.id },
+      data: { expiresAt: new Date(Date.now() - 60000) },
+    });
+
+    // 4. Call consumeNonce — should fail because the persisted record is expired
     const result = await consumeNonce(response, prisma);
     expect(result).toBe(false);
+  });
+
+  it('20b. Client-side expiry mutation has NO authority over nonce consumption', async () => {
+    // 1. Create a valid CERTIFIED authorization
+    const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
+
+    // 2. Mutate ONLY the in-memory response.expiresAt to expired
+    //    Leave the persisted gate_audit.expiresAt VALID
+    response.expiresAt = new Date(Date.now() - 60000).toISOString();
+
+    // 3. consumeNonce reads the AUTHORITATIVE expiry from gate_audit
+    //    The in-memory mutation must NOT bypass the persisted expiry
+    //    The persisted record is still valid → consumption should succeed
+    //    (proving the client cannot bypass the authoritative expiry model)
+    const result = await consumeNonce(response, prisma);
+    expect(result).toBe(true);
   });
 
   it('21. Audit record reflects consumption state', async () => {
