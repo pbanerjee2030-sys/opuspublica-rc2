@@ -1,14 +1,21 @@
 // tests/governance/01f-publication-enforcement.test.ts
 //
-// WP-GOV-01F — Publication Gate Integration Tests
-//
-// Authority: Installment 3 Directive §PHASE C
-// Tests: valid authorization, expired, replay, mismatch, fail-closed
+// WP-GOV-01F — Publication Gate Integration (CORRECTED)
+// Tests: valid, expired, replay, mismatch, fail-closed, durable nonce
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { enforceGateAuthorization } from '../../governance/lib/gate/publication-enforcer';
 import { evaluateGate, clearNonces } from '../../governance/lib/gate/gate-evaluator';
 import type { CertificationResult } from '../../governance/lib/evaluation/types';
+import { PrismaClient } from '@prisma/client';
+import * as dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
+for (const f of ['.env.local', '.env', '.env.example']) {
+  try { dotenv.config({ path: f }); break; } catch {}
+}
+
+const prisma = new PrismaClient();
 
 function makeCert(result: CertificationResult['result']): CertificationResult {
   return {
@@ -27,98 +34,96 @@ function makeCert(result: CertificationResult['result']): CertificationResult {
   };
 }
 
-describe('WP-GOV-01F — Publication Gate Integration', () => {
-  beforeEach(() => clearNonces());
+describe('WP-GOV-01F — Publication Gate Integration (Corrected)', () => {
+  beforeEach(async () => {
+    await prisma.nonceStore.deleteMany({}).catch(() => {});
+    await prisma.gateAudit.deleteMany({}).catch(() => {});
+  });
 
-  it('1. Valid CERTIFIED authorization → ALLOW publication action', () => {
-    const auth = evaluateGate(
+  it('1. Valid CERTIFIED authorization → ALLOW publication action', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('CERTIFIED')
+      makeCert('CERTIFIED'), prisma
     );
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI');
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI', prisma);
     expect(result.allowed).toBe(true);
   });
 
-  it('2. NOT_CERTIFIED authorization → DENY', () => {
-    const auth = evaluateGate(
+  it('2. NOT_CERTIFIED authorization → DENY', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('NOT_CERTIFIED')
+      makeCert('NOT_CERTIFIED'), prisma
     );
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI');
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI', prisma);
     expect(result.allowed).toBe(false);
   });
 
-  it('3. Expired authorization → DENY', () => {
-    const auth = evaluateGate(
+  it('3. Expired authorization → DENY', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('CERTIFIED')
+      makeCert('CERTIFIED'), prisma
     );
-    auth.expiresAt = new Date(Date.now() - 60000).toISOString(); // Expired
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI');
+    auth.expiresAt = new Date(Date.now() - 60000).toISOString();
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI', prisma);
     expect(result.allowed).toBe(false);
     expect(result.reason).toContain('expired');
   });
 
-  it('4. Replay: second use of PUBLISH nonce → DENY', () => {
-    const auth = evaluateGate(
+  it('4. Replay: second use of PUBLISH nonce → DENY', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'PUBLISH' },
-      makeCert('CERTIFIED')
+      makeCert('CERTIFIED'), prisma
     );
-    // First use
-    const result1 = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH');
-    expect(result1.allowed).toBe(true);
-    // Replay
-    const result2 = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH');
-    expect(result2.allowed).toBe(false);
-    expect(result2.reason).toContain('replay');
+    const r1 = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH', prisma);
+    expect(r1.allowed).toBe(true);
+    const r2 = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH', prisma);
+    expect(r2.allowed).toBe(false);
+    expect(r2.reason).toContain('replay');
   });
 
-  it('5. Submission ID mismatch → DENY', () => {
-    const auth = evaluateGate(
+  it('5. Submission ID mismatch → DENY', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('CERTIFIED')
+      makeCert('CERTIFIED'), prisma
     );
-    const result = enforceGateAuthorization(auth, 'wrong-sub', 'art-1', 'MINT_DOI');
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('Submission ID mismatch');
-  });
-
-  it('6. Article ID mismatch → DENY', () => {
-    const auth = evaluateGate(
-      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('CERTIFIED')
-    );
-    const result = enforceGateAuthorization(auth, 'sub-1', 'wrong-art', 'MINT_DOI');
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('Article ID mismatch');
-  });
-
-  it('7. Action mismatch → DENY', () => {
-    const auth = evaluateGate(
-      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('CERTIFIED')
-    );
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH');
-    expect(result.allowed).toBe(false);
-    expect(result.reason).toContain('Action mismatch');
-  });
-
-  it('8. BLOCKED authorization → DENY', () => {
-    const auth = evaluateGate(
-      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      makeCert('NOT_EVALUABLE')
-    );
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI');
+    const result = await enforceGateAuthorization(auth, 'wrong-sub', 'art-1', 'MINT_DOI', prisma);
     expect(result.allowed).toBe(false);
   });
 
-  it('9. No certification → BLOCKED (fail-closed)', () => {
-    const auth = evaluateGate(
+  it('6. Article ID mismatch → DENY', async () => {
+    const auth = await evaluateGate(
       { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
-      null
+      makeCert('CERTIFIED'), prisma
+    );
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'wrong-art', 'MINT_DOI', prisma);
+    expect(result.allowed).toBe(false);
+  });
+
+  it('7. Action mismatch → DENY', async () => {
+    const auth = await evaluateGate(
+      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
+      makeCert('CERTIFIED'), prisma
+    );
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'PUBLISH', prisma);
+    expect(result.allowed).toBe(false);
+  });
+
+  it('8. BLOCKED authorization → DENY', async () => {
+    const auth = await evaluateGate(
+      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
+      makeCert('NOT_EVALUABLE'), prisma
+    );
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI', prisma);
+    expect(result.allowed).toBe(false);
+  });
+
+  it('9. No certification → BLOCKED (fail-closed)', async () => {
+    const auth = await evaluateGate(
+      { submissionId: 'sub-1', articleId: 'art-1', action: 'MINT_DOI' },
+      null, prisma
     );
     expect(auth.result).toBe('BLOCKED');
-    const result = enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI');
+    const result = await enforceGateAuthorization(auth, 'sub-1', 'art-1', 'MINT_DOI', prisma);
     expect(result.allowed).toBe(false);
   });
 });

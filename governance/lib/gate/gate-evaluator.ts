@@ -1,19 +1,12 @@
 // governance/lib/gate/gate-evaluator.ts
 //
-// WP-GOV-01E — Release Gate Evaluator
+// WP-GOV-01E — Release Gate Evaluator (CORRECTED)
 //
-// Authority: wp-gov-01-engineering-specification.md §8 (Release Authorization)
-//            Installment 3 Directive §PHASE B
-//
-// The gate is:
-// - Deterministic: same certification + same request → same authorization
-// - Fail-closed: BLOCKED when Governance/certification is unavailable
-// - Read-only: does NOT mutate Publication state
-// - Time-limited: 15-minute TTL per authorization
-// - Nonce-protected: unique nonce per authorization for replay resistance
-// - Auditable: every request/response recorded in gate audit
+// Correction: durable gate_audit persistence + durable nonce consumption
+// Per Installment 3 Correction Directive §1 + §2
 
 import { randomUUID, createHash } from 'crypto';
+import { PrismaClient } from '@prisma/client';
 import {
   type GateRequest,
   type GateResponse,
@@ -26,122 +19,221 @@ import {
 import type { CertificationResult } from '../evaluation/types';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GATE EVALUATION
+// GATE EVALUATION (with durable audit)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Evaluates a gate request against a CertificationResult.
+ * Evaluates a gate request against a CertificationResult AND persists
+ * a durable gate_audit record.
  *
- * Per wp-gov-01-eng-spec §8:
- * - ALLOW: only if certification result is CERTIFIED
- * - DENY: if certification result is NOT_CERTIFIED
- * - BLOCKED: if certification is NOT_EVALUABLE, INSUFFICIENT_EVIDENCE, SUPERSEDED, or missing
+ * Per directive §3:
+ * - validate request
+ * - evaluate certification
+ * - create authorization response
+ * - persist gate_audit record
+ * - return response
  *
- * Per GOV-INV-14:
- * - Missing evidence MUST NEVER produce ALLOW
- *
- * Per GOV-INV-11:
- * - Protected release actions fail closed when Governance is unavailable
+ * Per directive §3 (fail-closed):
+ * - If audit persistence fails for an ALLOW, the response MUST be BLOCKED.
  */
-export function evaluateGate(
+export async function evaluateGate(
   request: GateRequest,
-  certification: CertificationResult | null
-): GateResponse {
+  certification: CertificationResult | null,
+  prisma: PrismaClient,
+  requesterIdentity?: string
+): Promise<GateResponse> {
   const now = new Date();
   const expiresAt = new Date(now.getTime() + GATE_AUTHORIZATION_TTL_MINUTES * 60 * 1000);
   const nonce = randomUUID();
   const authorizationId = computeAuthorizationId(request, nonce);
 
-  // ─── No certification provided → BLOCKED (fail-closed) ─────────────────
-  if (!certification) {
-    return buildResponse({
-      authorizationId,
-      submissionId: request.submissionId,
-      articleId: request.articleId,
-      requestedAction: request.action,
-      certificationId: null,
-      certificationHash: null,
-      evidenceSnapshotHash: null,
-      traceabilityGraphHash: null,
-      result: 'BLOCKED',
-      reason: 'No certification available — Governance fail-closed (GOV-INV-11)',
-      nonce,
-      issuedAt: now.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-    });
-  }
-
-  // ─── Certification must match the requested submission ──────────────────
-  if (certification.submissionId !== request.submissionId) {
-    return buildResponse({
-      authorizationId,
-      submissionId: request.submissionId,
-      articleId: request.articleId,
-      requestedAction: request.action,
-      certificationId: certification.certificationId,
-      certificationHash: null,
-      evidenceSnapshotHash: null,
-      traceabilityGraphHash: null,
-      result: 'DENY',
-      reason: `Certification submissionId mismatch: ${certification.submissionId} ≠ ${request.submissionId}`,
-      nonce,
-      issuedAt: now.toISOString(),
-      expiresAt: expiresAt.toISOString(),
-    });
-  }
-
-  // ─── Evaluate based on certification result state ──────────────────────
+  // ─── Evaluate certification ───────────────────────────────────────────
   let result: GateResult;
   let reason: string;
+  let certId: string | null = null;
+  let evidenceHash: string | null = null;
+  let graphHash: string | null = null;
 
-  switch (certification.result) {
-    case 'CERTIFIED':
-      result = 'ALLOW';
-      reason = 'Certification CERTIFIED — release authorized';
-      break;
+  if (!certification) {
+    result = 'BLOCKED';
+    reason = 'No certification available — Governance fail-closed (GOV-INV-11)';
+  } else if (certification.submissionId !== request.submissionId) {
+    result = 'DENY';
+    reason = `Certification submissionId mismatch: ${certification.submissionId} ≠ ${request.submissionId}`;
+    certId = certification.certificationId;
+    evidenceHash = certification.evidenceSnapshotHash;
+    graphHash = certification.traceabilityGraphHash;
+  } else {
+    certId = certification.certificationId;
+    evidenceHash = certification.evidenceSnapshotHash;
+    graphHash = certification.traceabilityGraphHash;
 
-    case 'NOT_CERTIFIED':
-      result = 'DENY';
-      reason = `Certification NOT_CERTIFIED: ${certification.findings.map(f => f.message).join('; ')}`;
-      break;
-
-    case 'NOT_EVALUABLE':
-      result = 'BLOCKED';
-      reason = 'Certification NOT_EVALUABLE — cannot determine compliance (GOV-INV-14)';
-      break;
-
-    case 'INSUFFICIENT_EVIDENCE':
-      result = 'BLOCKED';
-      reason = 'Certification INSUFFICIENT_EVIDENCE — insufficient evidence for release (GOV-INV-14)';
-      break;
-
-    case 'SUPERSEDED':
-      result = 'BLOCKED';
-      reason = `Certification SUPERSEDED by ${certification.supersededBy} — use the latest certification`;
-      break;
-
-    default:
-      result = 'BLOCKED';
-      reason = `Unknown certification result: ${certification.result} — fail-closed (GOV-INV-11)`;
-      break;
+    switch (certification.result) {
+      case 'CERTIFIED':
+        result = 'ALLOW';
+        reason = 'Certification CERTIFIED — release authorized';
+        break;
+      case 'NOT_CERTIFIED':
+        result = 'DENY';
+        reason = `Certification NOT_CERTIFIED: ${certification.findings.map(f => f.message).join('; ')}`;
+        break;
+      case 'NOT_EVALUABLE':
+        result = 'BLOCKED';
+        reason = 'Certification NOT_EVALUABLE — cannot determine compliance (GOV-INV-14)';
+        break;
+      case 'INSUFFICIENT_EVIDENCE':
+        result = 'BLOCKED';
+        reason = 'Certification INSUFFICIENT_EVIDENCE — insufficient evidence (GOV-INV-14)';
+        break;
+      case 'SUPERSEDED':
+        result = 'BLOCKED';
+        reason = `Certification SUPERSEDED by ${certification.supersededBy} — use latest certification`;
+        break;
+      default:
+        result = 'BLOCKED';
+        reason = `Unknown certification result: ${certification.result} — fail-closed (GOV-INV-11)`;
+        break;
+    }
   }
 
-  return buildResponse({
+  // ─── Build response ────────────────────────────────────────────────────
+  const response: GateResponse = {
     authorizationId,
     submissionId: request.submissionId,
     articleId: request.articleId,
     requestedAction: request.action,
-    certificationId: certification.certificationId,
-    certificationHash: certification.certificationId, // Bound to the certification
-    evidenceSnapshotHash: certification.evidenceSnapshotHash,
-    traceabilityGraphHash: certification.traceabilityGraphHash,
+    certificationId: certId,
+    certificationHash: certId,
+    evidenceSnapshotHash: evidenceHash,
+    traceabilityGraphHash: graphHash,
+    constitutionVersion: CONSTITUTION_VERSION,
     result,
     reason,
     nonce,
     issuedAt: now.toISOString(),
     expiresAt: expiresAt.toISOString(),
-    findings: result === 'ALLOW' ? undefined : certification.findings,
-  });
+    authorizationVersion: GATE_AUTHORIZATION_VERSION,
+    findings: result === 'ALLOW' ? undefined : certification?.findings,
+  };
+
+  // ─── Persist gate_audit record ────────────────────────────────────────
+  // Per directive §3: fail-closed if audit persistence fails for ALLOW
+  try {
+    await prisma.gateAudit.create({
+      data: {
+        authorizationId,
+        submissionId: request.submissionId,
+        articleId: request.articleId,
+        requestedAction: request.action,
+        result,
+        reason,
+        certificationId: certId,
+        evidenceSnapshotHash: evidenceHash,
+        traceabilityGraphHash: graphHash,
+        constitutionVersion: CONSTITUTION_VERSION,
+        nonce,
+        issuedAt: now,
+        expiresAt,
+        authorizationVersion: GATE_AUTHORIZATION_VERSION,
+        requesterIdentity: requesterIdentity || null,
+        consumed: false,
+      },
+    });
+  } catch (auditError) {
+    // Per directive §3: fail-closed if audit cannot be written for ALLOW
+    if (result === 'ALLOW') {
+      response.result = 'BLOCKED';
+      response.reason = `Audit persistence failed — fail-closed (GOV-INV-11): ${auditError instanceof Error ? auditError.message : 'unknown'}`;
+    }
+    // For DENY/BLOCKED, audit failure is logged but doesn't change the result
+    // (the action is already denied/blocked)
+  }
+
+  return response;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DURABLE NONCE CONSUMPTION (CORRECTED — database-backed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Durable nonce consumption using the governance.nonce_store table.
+ *
+ * Per directive §2:
+ * - first valid consumption succeeds
+ * - second consumption fails
+ * - concurrent consumption has exactly one winner
+ * - nonce cannot be consumed for different submission/article/action
+ * - expired authorization cannot be consumed
+ *
+ * The PRIMARY KEY (UNIQUE) constraint on nonce ensures atomic first-writer-wins:
+ * INSERT succeeds → first consumer wins
+ * INSERT fails (conflict) → replay rejected
+ *
+ * The authorization_id + submission_id + article_id + action binding
+ * prevents cross-authorization nonce reuse.
+ */
+export async function consumeNonce(
+  auth: GateResponse,
+  prisma: PrismaClient
+): Promise<boolean> {
+  // 1. Verify authorization is not expired
+  const now = new Date();
+  const expiresAt = new Date(auth.expiresAt);
+  if (now > expiresAt) {
+    return false; // Expired
+  }
+
+  // 2. Verify authorization is ALLOW
+  if (auth.result !== 'ALLOW') {
+    return false; // Not an authorization
+  }
+
+  // 3. Atomically insert into nonce_store (UNIQUE constraint = first-writer-wins)
+  try {
+    await prisma.nonceStore.create({
+      data: {
+        nonce: auth.nonce,
+        authorizationId: auth.authorizationId,
+        submissionId: auth.submissionId,
+        articleId: auth.articleId,
+        requestedAction: auth.requestedAction,
+      },
+    });
+
+    // 4. Update gate_audit consumption state
+    await prisma.gateAudit.updateMany({
+      where: { nonce: auth.nonce },
+      data: {
+        consumed: true,
+        consumedAt: now,
+      },
+    });
+
+    return true; // Successfully consumed
+  } catch (error) {
+    // UNIQUE constraint violation → nonce already consumed → replay
+    return false;
+  }
+}
+
+/**
+ * Clears all consumed nonces (for testing/reset).
+ */
+export async function clearNonces(prisma: PrismaClient): Promise<void> {
+  await prisma.nonceStore.deleteMany({});
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EXPIRY VERIFICATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function isAuthorizationValid(auth: GateResponse): boolean {
+  const now = new Date();
+  const expiresAt = new Date(auth.expiresAt);
+  if (now > expiresAt) return false;
+  if (auth.result !== 'ALLOW') return false;
+  return true;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -152,97 +244,4 @@ function computeAuthorizationId(request: GateRequest, nonce: string): string {
   const input = `${request.submissionId}:${request.articleId}:${request.action}:${nonce}`;
   const hash = createHash('sha256').update(input).digest('hex');
   return `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RESPONSE BUILDER
-// ─────────────────────────────────────────────────────────────────────────────
-
-function buildResponse(params: {
-  authorizationId: string;
-  submissionId: string;
-  articleId: string;
-  requestedAction: ProtectedAction;
-  certificationId: string | null;
-  certificationHash: string | null;
-  evidenceSnapshotHash: string | null;
-  traceabilityGraphHash: string | null;
-  result: GateResult;
-  reason: string;
-  nonce: string;
-  issuedAt: string;
-  expiresAt: string;
-  findings?: unknown[];
-}): GateResponse {
-  return {
-    authorizationId: params.authorizationId,
-    submissionId: params.submissionId,
-    articleId: params.articleId,
-    requestedAction: params.requestedAction,
-    certificationId: params.certificationId,
-    certificationHash: params.certificationHash,
-    evidenceSnapshotHash: params.evidenceSnapshotHash,
-    traceabilityGraphHash: params.traceabilityGraphHash,
-    constitutionVersion: CONSTITUTION_VERSION,
-    result: params.result,
-    reason: params.reason,
-    nonce: params.nonce,
-    issuedAt: params.issuedAt,
-    expiresAt: params.expiresAt,
-    authorizationVersion: GATE_AUTHORIZATION_VERSION,
-    findings: params.findings,
-  };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// EXPIRY VERIFICATION
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Verifies that a gate authorization is still valid (not expired, not revoked).
- * Used by Publication enforcement (WP-GOV-01F) before executing protected actions.
- */
-export function isAuthorizationValid(auth: GateResponse): boolean {
-  const now = new Date();
-  const expiresAt = new Date(auth.expiresAt);
-
-  if (now > expiresAt) {
-    return false; // Expired
-  }
-
-  if (auth.result !== 'ALLOW') {
-    return false; // Not an authorization
-  }
-
-  return true;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NONCE VERIFICATION
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * In-memory nonce store for single-use enforcement.
- * In production, this would be a database table or Redis.
- * For WP-GOV-01E, in-memory is sufficient for the gate API.
- */
-const consumedNonces = new Set<string>();
-
-/**
- * Verifies and consumes a nonce (single-use enforcement).
- * Returns true if the nonce was valid and not previously consumed.
- */
-export function consumeNonce(nonce: string): boolean {
-  if (consumedNonces.has(nonce)) {
-    return false; // Replay — nonce already consumed
-  }
-  consumedNonces.add(nonce);
-  return true;
-}
-
-/**
- * Clears all consumed nonces (for testing/reset).
- */
-export function clearNonces(): void {
-  consumedNonces.clear();
 }

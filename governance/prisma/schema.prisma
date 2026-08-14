@@ -434,3 +434,45 @@ model EvidenceProjection {
 
   @@schema("governance")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WP-GOV-01E CORRECTION: Gate Audit + Durable Nonce
+// ─────────────────────────────────────────────────────────────────────────────
+
+model GateAudit {
+  id                    String    @id @db.Uuid @default(uuid())
+  authorizationId       String    @db.Uuid
+  submissionId          String    @db.Uuid
+  articleId             String    @db.Uuid
+  requestedAction       String
+  result                String    // ALLOW | DENY | BLOCKED
+  reason                String
+  certificationId       String?
+  evidenceSnapshotHash  String?
+  traceabilityGraphHash String?
+  constitutionVersion   String
+  nonce                 String
+  issuedAt              DateTime
+  expiresAt             DateTime
+  authorizationVersion  String
+  requesterIdentity     String?
+  consumed              Boolean   @default(false)
+  consumedAt            DateTime?
+  createdAt             DateTime  @default(now())
+
+  @@index([authorizationId])
+  @@index([submissionId])
+  @@index([nonce])
+  @@schema("governance")
+}
+
+model NonceStore {
+  nonce                String   @id
+  authorizationId      String   @db.Uuid
+  submissionId         String   @db.Uuid
+  articleId            String   @db.Uuid
+  requestedAction      String
+  consumedAt           DateTime @default(now())
+
+  @@schema("governance")
+}
