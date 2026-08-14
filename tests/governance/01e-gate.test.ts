@@ -175,6 +175,37 @@ describe('WP-GOV-01E — Release Gate API (Corrected)', () => {
     const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
     const tampered = { ...response, submissionId: TEST_DIFFERENT_SUB_ID };
     const result = await consumeNonce(tampered, prisma);
+    // consumeNonce verifies caller-supplied submissionId against the persisted
+    // gate_audit record. The tampered submissionId does NOT match the
+    // authoritative record, so consumption is rejected.
+    expect(result).toBe(false);
+  });
+
+  it('19b. Nonce cannot be consumed with altered articleId', async () => {
+    const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
+    const tampered = { ...response, articleId: '00000000-0000-4000-8000-000000000004' };
+    const result = await consumeNonce(tampered, prisma);
+    expect(result).toBe(false);
+  });
+
+  it('19c. Nonce cannot be consumed with altered requestedAction', async () => {
+    const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
+    const tampered = { ...response, requestedAction: 'PUBLISH' as any };
+    const result = await consumeNonce(tampered, prisma);
+    expect(result).toBe(false);
+  });
+
+  it('19d. Nonce cannot be consumed with altered authorizationId', async () => {
+    const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
+    const tampered = { ...response, authorizationId: '00000000-0000-4000-8000-000000000099' };
+    const result = await consumeNonce(tampered, prisma);
+    expect(result).toBe(false);
+  });
+
+  it('19e. Nonce cannot be consumed with altered nonce', async () => {
+    const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
+    const tampered = { ...response, nonce: 'fake-nounce-' + 'x'.repeat(20) };
+    const result = await consumeNonce(tampered, prisma);
     expect(result).toBe(false);
   });
 
