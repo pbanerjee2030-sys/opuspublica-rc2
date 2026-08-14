@@ -1,6 +1,6 @@
 // tests/governance/01e-gate.test.ts
 //
-// WP-GOV-01E — Release Gate API Tests (CORRECTED)
+// WP-GOV-01E — Release Gate API Tests (UUID CORRECTED)
 // Tests: ALLOW, DENY, BLOCKED, expiry, nonce, provenance, audit persistence
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -17,10 +17,15 @@ for (const f of ['.env.local', '.env', '.env.example']) {
 
 const prisma = new PrismaClient();
 
+// Deterministic test UUIDs (valid PostgreSQL UUID format)
+const TEST_SUBMISSION_ID = '00000000-0000-4000-8000-000000000001';
+const TEST_ARTICLE_ID = '00000000-0000-4000-8000-000000000002';
+const TEST_DIFFERENT_SUB_ID = '00000000-0000-4000-8000-000000000003';
+
 function makeCert(result: CertificationResult['result']): CertificationResult {
   return {
     certificationId: 'test-cert-id',
-    submissionId: 'sub-1',
+    submissionId: TEST_SUBMISSION_ID,
     journalId: 'journal-A',
     evidenceSnapshotHash: 'a'.repeat(64),
     traceabilityGraphHash: 'b'.repeat(64),
@@ -35,8 +40,8 @@ function makeCert(result: CertificationResult['result']): CertificationResult {
 }
 
 const baseRequest: GateRequest = {
-  submissionId: 'sub-1',
-  articleId: 'art-1',
+  submissionId: TEST_SUBMISSION_ID,
+  articleId: TEST_ARTICLE_ID,
   action: 'MINT_DOI',
 };
 
@@ -81,7 +86,7 @@ describe('WP-GOV-01E — Release Gate API (Corrected)', () => {
 
   it('7. Submission ID mismatch → DENY', async () => {
     const cert = makeCert('CERTIFIED');
-    cert.submissionId = 'different-sub';
+    cert.submissionId = TEST_DIFFERENT_SUB_ID;
     const response = await evaluateGate(baseRequest, cert, prisma);
     expect(response.result).toBe('DENY');
     expect(response.reason).toContain('mismatch');
@@ -168,12 +173,9 @@ describe('WP-GOV-01E — Release Gate API (Corrected)', () => {
 
   it('19. Nonce cannot be consumed with altered submissionId', async () => {
     const response = await evaluateGate(baseRequest, makeCert('CERTIFIED'), prisma);
-    const tampered = { ...response, submissionId: 'wrong-sub' };
+    const tampered = { ...response, submissionId: TEST_DIFFERENT_SUB_ID };
     const result = await consumeNonce(tampered, prisma);
-    // The nonce_store PK prevents this — the nonce is already bound
-    // to the original authorization. A tampered request will fail
-    // because the nonce_store row has the original submissionId.
-    expect(result).toBe(false); // Fails because nonce already consumed or binding mismatch
+    expect(result).toBe(false);
   });
 
   it('20. Expired authorization cannot be consumed', async () => {
