@@ -3,6 +3,10 @@ import { getSupabaseAdmin } from '@/lib/supabase-admin';
 import { generatePublishedPdf } from '@/lib/generate-pdf';
 import { logAuditEvent } from '@/lib/audit';
 import { withAuth } from '@/lib/rbac';
+import { onSuccessfulPublication } from '@/governance/lib/integration/publication-integration';
+import { PrismaClient } from '@prisma/client';
+
+const governancePrisma = new PrismaClient();
 
 /**
  * POST /api/admin/articles/publish
@@ -11,6 +15,15 @@ import { withAuth } from '@/lib/rbac';
  *
  * - 'publish' (default): Sets status to 'published', generates house PDF, sets published_pdf_url
  * - 'regenerate': Re-generates the house PDF for an already-published article
+ *
+ * POST-PUBLICATION INTEGRATION (WS-D+H):
+ * After successful publication, invokes onSuccessfulPublication() which:
+ * 1. Checks for valid Release Gate ALLOW authorization
+ * 2. If ALLOW: queues Crossref deposit job
+ * 3. Triggers preservation (BagIt package)
+ *
+ * Side-effect failures are non-blocking (durable job creation, async workers).
+ * Publication is NOT rolled back if Crossref queue or preservation fails.
  */
 export const POST = withAuth({ roles: ['admin', 'editor'] }, async (request, ctx) => {
   try {
@@ -143,6 +156,23 @@ export const POST = withAuth({ roles: ['admin', 'editor'] }, async (request, ctx
         ...(action === 'publish' ? { from_status: article.status, to_status: 'published' } : {}),
       },
     });
+
+    // ─── POST-PUBLICATION INTEGRATION (WS-D+H) ────────────────────────────
+    // After successful publication, trigger:
+    // 1. Crossref deposit queue (if Release Gate ALLOW exists)
+    // 2. Preservation (BagIt dark archive package)
+    //
+    // These are non-blocking side effects. If they fail, the article
+    // is still published — the failure is durably recorded.
+    if (action === 'publish') {
+      try {
+        const result = await onSuccessfulPublication(articleId, governancePrisma);
+        console.log(`[Publish] Post-publication: crossrefQueued=${result.crossrefQueued} preservationTriggered=${result.preservationTriggered}`);
+      } catch (integrationError) {
+        // Non-blocking — publication succeeded, side effects will be retried by workers
+        console.error('[Publish] Post-publication integration failed (non-blocking):', integrationError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
