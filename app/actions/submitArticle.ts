@@ -3,6 +3,7 @@
 import { withActionAuth, AuthContext } from '@/lib/rbac';
 import * as mammoth from 'mammoth';
 import * as crypto from 'crypto';
+import { validateSubmissionCompleteness } from '../../lib/submission/preflight';
 
 export interface SubmitArticlePayload {
   idempotencyKey: string;
@@ -10,7 +11,16 @@ export interface SubmitArticlePayload {
   abstract: string;
   content: string;
   journalId: string;
-  coAuthors: { name: string; orcid: string; rorId?: string }[];
+  articleType?: string;
+  license?: string;
+  coAuthors: {
+    name: string;
+    orcid?: string;
+    rorId?: string;
+    email?: string;
+    isCorresponding?: boolean;
+    affiliations?: string[];
+  }[];
   pdfFile: {
     name: string;
     type: string;
@@ -135,6 +145,55 @@ export const submitArticle = withActionAuth(
       ethicsApprovalStatement: payload.ethicsApprovalStatement || null,
       intent_hash: intentHash
     };
+
+    // 6.5 Preflight Completeness Check
+    const { data: journalData } = await supabaseAdmin
+      .from('journals')
+      .select('name')
+      .eq('id', payload.journalId)
+      .single();
+    
+    const journalName = journalData?.name || 'Unknown Journal';
+    
+    // Construct Preflight inputs
+    const submissionForm = {
+      authors: payload.coAuthors.map(a => ({
+        name: a.name,
+        email: a.email,
+        orcid: a.orcid,
+        affiliations: a.affiliations,
+        isCorresponding: a.isCorresponding
+      })),
+      funding_declaration: (payload.funderName || payload.funderAwardNumber) ? `${payload.funderName} ${payload.funderAwardNumber}` : '',
+      conflict_of_interest_declaration: payload.conflictOfInterestStatement || '',
+      license: payload.license || '',
+      article_type: payload.articleType || 'Journal Article'
+    };
+
+    const manuscriptData = {
+      hasContent: true, // We successfully processed the PDF/DOCX
+      title: payload.title, // In a real parser, we'd extract from HTML. Here we fall back to payload.
+      abstract: payload.abstract,
+      keywords: payload.keywords,
+      references: extractedHtml.includes('class="references"') ? ['ref'] : [] // extremely naive references check for validation
+    };
+
+    const preflightResult = validateSubmissionCompleteness({
+      journal: journalName,
+      articleType: payload.articleType || 'Journal Article',
+      submissionForm,
+      manuscript: manuscriptData
+    });
+
+    if (!preflightResult.complete) {
+      await supabaseAdmin.storage.from('publications').remove([storagePath]);
+      return { 
+        success: false, 
+        error: 'Validation Error: Submission is incomplete.', 
+        missingRequiredFields: preflightResult.missingRequiredFields,
+        validationErrors: preflightResult.errors
+      };
+    }
 
     // 7. Transition Boundary
     const newSubmissionId = crypto.randomUUID();
