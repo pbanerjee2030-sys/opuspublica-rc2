@@ -47,13 +47,16 @@
     "@types/pdf-parse": "^1.1.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axios": "^1.19.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
+    "libxmljs2": "^0.37.0",
     "prisma": "6.19.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.12",
     "typescript": "^5",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "xmllint": "^0.1.1"
   },
   "allowScripts": {
     "@prisma/client@6.19.3": true,
