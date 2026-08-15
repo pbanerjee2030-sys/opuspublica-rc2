@@ -31,7 +31,7 @@ export function splitName(fullName: string): { given: string; surname: string } 
 }
 
 /**
- * Generates Crossref metadata deposit XML schema version 4.4.2
+ * Generates Crossref metadata deposit XML for Journal Articles
  */
 export function generateCrossrefXml(articleData: {
   title: string;
@@ -44,12 +44,15 @@ export function generateCrossrefXml(articleData: {
   authors: Array<{
     full_name: string;
     orcid?: string | null;
+    orcid_authenticated?: boolean | null;
     affiliation?: string | null;
     ror_id?: string | null;
   }>;
   funderName?: string | null;
   funderAwardNumber?: string | null;
   funderId?: string | null;
+  ror?: string | null;
+  grantDoi?: string | null;
 }): string {
   const batchId = `deposit_${articleData.doi.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
   const timestamp = Date.now();
@@ -58,7 +61,6 @@ export function generateCrossrefXml(articleData: {
   const month = String(pubDate.getMonth() + 1).padStart(2, '0');
   const day = String(pubDate.getDate()).padStart(2, '0');
 
-  // Escape all text inputs
   const escapedTitle = escapeXml(articleData.title);
   const escapedAbstract = articleData.abstract ? escapeXml(articleData.abstract) : '';
   const escapedJournalName = escapeXml(articleData.journalName);
@@ -66,7 +68,6 @@ export function generateCrossrefXml(articleData: {
   const escapedDoi = escapeXml(articleData.doi);
   const escapedUrl = escapeXml(articleData.url);
 
-  // Form contributors XML
   let contributorsXml = '';
   if (articleData.authors && articleData.authors.length > 0) {
     contributorsXml = '<contributors>\n';
@@ -79,7 +80,6 @@ export function generateCrossrefXml(articleData: {
       }
       contributorsXml += `            <surname>${escapeXml(surname)}</surname>\n`;
       
-      // Affiliations with optional ROR ID
       if (author.affiliation?.trim() || author.ror_id?.trim()) {
         contributorsXml += `            <affiliations>\n`;
         contributorsXml += `              <institution>\n`;
@@ -95,24 +95,22 @@ export function generateCrossrefXml(articleData: {
 
       if (author.orcid) {
         const cleanOrcid = author.orcid.trim().replace(/^https?:\/\/orcid\.org\//, '');
-        contributorsXml += `            <ORCID authenticated="false">https://orcid.org/${escapeXml(cleanOrcid)}</ORCID>\n`;
+        const authFlag = author.orcid_authenticated ? 'true' : 'false';
+        contributorsXml += `            <ORCID authenticated="${authFlag}">https://orcid.org/${escapeXml(cleanOrcid)}</ORCID>\n`;
       }
       contributorsXml += `          </person_name>\n`;
     });
     contributorsXml += '        </contributors>';
   }
 
-  // Abstract section (Crossref JATS abstract tag namespace)
   const abstractXml = escapedAbstract
     ? `        <abstract xmlns="http://www.ncbi.nlm.nih.gov/JATS1">\n          <p>${escapedAbstract}</p>\n        </abstract>\n`
     : '';
 
-  // ISSN element
   const issnXml = escapedJournalIssn && escapedJournalIssn !== 'N/A'
     ? `        <issn media_type="electronic">${escapedJournalIssn}</issn>\n`
     : '';
 
-  // Form Crossmark XML
   let crossmarkXml = '';
   try {
     const articleUrlObj = new URL(articleData.url);
@@ -138,13 +136,15 @@ export function generateCrossrefXml(articleData: {
     console.error('Failed to generate Crossmark XML segment:', err);
   }
 
-  // Form Funder XML
   let fundingXml = '';
   if (articleData.funderName?.trim()) {
     fundingXml = `        <fr:program name="fundref">\n`;
     fundingXml += `          <fr:assertion name="fundgroup">\n`;
     fundingXml += `            <fr:assertion name="funder_name">\n`;
     fundingXml += `              ${escapeXml(articleData.funderName.trim())}\n`;
+    if (articleData.ror?.trim()) {
+      fundingXml += `              <fr:assertion name="ror">${escapeXml(articleData.ror.trim())}</fr:assertion>\n`;
+    }
     if (articleData.funderId?.trim()) {
       fundingXml += `              <fr:assertion name="funder_identifier">${escapeXml(articleData.funderId.trim())}</fr:assertion>\n`;
     }
@@ -152,12 +152,15 @@ export function generateCrossrefXml(articleData: {
     if (articleData.funderAwardNumber?.trim()) {
       fundingXml += `            <fr:assertion name="award_number">${escapeXml(articleData.funderAwardNumber.trim())}</fr:assertion>\n`;
     }
+    if (articleData.grantDoi?.trim()) {
+      fundingXml += `            <fr:assertion name="grant_doi">${escapeXml(articleData.grantDoi.trim())}</fr:assertion>\n`;
+    }
     fundingXml += `          </fr:assertion>\n`;
     fundingXml += `        </fr:program>\n`;
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://www.crossref.org/schemas/crossref5.3.1.xsd">
+<doi_batch version="5.5.0" xmlns="http://www.crossref.org/schema/5.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xmlns:ai="http://www.crossref.org/AccessIndicators.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.5.0 http://www.crossref.org/schemas/crossref5.5.0.xsd">
   <head>
     <doi_batch_id>${batchId}</doi_batch_id>
     <timestamp>${timestamp}</timestamp>
@@ -183,9 +186,9 @@ ${issnXml}      </journal_metadata>
         </titles>
         ${contributorsXml}
 ${abstractXml}        <publication_date media_type="online">
-          <year>${year}</year>
           <month>${month}</month>
           <day>${day}</day>
+          <year>${year}</year>
         </publication_date>
 ${crossmarkXml}${fundingXml}        <doi_data>
           <doi>${escapedDoi}</doi>
@@ -210,6 +213,8 @@ export function generateBookCrossrefXml(bookData: {
   authors: Array<{
     name: string;
     role?: string | null;
+    orcid?: string | null;
+    orcid_authenticated?: boolean | null;
   }>;
 }): string {
   const batchId = `deposit_${bookData.doi.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}`;
@@ -230,7 +235,6 @@ export function generateBookCrossrefXml(bookData: {
   const escapedDoi = escapeXml(bookData.doi);
   const escapedUrl = escapeXml(bookData.url);
 
-  // Contributors XML
   let contributorsXml = '';
   if (bookData.authors && bookData.authors.length > 0) {
     contributorsXml = '    <contributors>\n';
@@ -242,12 +246,16 @@ export function generateBookCrossrefXml(bookData: {
         contributorsXml += `        <given_name>${escapeXml(given)}</given_name>\n`;
       }
       contributorsXml += `        <surname>${escapeXml(surname)}</surname>\n`;
+      if (author.orcid) {
+        const cleanOrcid = author.orcid.trim().replace(/^https?:\/\/orcid\.org\//, '');
+        const authFlag = author.orcid_authenticated ? 'true' : 'false';
+        contributorsXml += `        <ORCID authenticated="${authFlag}">https://orcid.org/${escapeXml(cleanOrcid)}</ORCID>\n`;
+      }
       contributorsXml += `      </person_name>\n`;
     });
     contributorsXml += '    </contributors>';
   }
 
-  // ISBN XML
   let isbnXml = '';
   const cleanIsbn = bookData.isbn?.trim() || '';
   const cleanIsbnEbook = bookData.isbn_ebook?.trim() || '';
@@ -264,7 +272,7 @@ export function generateBookCrossrefXml(bookData: {
   }
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<doi_batch version="5.3.1" xmlns="http://www.crossref.org/schema/5.3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.3.1 http://www.crossref.org/schemas/crossref5.3.1.xsd">
+<doi_batch version="5.5.0" xmlns="http://www.crossref.org/schema/5.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xmlns:ai="http://www.crossref.org/AccessIndicators.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.5.0 http://www.crossref.org/schemas/crossref5.5.0.xsd">
   <head>
     <doi_batch_id>${batchId}</doi_batch_id>
     <timestamp>${timestamp}</timestamp>
@@ -277,8 +285,7 @@ export function generateBookCrossrefXml(bookData: {
   <body>
     <book book_type="monograph">
       <book_metadata language="en">
-        <titles><title>${escapedTitle}</title></titles>
-        ${contributorsXml}
+${contributorsXml ? contributorsXml + '\n        ' : ''}<titles><title>${escapedTitle}</title></titles>
         <publication_date>
           <year>${year}</year>
         </publication_date>
@@ -292,6 +299,295 @@ export function generateBookCrossrefXml(bookData: {
         </doi_data>
       </book_metadata>
     </book>
+  </body>
+</doi_batch>`;
+}
+
+export interface ReportCrossrefMetadata {
+  title: string;
+  abstract?: string | null;
+  doi: string;
+  url: string; // resource URL
+  publishedAt: string; // Used as online publication date
+  historicalPublishedAt?: string | null; // series or print publication date
+  seriesTitle?: string | null;
+  seriesNumber?: string | null;
+  issn?: string | null;
+  volume?: string | null;
+  version?: string | null;
+  publisherName: string;
+  institutionName?: string | null;
+  authors: Array<{
+    full_name: string;
+    orcid?: string | null;
+    orcid_authenticated?: boolean | null;
+    affiliation?: string | null;
+    ror_id?: string | null;
+  }>;
+  funderName?: string | null;
+  funderAwardNumber?: string | null;
+  funderId?: string | null;
+  ror?: string | null;
+  grantDoi?: string | null;
+  licenseUrl?: string | null;
+  crossmarkPolicyDoi?: string | null;
+  crossmarkDomain?: string | null;
+  references?: Array<{
+    key: string;
+    doi?: string | null;
+    unstructured?: string | null;
+  }>;
+}
+
+/**
+ * Generates Crossref metadata deposit XML for Reports / Working Papers
+ */
+export function generateReportCrossrefXml(reportData: ReportCrossrefMetadata): string {
+  // Validation: Prevent placeholder URLs
+  const invalidDomains = ['example.com', 'example.org', 'localhost'];
+  if (invalidDomains.some(domain => reportData.url.includes(domain))) {
+    throw new Error(`Invalid resource URL: Placeholder domains like example.com are not permitted for production deposits.`);
+  }
+
+  // Validation: Series MUST have ISSN
+  if (reportData.seriesTitle?.trim() && !reportData.issn?.trim()) {
+    throw new Error(`missing authoritative ISSN for series`);
+  }
+
+  // Validation: DOI format
+  if (!reportData.doi.startsWith("10.")) {
+    throw new Error(`Invalid DOI format: Must start with 10.`);
+  }
+
+  // Validation: ROR format
+  if (reportData.ror?.trim() && !reportData.ror.startsWith("https://ror.org/")) {
+    throw new Error(`Invalid ROR format: Must start with https://ror.org/`);
+  }
+
+  const batchId = `deposit_${reportData.doi.replace(/[^a-zA-Z0-9]/g, "_")}_${Date.now()}`;
+  const timestamp = Date.now();
+  
+  const pubDateOnline = new Date(reportData.publishedAt);
+  const yearOnline = pubDateOnline.getFullYear();
+  const monthOnline = String(pubDateOnline.getMonth() + 1).padStart(2, "0");
+  const dayOnline = String(pubDateOnline.getDate()).padStart(2, "0");
+
+  let historicalXml = "";
+  if (reportData.historicalPublishedAt) {
+    const pubDateHist = new Date(reportData.historicalPublishedAt);
+    const yearHist = pubDateHist.getFullYear();
+    const monthHist = String(pubDateHist.getMonth() + 1).padStart(2, "0");
+    const dayHist = String(pubDateHist.getDate()).padStart(2, "0");
+    historicalXml = `        <publication_date media_type="print">\n          <month>${monthHist}</month>\n          <day>${dayHist}</day>\n          <year>${yearHist}</year>\n        </publication_date>\n`;
+  }
+
+  const escapedTitle = escapeXml(reportData.title);
+  const escapedAbstract = reportData.abstract ? escapeXml(reportData.abstract) : "";
+  const escapedDoi = escapeXml(reportData.doi);
+  const escapedUrl = escapeXml(reportData.url);
+  const escapedPublisher = escapeXml(reportData.publisherName);
+  
+  // Contributors XML
+  let contributorsXml = "";
+  if (reportData.authors && reportData.authors.length > 0) {
+    contributorsXml = "        <contributors>\n";
+    reportData.authors.forEach((author, index) => {
+      const { given, surname } = splitName(author.full_name);
+      const seq = index === 0 ? "first" : "additional";
+      contributorsXml += `          <person_name sequence="${seq}" contributor_role="author">\n`;
+      if (given) {
+        contributorsXml += `            <given_name>${escapeXml(given)}</given_name>\n`;
+      }
+      contributorsXml += `            <surname>${escapeXml(surname)}</surname>\n`;
+      
+      if (author.affiliation?.trim() || author.ror_id?.trim()) {
+        contributorsXml += `            <affiliations>\n`;
+        contributorsXml += `              <institution>\n`;
+        if (author.affiliation?.trim()) {
+          contributorsXml += `                <institution_name>${escapeXml(author.affiliation.trim())}</institution_name>\n`;
+        }
+        if (author.ror_id?.trim()) {
+          contributorsXml += `                <institution_id type="ror">${escapeXml(author.ror_id.trim())}</institution_id>\n`;
+        }
+        contributorsXml += `              </institution>\n`;
+        contributorsXml += `            </affiliations>\n`;
+      }
+
+      if (author.orcid) {
+        const cleanOrcid = author.orcid.trim().replace(/^https?:\/\/orcid\.org\//, "");
+        const authFlag = author.orcid_authenticated ? 'true' : 'false';
+        contributorsXml += `            <ORCID authenticated="${authFlag}">https://orcid.org/${escapeXml(cleanOrcid)}</ORCID>\n`;
+      }
+      contributorsXml += `          </person_name>\n`;
+    });
+    contributorsXml += "        </contributors>\n";
+  }
+
+  // Abstract section
+  const abstractXml = escapedAbstract
+    ? `        <abstract xmlns="http://www.ncbi.nlm.nih.gov/JATS1">\n          <p>${escapedAbstract}</p>\n        </abstract>\n`
+    : "";
+
+  // Crossmark, Funding, and License Logic
+  // According to Crossref schema 5.5.0, if <crossmark> is used, <fr:program> and <ai:program> MUST be nested inside <custom_metadata>.
+  let fundingXml = "";
+  if (reportData.funderName?.trim()) {
+    fundingXml += `        <fr:program name="fundref">\n`;
+    fundingXml += `          <fr:assertion name="fundgroup">\n`;
+    fundingXml += `            <fr:assertion name="funder_name">\n`;
+    fundingXml += `              ${escapeXml(reportData.funderName.trim())}\n`;
+    if (reportData.ror?.trim()) {
+      fundingXml += `              <fr:assertion name="ror">${escapeXml(reportData.ror.trim())}</fr:assertion>\n`;
+    }
+    if (reportData.funderId?.trim()) {
+      fundingXml += `              <fr:assertion name="funder_identifier">${escapeXml(reportData.funderId.trim())}</fr:assertion>\n`;
+    }
+    fundingXml += `            </fr:assertion>\n`;
+    if (reportData.funderAwardNumber?.trim()) {
+      fundingXml += `            <fr:assertion name="award_number">${escapeXml(reportData.funderAwardNumber.trim())}</fr:assertion>\n`;
+    }
+    if (reportData.grantDoi?.trim()) {
+      fundingXml += `            <fr:assertion name="grant_doi">${escapeXml(reportData.grantDoi.trim())}</fr:assertion>\n`;
+    }
+    fundingXml += `          </fr:assertion>\n`;
+    fundingXml += `        </fr:program>\n`;
+  }
+
+  let licenseXml = "";
+  if (reportData.licenseUrl?.trim()) {
+    licenseXml += `        <ai:program name="AccessIndicators">\n`;
+    licenseXml += `          <ai:license_ref>${escapeXml(reportData.licenseUrl.trim())}</ai:license_ref>\n`;
+    licenseXml += `        </ai:program>\n`;
+  }
+
+  let finalProgramsXml = "";
+  if (reportData.crossmarkPolicyDoi || reportData.crossmarkDomain) {
+    const policyDoi = reportData.crossmarkPolicyDoi || `${reportData.doi.split('/')[0]}/opuspublica_crossmark_policy`;
+    const domain = reportData.crossmarkDomain || new URL(reportData.url).hostname;
+    
+    finalProgramsXml += `        <crossmark>\n`;
+    finalProgramsXml += `          <crossmark_version>1</crossmark_version>\n`;
+    finalProgramsXml += `          <crossmark_policy>${escapeXml(policyDoi)}</crossmark_policy>\n`;
+    finalProgramsXml += `          <crossmark_domains>\n`;
+    finalProgramsXml += `            <crossmark_domain>\n`;
+    finalProgramsXml += `              <domain>${escapeXml(domain)}</domain>\n`;
+    finalProgramsXml += `            </crossmark_domain>\n`;
+    finalProgramsXml += `          </crossmark_domains>\n`;
+    finalProgramsXml += `          <crossmark_domain_exclusive>false</crossmark_domain_exclusive>\n`;
+    if (fundingXml || licenseXml) {
+      finalProgramsXml += `          <custom_metadata>\n`;
+      finalProgramsXml += fundingXml;
+      finalProgramsXml += licenseXml;
+      finalProgramsXml += `          </custom_metadata>\n`;
+    }
+    finalProgramsXml += `        </crossmark>\n`;
+  } else {
+    finalProgramsXml += fundingXml;
+    finalProgramsXml += licenseXml;
+  }
+
+  // Version maps to edition_number
+  let editionNumberXml = "";
+  if (reportData.version?.trim()) {
+    editionNumberXml = `        <edition_number>${escapeXml(reportData.version.trim())}</edition_number>\n`;
+  }
+
+  // Institution
+  let institutionXml = "";
+  if (reportData.institutionName?.trim()) {
+    institutionXml = `        <institution>\n          <institution_name>${escapeXml(reportData.institutionName.trim())}</institution_name>\n        </institution>\n`;
+  }
+
+  // Citation List
+  let citationListXml = "";
+  if (reportData.references && reportData.references.length > 0) {
+    citationListXml = `        <citation_list>\n`;
+    reportData.references.forEach((ref) => {
+      citationListXml += `          <citation key="${escapeXml(ref.key)}">\n`;
+      if (ref.doi) {
+        citationListXml += `            <doi>${escapeXml(ref.doi)}</doi>\n`;
+      }
+      if (ref.unstructured) {
+        citationListXml += `            <unstructured_citation>${escapeXml(ref.unstructured)}</unstructured_citation>\n`;
+      }
+      citationListXml += `          </citation>\n`;
+    });
+    citationListXml += `        </citation_list>\n`;
+  }
+
+  // Base report metadata components
+  const titlesXml = `        <titles><title>${escapedTitle}</title></titles>\n`;
+  const pubDateOnlineXml = `        <publication_date media_type="online">\n          <month>${monthOnline}</month>\n          <day>${dayOnline}</day>\n          <year>${yearOnline}</year>\n        </publication_date>\n`;
+  const publisherXml = `        <publisher>\n          <publisher_name>${escapedPublisher}</publisher_name>\n        </publisher>\n`;
+  const doiDataXml = `        <doi_data>\n          <doi>${escapedDoi}</doi>\n          <resource>${escapedUrl}</resource>\n        </doi_data>\n`;
+
+  let innerContent = "";
+
+  if (reportData.seriesTitle?.trim() || reportData.issn?.trim()) {
+    // report-paper_series_metadata path
+    let seriesMetadataXml = `        <series_metadata>\n`;
+    if (reportData.seriesTitle?.trim()) {
+      seriesMetadataXml += `          <titles><title>${escapeXml(reportData.seriesTitle.trim())}</title></titles>\n`;
+    }
+    if (reportData.issn?.trim()) {
+      seriesMetadataXml += `          <issn>${escapeXml(reportData.issn.trim())}</issn>\n`;
+    }
+    if (reportData.seriesNumber?.trim()) {
+      seriesMetadataXml += `          <series_number>${escapeXml(reportData.seriesNumber.trim())}</series_number>\n`;
+    }
+    seriesMetadataXml += `        </series_metadata>\n`;
+
+    let volumeXml = "";
+    if (reportData.volume?.trim()) {
+      volumeXml = `        <volume>${escapeXml(reportData.volume.trim())}</volume>\n`;
+    }
+
+    innerContent = `      <report-paper_series_metadata>\n` +
+      seriesMetadataXml +
+      contributorsXml +
+      titlesXml +
+      abstractXml +
+      volumeXml +
+      editionNumberXml +
+      historicalXml +
+      pubDateOnlineXml +
+      publisherXml +
+      institutionXml +
+      finalProgramsXml +
+      doiDataXml +
+      citationListXml +
+      `      </report-paper_series_metadata>\n`;
+  } else {
+    // report-paper_metadata path
+    innerContent = `      <report-paper_metadata>\n` +
+      contributorsXml +
+      titlesXml +
+      editionNumberXml +
+      abstractXml +
+      historicalXml +
+      pubDateOnlineXml +
+      publisherXml +
+      institutionXml +
+      finalProgramsXml +
+      doiDataXml +
+      citationListXml +
+      `      </report-paper_metadata>\n`;
+  }
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<doi_batch version="5.5.0" xmlns="http://www.crossref.org/schema/5.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:fr="http://www.crossref.org/fundref.xsd" xmlns:ai="http://www.crossref.org/AccessIndicators.xsd" xsi:schemaLocation="http://www.crossref.org/schema/5.5.0 http://www.crossref.org/schemas/crossref5.5.0.xsd">
+  <head>
+    <doi_batch_id>${batchId}</doi_batch_id>
+    <timestamp>${timestamp}</timestamp>
+    <depositor>
+      <depositor_name>Opus Publica</depositor_name>
+      <email_address>admin@opuspublica.com</email_address>
+    </depositor>
+    <registrant>Advocacy Unified Network</registrant>
+  </head>
+  <body>
+    <report-paper>
+${innerContent}    </report-paper>
   </body>
 </doi_batch>`;
 }
