@@ -135,7 +135,7 @@ export const submitArticle = withActionAuth(
       journalId: payload.journalId,
       storagePath,
       authors, // Unified authors array
-      articleType: payload.articleType || 'Journal Article',
+      articleType: payload.articleType,
       license: payload.license || 'CC-BY',
       funderName: payload.funderName || null,
       funderAwardNumber: payload.funderAwardNumber || null,
@@ -168,7 +168,7 @@ export const submitArticle = withActionAuth(
       funding_declaration: (payload.funderName || payload.funderAwardNumber) ? `${payload.funderName} ${payload.funderAwardNumber}` : '',
       conflict_of_interest_declaration: payload.conflictOfInterestStatement || '',
       license: payload.license || '',
-      article_type: payload.articleType || 'Journal Article'
+      article_type: payload.articleType
     };
 
     const manuscriptData = {
@@ -181,7 +181,7 @@ export const submitArticle = withActionAuth(
 
     const preflightResult = validateSubmissionCompleteness({
       journal: journalName,
-      articleType: payload.articleType || 'Journal Article',
+      articleType: payload.articleType as string,
       submissionForm,
       manuscript: manuscriptData
     });
