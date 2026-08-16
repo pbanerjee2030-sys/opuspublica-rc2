@@ -101,9 +101,9 @@ export const submitArticle = withActionAuth(
       return { success: false, error: `Upload Failed: ${uploadError.message}` };
     }
 
-    // 4. Resolve co-authors
-    const authorIds: string[] = [userId];
-    const externalCoAuthors: { name: string; orcid: string; rorId?: string }[] = [];
+    // 4. Resolve co-authors into unified authors list
+    const authors: any[] = [];
+    let authorOrder = 1;
 
     for (const coAuthor of payload.coAuthors) {
       const cleanName = coAuthor.name.trim();
@@ -115,17 +115,17 @@ export const submitArticle = withActionAuth(
         .eq('full_name', cleanName)
         .maybeSingle();
 
-      if (existingProfile) {
-        authorIds.push((existingProfile as any).id);
-      } else {
-        externalCoAuthors.push({ 
-          name: cleanName, 
-          orcid: coAuthor.orcid || '', 
-          rorId: coAuthor.rorId || '' 
-        });
-      }
+      authors.push({
+        profileId: existingProfile ? (existingProfile as any).id : null,
+        name: cleanName,
+        orcid: coAuthor.orcid || '',
+        rorId: coAuthor.rorId || '',
+        email: coAuthor.email || '',
+        isCorresponding: coAuthor.isCorresponding || false,
+        affiliations: coAuthor.affiliations || [],
+        order: authorOrder++
+      });
     }
-
 
     // 6. Build RPC Payload
     const rpcPayload = {
@@ -134,8 +134,9 @@ export const submitArticle = withActionAuth(
       content: extractedHtml,
       journalId: payload.journalId,
       storagePath,
-      authorIds,
-      externalCoAuthors,
+      authors, // Unified authors array
+      articleType: payload.articleType,
+      license: payload.license || 'CC-BY',
       funderName: payload.funderName || null,
       funderAwardNumber: payload.funderAwardNumber || null,
       funderId: payload.funderId || null,
@@ -167,7 +168,7 @@ export const submitArticle = withActionAuth(
       funding_declaration: (payload.funderName || payload.funderAwardNumber) ? `${payload.funderName} ${payload.funderAwardNumber}` : '',
       conflict_of_interest_declaration: payload.conflictOfInterestStatement || '',
       license: payload.license || '',
-      article_type: payload.articleType || 'Journal Article'
+      article_type: payload.articleType
     };
 
     const manuscriptData = {
@@ -180,7 +181,7 @@ export const submitArticle = withActionAuth(
 
     const preflightResult = validateSubmissionCompleteness({
       journal: journalName,
-      articleType: payload.articleType || 'Journal Article',
+      articleType: payload.articleType as string,
       submissionForm,
       manuscript: manuscriptData
     });
@@ -226,6 +227,10 @@ export const submitArticle = withActionAuth(
       }
     });
 
+    // DEBUG: print the RPC payload so we can see exactly what's sent
+    console.log('[DEBUG] RPC payload authors:', JSON.stringify(rpcPayload.authors, null, 2));
+    console.log('[DEBUG] RPC payload keywords:', JSON.stringify(rpcPayload.keywords));
+
     const { data: transitionResult, error: rpcError } = await authenticatedClient.rpc('submit_article_transition', {
       p_submission_id: newSubmissionId,
       p_article_id: newArticleId,
@@ -235,6 +240,7 @@ export const submitArticle = withActionAuth(
     });
 
     if (rpcError) {
+      console.error('[DEBUG] Full RPC error:', JSON.stringify(rpcError, null, 2));
       await supabaseAdmin.storage.from('publications').remove([storagePath]);
       return { success: false, error: `Transition Error: ${rpcError.message}` };
     }

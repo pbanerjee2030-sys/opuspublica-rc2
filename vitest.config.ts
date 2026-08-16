@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 // Vitest configuration for Opus Publica RC2.
 // Sequential execution required for governance DB integration tests
@@ -6,6 +7,11 @@ import { defineConfig } from 'vitest/config';
 // setupFiles loads GOVERNANCE_DATABASE_URL automatically from .env.local/.env/.env.example
 // so a clean checkout can run `npm test` without manual env var export.
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './')
+    }
+  },
   test: {
     environment: 'node',
     globals: true,
